@@ -1,0 +1,111 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Connection URL moved to prisma.config.ts for Prisma 7 migration
+}
+
+model Producto {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  nombre      String
+  descripcion String?
+  precio      Decimal  @db.Decimal
+  imagenUrl   String?  @map("imagen_url")
+  stock       Int      @default(0)
+  categoria   String?
+  activo      Boolean  @default(true)
+  creadoEn    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Legacy family name (compatibility with existing data)
+  familia     String?  @map("familia")
+  // New relation to familias table
+  familiaId   Int?     @map("familia_id")
+  familiaRel  Familia? @relation(fields: [familiaId], references: [id])
+  
+  lineasPedido LineasPedido[]
+
+  @@map("productos")
+}
+
+model Familia {
+  id         Int       @id @default(autoincrement())
+  nombre     String    @unique
+  descripcion String?
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  productos  Producto[]
+
+  @@map("familias")
+}
+
+model Cliente {
+  id              String   @id @db.Uuid
+  nombreCompleto  String?  @map("nombre_completo")
+  email           String?  @unique
+  creadoEn        DateTime @default(now()) @map("creado_at") @db.Timestamptz(6)
+  
+  direcciones Direccion[]
+
+  @@map("clientes")
+}
+
+model Direccion {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  clienteId   String?  @map("cliente_id") @db.Uuid
+  calle       String
+  ciudad      String
+  cp          String
+  esPrincipal Boolean  @default(false) @map("es_principal")
+  
+  cliente Cliente? @relation(fields: [clienteId], references: [id])
+  pedidos Pedido[]
+
+  @@map("direcciones")
+}
+
+model Perfil {
+  id          String    @id @db.Uuid
+  nombre      String?
+  direccion   String?
+  telefono    String?
+  updatedAt   DateTime? @map("updated_at") @db.Timestamptz(6)
+  
+  pedidos Pedido[]
+
+  @@map("perfiles")
+}
+
+model Pedido {
+  id                String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  clienteId         String?  @map("cliente_id") @db.Uuid
+  direccionId       String?  @map("direccion_id") @db.Uuid
+  total             Decimal  @db.Decimal
+  estado            String   @default("pagado")
+  stripeSessionId   String?  @unique @map("stripe_session_id")
+  creadoEn          DateTime @default(now()) @map("creado_at") @db.Timestamptz(6)
+  articulos         Json     @default("[]")
+  direccionEntrega  String?  @map("direccion_entrega")
+  
+  direccion     Direccion?     @relation(fields: [direccionId], references: [id])
+  cliente       Perfil?        @relation(fields: [clienteId], references: [id])
+  lineasPedido  LineasPedido[]
+
+  @@map("pedidos")
+}
+
+model LineasPedido {
+  id                      String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  pedidoId                String? @map("pedido_id") @db.Uuid
+  productoId              String? @map("producto_id") @db.Uuid
+  cantidad                Int
+  precioUnitarioHistorico Decimal @map("precio_unitario_historico") @db.Decimal
+  
+  pedido   Pedido?   @relation(fields: [pedidoId], references: [id])
+  producto Producto? @relation(fields: [productoId], references: [id])
+
+  @@map("lineas_pedido")
+}

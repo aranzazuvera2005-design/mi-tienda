@@ -21,7 +21,6 @@ export default function RootLayout({
             <div className="min-h-screen">
               {/* Header (cliente) */}
               {/* Import aquí para que sea renderizado dentro del layout */}
-              {/* @ts-ignore-next-line Server Component can render Client Component */}
               <Header />
 
               {children}

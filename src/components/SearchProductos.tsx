@@ -24,7 +24,11 @@ export default function SearchProductos({ initialProducts = [], initialQuery = '
     try {
       const url = qStr ? `/api/search?q=${encodeURIComponent(qStr)}&page=${pageNum}&limit=${limit}` : `/api/search?limit=${limit}`;
       const r = await fetch(url);
-      if (!r.ok) throw new Error('Fetch failed');
+      if (!r.ok) {
+        const errorData = await r.json().catch(() => ({}));
+        console.error('Error detallado del servidor:', JSON.stringify(errorData, null, 2));
+        throw new Error(errorData.error || `Error ${r.status}: ${r.statusText}`);
+      }
       const json = await r.json();
       setResults(json.items || []);
       setPage(pageNum);

@@ -242,7 +242,7 @@ export default function GestionInventario() {
                         <input style={inS} placeholder="URL imagen" value={datosEdit?.imagen_url ?? ''} onChange={e => setDatosEdit({...datosEdit, imagen_url: e.target.value})} />
                       </div>
                     ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexDirection: 'column', alignItems: 'flex-start' }}>
+                      <div style={{ display: 'flex', gap: '12px', flexDirection: 'column', alignItems: 'flex-start' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <img src={p.imagen_url} style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }} />
                           <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{p.nombre}</span>

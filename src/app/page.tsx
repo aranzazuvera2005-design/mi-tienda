@@ -1,13 +1,13 @@
 import AgregarAlCarritoBtn from "../components/AgregarAlCarritoBtn";
 import SearchProductos from "../components/SearchProductos";
 
-export default async function HomePage({ searchParams }: { searchParams?: { q?: string } }) {
+export default async function HomePage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   // Usamos el endpoint REST de Supabase desde el servidor para evitar depender
   // de una conexión directa a Postgres (que falla si no hay acceso IPv4 al host)
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  const params = await (searchParams as any);
+  const params = await searchParams;
   const q = params?.q?.toString()?.trim() || '';
 
   let productos: any[] = [];

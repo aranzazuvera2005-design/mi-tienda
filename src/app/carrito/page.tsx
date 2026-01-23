@@ -44,7 +44,7 @@ export default function CarritoPage() {
 
   if (!mounted) return null;
 
-  const total = cart.reduce((acc, item) => {
+  const total = cart.reduce((acc: number, item: any) => {
     const precio = typeof item.precio === 'object' ? Number(item.precio) : Number(item.precio || 0);
     return acc + (precio * (item.cantidad || 0));
   }, 0);

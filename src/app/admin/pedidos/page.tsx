@@ -214,7 +214,7 @@ export default function AdminPedidos() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
         <h1 style={{ fontWeight: 900, fontSize: '28px' }}>Gestión de Pedidos</h1>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={fetchTodosLosPedidos} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', borderRadius: '8px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer' }}>
+          <button onClick={() => fetchTodosLosPedidos({ page: 1 })} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', borderRadius: '8px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer' }}>
             <RefreshCw size={16} /> Refrescar
           </button>
         </div>

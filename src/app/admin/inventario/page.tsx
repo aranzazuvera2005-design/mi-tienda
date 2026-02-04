@@ -136,7 +136,7 @@ export default function GestionInventario() {
     );
 
     try {
-      if (!supabase) return alert('Supabase no configurado. No se puede guardar la edición.');
+      if (!SUPABASE_URL || !SUPABASE_ANON) return alert('Supabase no configurado. No se puede guardar la edición.');
       const supabase = createBrowserClient(SUPABASE_URL!, SUPABASE_ANON!);
       const { error } = await supabase.from('productos').update(sanitizedPayload).eq('id', id);
       if (error) {
@@ -159,6 +159,8 @@ export default function GestionInventario() {
       if (String(e).toLowerCase().includes('familia')) {
         const s2 = { ...sanitizedPayload };
         delete s2.familia;
+        if (!SUPABASE_URL || !SUPABASE_ANON) return alert('Supabase no configurado. No se puede guardar la edición.');
+        const supabase = createBrowserClient(SUPABASE_URL!, SUPABASE_ANON!);
         const { error: retryErr } = await supabase.from('productos').update(s2).eq('id', id);
         if (retryErr) return alert(retryErr.message);
         setEditandoId(null);

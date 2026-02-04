@@ -37,6 +37,7 @@ export default function AdminPedidos() {
 
   // debounce búsqueda y filtros
   useEffect(() => {
+    let supabase: any = null;
     if (searchTimer.current) clearTimeout(searchTimer.current);
     searchTimer.current = setTimeout(() => {
       fetchTodosLosPedidos({ page: 1 });
@@ -54,6 +55,7 @@ export default function AdminPedidos() {
   }, [page]);
 
   useEffect(() => {
+    let supabase: any = null;
     // carga inicial
     fetchTodosLosPedidos({ page: 1 });
 
@@ -62,7 +64,7 @@ export default function AdminPedidos() {
       if (!SUPABASE_URL || !SUPABASE_ANON) {
         throw new Error('Supabase no configurado; realtime deshabilitado');
       }
-      const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
+      supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
 
       if (typeof supabase.channel !== 'function') {
         throw new Error('Realtime no disponible en la versión actual del cliente Supabase');
@@ -70,14 +72,14 @@ export default function AdminPedidos() {
 
       const channel = supabase
         .channel('public:pedidos')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pedidos' }, (payload) => {
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pedidos' }, (payload: any) => {
           // refrescar la página actual para incluir cambios coherentemente
           fetchTodosLosPedidos({ page });
         })
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pedidos' }, (payload) => {
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pedidos' }, (payload: any) => {
           fetchTodosLosPedidos({ page });
         })
-        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'pedidos' }, (payload) => {
+        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'pedidos' }, (payload: any) => {
           fetchTodosLosPedidos({ page });
         })
         .subscribe();

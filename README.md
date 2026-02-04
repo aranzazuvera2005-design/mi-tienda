@@ -49,3 +49,19 @@ Pasos mínimos para desplegar en Vercel:
 Si no configuras Supabase, la aplicación seguirá desplegando correctamente pero ciertas funcionalidades (login, envío de pedidos, panel admin) quedarán deshabilitadas y mostrarán mensajes de error amigables.
 
 Usa `.env.example` como referencia para las variables necesarias.
+
+### Recomendaciones y variables adicionales
+
+- Asegúrate de añadir también:
+	- `SUPABASE_URL` = https://<tu-proyecto>.supabase.co
+	- `DATABASE_URL` = <tu DATABASE_URL> (sólo si vas a usar Prisma en Vercel)
+
+- Importante:
+	- `NEXT_PUBLIC_*` se expone al cliente y debe usarse sólo para claves públicas (ANON).
+	- `SUPABASE_SERVICE_ROLE_KEY` debe permanecer privada y no empezar por `NEXT_PUBLIC_`.
+
+### Flujo recomendado para creación de usuarios en producción
+
+- Para crear usuarios desde el panel admin de forma segura, usa la ruta server-side que añadimos: `POST /api/admin/create-user`. Esta ruta requiere `SUPABASE_SERVICE_ROLE_KEY` definida en Vercel y crea tanto el usuario de Auth como el registro en `perfiles`.
+
+Si quieres, puedo automatizar la creación de las variables en Vercel vía su API (necesitaré un token de Vercel) o añadir un pequeño script para comprobar las variables en tiempo de despliegue.

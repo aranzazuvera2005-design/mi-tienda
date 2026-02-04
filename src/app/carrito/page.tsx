@@ -25,7 +25,13 @@ export default function CarritoPage() {
       if (!user) return;
       try {
         setLoadingPerfil(true);
-        const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+        const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+        const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+        if (!SUPABASE_URL || !SUPABASE_ANON) {
+          console.warn('Supabase no configurado; omitiendo carga de perfil.');
+          return;
+        }
+        const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
         const { data, error } = await supabase.from('perfiles').select('nombre, telefono, direccion').eq('id', user.id).single();
         if (!error && data) {
           if (data.nombre) setNombre(data.nombre);

@@ -19,10 +19,9 @@ export default function GestionInventario() {
   const [familias, setFamilias] = useState<any[]>([]);
   const [nuevoFamiliaNombre, setNuevoFamiliaNombre] = useState('');
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  // Create Supabase client lazily inside functions to avoid errors during module evaluation
+  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
 
   useEffect(() => {
     fetchFamilias();
@@ -30,12 +29,25 @@ export default function GestionInventario() {
   }, []);
 
   const fetchFamilias = async () => {
+    if (!SUPABASE_URL || !SUPABASE_ANON) {
+      console.warn('Supabase no configurado; no se cargarán familias.');
+      setFamilias([]);
+      return;
+    }
+    const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
     const { data } = await supabase.from('familias').select('*').order('nombre');
     setFamilias(data || []);
   };
 
   const fetchProductos = async () => {
     // solicitar la relación con familias si existe
+    if (!SUPABASE_URL || !SUPABASE_ANON) {
+      console.warn('Supabase no configurado; no se cargarán productos.');
+      setProductos([]);
+      setCargando(false);
+      return;
+    }
+    const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
     const { data } = await supabase.from('productos').select('*, familias(id, nombre)').order('id', { ascending: false });
     setProductos(data || []);
     setCargando(false);
@@ -43,6 +55,9 @@ export default function GestionInventario() {
 
   const crearProducto = async () => {
     if (!nuevoP.nombre || !nuevoP.precio) return alert("Nombre y precio son obligatorios");
+
+    if (!SUPABASE_URL || !SUPABASE_ANON) return alert('Supabase no configurado. No se puede crear producto.');
+    const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
 
     const payload: any = {
       nombre: nuevoP.nombre,
@@ -121,6 +136,8 @@ export default function GestionInventario() {
     );
 
     try {
+      if (!supabase) return alert('Supabase no configurado. No se puede guardar la edición.');
+      const supabase = createBrowserClient(SUPABASE_URL!, SUPABASE_ANON!);
       const { error } = await supabase.from('productos').update(sanitizedPayload).eq('id', id);
       if (error) {
         // Si la API dice que no existe la columna legacy 'familia', reintentar sin ese campo
@@ -155,6 +172,8 @@ export default function GestionInventario() {
 
   const eliminarProducto = async (id: any) => {
     if (confirm("¿Seguro que quieres eliminarlo?")) {
+      if (!SUPABASE_URL || !SUPABASE_ANON) return alert('Supabase no configurado. No se puede eliminar.');
+      const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
       await supabase.from('productos').delete().eq('id', id);
       fetchProductos();
     }
@@ -200,6 +219,8 @@ export default function GestionInventario() {
             <input style={{ ...inS, width: 240 }} placeholder="Nueva familia" value={nuevoFamiliaNombre} onChange={(e) => setNuevoFamiliaNombre(e.target.value)} />
             <button onClick={async () => {
               if (!nuevoFamiliaNombre.trim()) return alert('Nombre de familia vacío');
+              if (!SUPABASE_URL || !SUPABASE_ANON) return alert('Supabase no configurado. No se puede crear familia.');
+              const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
               const { error, data } = await supabase.from('familias').insert([{ nombre: nuevoFamiliaNombre.trim() }]).select().single();
               if (error) return alert(error.message);
               setNuevoFamiliaNombre('');

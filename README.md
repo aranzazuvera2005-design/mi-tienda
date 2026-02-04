@@ -35,3 +35,17 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 "# mi-tienda" 
+
+## Despliegue en Vercel / GitHub
+
+Pasos mínimos para desplegar en Vercel:
+
+- Añade el repositorio a GitHub y conéctalo desde Vercel (Import Project).
+- En Vercel, configura las siguientes variables de entorno (Project Settings → Environment Variables):
+	- `NEXT_PUBLIC_SUPABASE_URL` → la URL de tu proyecto Supabase (empieza por https://)
+	- `NEXT_PUBLIC_SUPABASE_ANON_KEY` → la clave ANON pública
+	- `SUPABASE_SERVICE_ROLE_KEY` → (opcional) clave de servidor para rutas privadas
+
+Si no configuras Supabase, la aplicación seguirá desplegando correctamente pero ciertas funcionalidades (login, envío de pedidos, panel admin) quedarán deshabilitadas y mostrarán mensajes de error amigables.
+
+Usa `.env.example` como referencia para las variables necesarias.

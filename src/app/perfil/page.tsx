@@ -5,21 +5,21 @@ import { MapPin, Plus } from 'lucide-react';
 
 export default function MisDirecciones() {
   const [nuevaDir, setNuevaDir] = useState({ calle: '', ciudad: '', cp: '' });
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+  const supabase = (SUPABASE_URL && SUPABASE_ANON) ? createBrowserClient(SUPABASE_URL, SUPABASE_ANON) : null;
 
   const guardarDireccion = async () => {
+    if (!supabase) return alert('Supabase no configurado. No se pueden guardar direcciones.');
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return alert("Debes iniciar sesión");
+    if (!user) return alert('Debes iniciar sesión');
 
     const { error } = await supabase.from('direcciones').insert([
       { ...nuevaDir, cliente_id: user.id }
     ]);
 
     if (!error) {
-      alert("Dirección guardada");
+      alert('Dirección guardada');
       setNuevaDir({ calle: '', ciudad: '', cp: '' });
     }
   };

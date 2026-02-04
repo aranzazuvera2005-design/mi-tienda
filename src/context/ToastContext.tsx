@@ -20,11 +20,16 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const addToast = useCallback((toast: Omit<Toast, 'id'>) => {
     const id = Math.random().toString(36).slice(2, 9);
     const item: Toast = { id, ...toast };
-    setToasts((t) => [item, ...t]);
-    const duration = toast.duration ?? 4000;
-    if (duration > 0) {
-      setTimeout(() => removeToast(id), duration);
-    }
+    // Ensure we never trigger a React state update on this provider
+    // while another component is rendering. Schedule the toast
+    // addition on the next macrotask to avoid "setState in render"
+    setTimeout(() => {
+      setToasts((t) => [item, ...t]);
+      const duration = toast.duration ?? 4000;
+      if (duration > 0) {
+        setTimeout(() => removeToast(id), duration);
+      }
+    }, 0);
   }, [removeToast]);
 
   return (

@@ -1,7 +1,7 @@
 'use client';
 
 import { createBrowserClient } from '@supabase/ssr';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, ArrowLeft, Loader2, UserPlus, LogIn } from 'lucide-react';
 import Link from 'next/link';
@@ -13,11 +13,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [mensaje, setMensaje] = useState('');
   const router = useRouter();
-
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+  const supabase = (SUPABASE_URL && SUPABASE_ANON) ? createBrowserClient(SUPABASE_URL, SUPABASE_ANON) : null;
+  const [authAvailable, setAuthAvailable] = useState<boolean | null>(null);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,6 +24,12 @@ export default function LoginPage() {
     setMensaje('');
 
     try {
+      // Antes de intentar autenticar, comprobar que el servidor puede alcanzar Supabase
+      const ping = await fetch('/api/ping-supabase').then(r => r.json()).catch(() => ({ ok: false, error: 'Ping failed' }));
+      if (!ping?.ok) {
+        throw new Error('Servicio de autenticación no disponible. ' + (ping?.error || 'Comprueba tu conexión o configura SUPABASE_URL'));
+      }
+      if (!supabase) throw new Error('Supabase no configurado. Autenticación no disponible.');
       if (isRegister) {
         const { error } = await supabase.auth.signUp({ 
           email, 
@@ -45,6 +50,24 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  // Comprobar disponibilidad de Supabase en montaje para deshabilitar el formulario si es necesario
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const ping = await fetch('/api/ping-supabase').then(r => r.json()).catch(() => ({ ok: false }));
+        if (!mounted) return;
+        setAuthAvailable(Boolean(ping?.ok));
+        if (!ping?.ok) setMensaje('Servicio de autenticación no disponible actualmente. Intenta más tarde.');
+      } catch (e) {
+        if (!mounted) return;
+        setAuthAvailable(false);
+        setMensaje('Servicio de autenticación no disponible actualmente. Intenta más tarde.');
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   return (
     <div style={containerS}>

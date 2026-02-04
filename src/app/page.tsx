@@ -14,6 +14,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
 
   if (SUPABASE_URL && SERVICE_KEY) {
     try {
+      console.log('HomePage: SUPABASE_URL detected, attempting fetch from', SUPABASE_URL);
       // construir query: si hay q, buscar en nombre, descripcion, familia(relacion) y categoria
       // pedimos también la relación 'familias' para buscar por su nombre
       let url = `${SUPABASE_URL}/rest/v1/productos?select=*,familias(nombre)`;
@@ -34,6 +35,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
 
       if (res.ok) {
         productos = await res.json();
+        console.log('HomePage: fetched productos count=', productos.length);
       } else {
         console.error("Error al obtener productos desde Supabase:", res.status, res.statusText);
       }

@@ -9,12 +9,13 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [cart, setCart] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+
+  const supabase = (SUPABASE_URL && SUPABASE_ANON) ? createBrowserClient(SUPABASE_URL, SUPABASE_ANON) : null;
 
   useEffect(() => {
+    if (!supabase) return;
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
@@ -24,7 +25,23 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const { addToast } = useToast();
 
   const addToCart = (producto: any) => {
-    setCart((prevCart) => {
+    try {
+      console.debug('CartContext.addToCart called with producto:', producto);
+    } catch (e) {
+      // noop
+    }
+
+    if (!producto || !producto.id) {
+      try {
+        addToast({ message: 'Producto inválido. No se pudo añadir al carrito.', type: 'error' });
+      } catch (e) {
+        // silent
+      }
+      return;
+    }
+
+    try {
+      setCart((prevCart) => {
       const existingItem = prevCart.find((item) => item.id === producto.id);
       if (existingItem) {
         addToast({ message: `${producto.nombre} actualizado en el carrito`, type: 'info' });
@@ -35,6 +52,10 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
       addToast({ message: `${producto.nombre} añadido al carrito`, type: 'success' });
       return [...prevCart, { ...producto, cantidad: 1 }];
     });
+    } catch (e) {
+      console.error('CartContext.addToCart error:', e);
+      try { addToast({ message: 'Error interno al añadir al carrito', type: 'error' }); } catch (_) {}
+    }
   };
 
   const removeFromCart = (productoId: string) => {
@@ -56,9 +77,13 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
   const enviarPedido = async (datosEnvio: any) => {
     if (!user) throw new Error("Inicia sesión primero");
+    if (!supabase) {
+      const msg = 'Supabase no está configurado. No se puede enviar el pedido ahora.';
+      addToast({ message: msg, type: 'error' });
+      throw new Error(msg);
+    }
 
     try {
-      // PASO 1: Upsert del perfil (crear o actualizar)
       const { error: pError } = await supabase.from('perfiles').upsert({
         id: user.id,
         nombre: datosEnvio.nombre,
@@ -67,9 +92,8 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         updated_at: new Date()
       }, { onConflict: 'id' });
 
-      if (pError) throw new Error("Error Perfil: " + pError.message);
+      if (pError) throw new Error('Error Perfil: ' + pError.message);
 
-      // PASO 2: Insertar pedido
       const { data, error: oError } = await supabase.from('pedidos').insert({
         cliente_id: user.id,
         total: total,
@@ -78,7 +102,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         estado: 'Pendiente'
       }).select().single();
 
-      if (oError) throw new Error("Error Pedido: " + oError.message);
+      if (oError) throw new Error('Error Pedido: ' + oError.message);
 
       addToast({ message: 'Pedido enviado correctamente', type: 'success' });
       setCart([]);
@@ -90,7 +114,9 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
     setUser(null);
   };
 

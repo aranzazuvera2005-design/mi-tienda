@@ -4,6 +4,14 @@ import React, { useEffect, useState } from 'react';
 import AgregarAlCarritoBtn from './AgregarAlCarritoBtn';
 
 export default function SearchProductos({ initialProducts = [], initialQuery = '' }: { initialProducts?: any[], initialQuery?: string }) {
+  // debug: log initial products length
+  useEffect(() => {
+    try {
+      console.debug('SearchProductos: initialProducts length =', Array.isArray(initialProducts) ? initialProducts.length : 'non-array');
+    } catch (e) {
+      // noop
+    }
+  }, [initialProducts]);
   const [q, setQ] = useState(initialQuery || '');
   const [results, setResults] = useState<any[] | null>(initialProducts || null);
   const [loading, setLoading] = useState(false);
@@ -24,12 +32,31 @@ export default function SearchProductos({ initialProducts = [], initialQuery = '
     try {
       const url = qStr ? `/api/search?q=${encodeURIComponent(qStr)}&page=${pageNum}&limit=${limit}` : `/api/search?limit=${limit}`;
       const r = await fetch(url);
-      if (!r.ok) {
-        const errorData = await r.json().catch(() => ({}));
-        console.error('Error detallado del servidor:', JSON.stringify(errorData, null, 2));
-        throw new Error(errorData.error || `Error ${r.status}: ${r.statusText}`);
+      let json: any = {};
+      try {
+        json = await r.json().catch(() => ({}));
+      } catch (err) {
+        // noop
       }
-      const json = await r.json();
+
+      if (!r.ok) {
+        // si la API devolvió un warning en JSON, trátalo como degradado: mantenemos resultados actuales
+        if (json?.warning) {
+          console.warn('Search API warning:', json.warning);
+          setPage(pageNum);
+          return;
+        }
+        console.error('Error detallado del servidor:', JSON.stringify(json, null, 2));
+        throw new Error(json.error || `Error ${r.status}: ${r.statusText}`);
+      }
+
+      // Si la respuesta incluye warning, mantenemos los resultados actuales
+      if (json?.warning) {
+        console.warn('Search API warning:', json.warning);
+        setPage(pageNum);
+        return;
+      }
+
       setResults(json.items || []);
       setPage(pageNum);
     } catch (e) {

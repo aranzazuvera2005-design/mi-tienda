@@ -10,10 +10,9 @@ export default function AdminPedidos() {
   const [pedidos, setPedidos] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  // Create Supabase client lazily inside effects/functions to avoid runtime errors during build
+  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
 
   const { addToast } = useToast();
 
@@ -60,6 +59,11 @@ export default function AdminPedidos() {
 
     // Suscripción en tiempo real para INSERT/UPDATE/DELETE (protegida con try/catch)
     try {
+      if (!SUPABASE_URL || !SUPABASE_ANON) {
+        throw new Error('Supabase no configurado; realtime deshabilitado');
+      }
+      const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
+
       if (typeof supabase.channel !== 'function') {
         throw new Error('Realtime no disponible en la versión actual del cliente Supabase');
       }
@@ -174,6 +178,11 @@ export default function AdminPedidos() {
       addToast({ message: 'No hay pedidos seleccionados', type: 'info' });
       return;
     }
+    if (!SUPABASE_URL || !SUPABASE_ANON) {
+      addToast({ message: 'Supabase no configurado. Acción no disponible.', type: 'error' });
+      return;
+    }
+    const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
     const ids = Array.from(selectedIds);
     const { error } = await supabase.from('pedidos').update({ estado: 'Enviado' }).in('id', ids);
     if (error) {
@@ -189,6 +198,11 @@ export default function AdminPedidos() {
   };
 
   const cambiarEstado = async (id: string, nuevoEstado: string) => {
+    if (!SUPABASE_URL || !SUPABASE_ANON) {
+      addToast({ message: 'Supabase no configurado. Acción no disponible.', type: 'error' });
+      return;
+    }
+    const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
     const { error } = await supabase
       .from('pedidos')
       .update({ estado: nuevoEstado })

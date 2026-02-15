@@ -3,7 +3,7 @@
 import { createBrowserClient } from '@supabase/ssr';
 import { useEffect, useState } from 'react';
 import { useToast } from '../../../context/ToastContext';
-import { User as UserIcon, Phone, MapPin, Search, ArrowLeft, MessageCircle } from 'lucide-react';
+import { User as UserIcon, Phone, MapPin, Search, ArrowLeft, Mail } from 'lucide-react';
 import Link from 'next/link';
 
 // --- ESTILOS ---
@@ -109,13 +109,12 @@ export default function GestionClientes() {
         });
         const json = await res.json();
         if (!res.ok) throw json?.error || json;
-        // success
+        addToast({ message: 'Cliente creado correctamente', type: 'success' });
       } else {
         // no auth creation requested — insert profile directly
         const insertRes = await supabase.from('perfiles').insert(payload).select().single();
         if ((insertRes as any).error) throw (insertRes as any).error;
       }
-      addToast({ message: 'Cliente creado correctamente', type: 'success' });
       // refresh list
       setNuevoNombre(''); setNuevoTelefono(''); setNuevaDireccion(''); setNuevoEmail(''); setNuevoPassword('');
       await fetchClientes();
@@ -169,20 +168,21 @@ export default function GestionClientes() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
           {clientesFiltrados.map((cliente) => (
             <div key={cliente.id} style={cardS}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                <div style={iconBoxS}><UserIcon size={24} color="#2563eb" /></div>
-                <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 900 }}>{cliente.nombre || 'Invitado'}</h2>
-              </div>
-              <div style={{ fontSize: '14px', color: '#4b5563' }}>
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}><Phone size={16} /> {cliente.telefono}</div>
-                <div style={{ display: 'flex', gap: '8px' }}><MapPin size={16} /> {cliente.direccion}</div>
-              </div>
-              <button 
-                onClick={() => window.open(`https://wa.me/${cliente.telefono?.replace(/\s+/g, '')}`, '_blank')}
-                style={{ width: '100%', padding: '10px', backgroundColor: '#25d366', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }}
-              >
-                WhatsApp
-              </button>
+	              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+	                <div style={iconBoxS}><UserIcon size={24} color="#2563eb" /></div>
+	                <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 900 }}>{cliente.nombre || 'Invitado'}</h2>
+	              </div>
+	              <div style={{ fontSize: '14px', color: '#4b5563' }}>
+	                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}><Mail size={16} /> {cliente.email}</div>
+	                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}><Phone size={16} /> {cliente.telefono || 'Sin teléfono'}</div>
+	                <div style={{ display: 'flex', gap: '8px' }}><MapPin size={16} /> {cliente.direccion || 'Sin dirección'}</div>
+	              </div>
+	              <button 
+	                onClick={() => window.open(`https://wa.me/${cliente.telefono?.replace(/\s+/g, '')}`, '_blank')}
+	                style={{ width: '100%', padding: '10px', backgroundColor: '#25d366', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+	              >
+	                WhatsApp
+	              </button>
             </div>
           ))}
         </div>

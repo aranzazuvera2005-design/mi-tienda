@@ -43,23 +43,25 @@ export default function LoginPage() {
         });
         if (authError) throw authError;
 
-        // 2. Si el usuario se creó (o ya existía pero no estaba confirmado), intentamos guardar en 'perfiles'
-        // Nota: En Supabase, si el email no está confirmado, el usuario no puede hacer mucho, 
-        // pero podemos intentar guardar su perfil inicial si tenemos el ID.
+        // 2. Guardar el perfil inicial
         const userId = authData.user?.id;
         if (userId) {
           const { error: profileError } = await supabase
             .from('perfiles')
-            .upsert({ 
+            .insert({ 
               id: userId, 
               nombre, 
+              email, // Guardamos el email también en el perfil
               telefono, 
               direccion,
               updated_at: new Date().toISOString()
             });
           
           if (profileError) {
-            console.warn('Error al guardar el perfil, pero la cuenta se creó:', profileError);
+            if (profileError.message.includes('duplicate key')) {
+              throw new Error('Este correo electrónico ya está registrado.');
+            }
+            console.warn('Error al guardar el perfil:', profileError);
           }
         }
 

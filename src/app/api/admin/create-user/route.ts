@@ -23,7 +23,18 @@ export async function POST(req: Request) {
       auth: { persistSession: false }
     });
 
-    // Create Auth user using service role key
+    // 1. Verificar si el email ya existe en la tabla de perfiles para evitar duplicados
+    const { data: existingProfile } = await supabase
+      .from('perfiles')
+      .select('id')
+      .eq('email', email)
+      .single();
+
+    if (existingProfile) {
+      return NextResponse.json({ error: 'Ya existe un cliente registrado con este correo electrónico.' }, { status: 400 });
+    }
+
+    // 2. Intentar crear el usuario en Auth
     const { data: userData, error: signError } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -31,21 +42,41 @@ export async function POST(req: Request) {
     } as any);
 
     if (signError) {
+      if (signError.message.includes('already been registered')) {
+        return NextResponse.json({ error: 'Este correo ya está registrado en el sistema de autenticación.' }, { status: 400 });
+      }
       return NextResponse.json({ error: signError.message || signError }, { status: 500 });
     }
 
-    const userId = (userData as any)?.id;
+    const userId = (userData as any).user?.id || (userData as any).id;
 
-    // Insert profile linked to user id
-    const profile = { id: userId, nombre, email, telefono: telefono || null, direccion: direccion || null };
-    const { data: profileData, error: profileError } = await supabase.from('perfiles').insert(profile).select().single();
+    // 3. Insertar el perfil (solo si no existe, aunque ya lo comprobamos arriba)
+    const profile = { 
+      id: userId, 
+      nombre, 
+      email, 
+      telefono: telefono || null, 
+      direccion: direccion || null,
+      updated_at: new Date().toISOString()
+    };
+
+    const { data: profileData, error: profileError } = await supabase
+      .from('perfiles')
+      .insert(profile)
+      .select()
+      .single();
+
     if (profileError) {
-      // attempt to cleanup user
+      // Limpiar el usuario de Auth si falla la creación del perfil
       try { await supabase.auth.admin.deleteUser(userId); } catch (_) {}
-      return NextResponse.json({ error: profileError.message || profileError }, { status: 500 });
+      return NextResponse.json({ error: 'Error al crear el perfil del cliente.' }, { status: 500 });
     }
 
-    return NextResponse.json({ user: userData, perfil: profileData });
+    return NextResponse.json({ 
+      user: userData, 
+      perfil: profileData,
+      message: 'Cliente creado correctamente'
+    });
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || String(err) }, { status: 500 });
   }

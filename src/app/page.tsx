@@ -6,8 +6,9 @@ export const dynamic = 'force-dynamic';
 export default async function HomePage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   // Usamos el endpoint REST de Supabase desde el servidor para evitar depender
   // de una conexión directa a Postgres (que falla si no hay acceso IPv4 al host)
-  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  // Priorizamos las variables de servidor si están disponibles
+  const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL)?.trim();
+  const SERVICE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY)?.trim();
 
   const params = await searchParams;
   const q = params?.q?.toString()?.trim() || '';
@@ -38,10 +39,11 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       if (res.ok) {
         productos = await res.json();
       } else {
-        console.error("Error al obtener productos desde Supabase:", res.status, res.statusText);
+        const errorText = await res.text();
+        console.error(`Error Supabase API (${res.status}):`, errorText);
       }
-    } catch (e) {
-      console.error("Fetch productos falló:", e);
+    } catch (e: any) {
+      console.error("Error de red o fetch en HomePage:", e?.message || e);
     }
   }
 

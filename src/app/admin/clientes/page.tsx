@@ -173,7 +173,7 @@ export default function GestionClientes() {
 	                <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 900 }}>{cliente.nombre || 'Invitado'}</h2>
 	              </div>
 	              <div style={{ fontSize: '14px', color: '#4b5563' }}>
-	                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}><Mail size={16} /> {cliente.email}</div>
+		                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}><Mail size={16} /> {cliente.email || 'Sin email'}</div>
 	                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}><Phone size={16} /> {cliente.telefono || 'Sin teléfono'}</div>
 	                <div style={{ display: 'flex', gap: '8px' }}><MapPin size={16} /> {cliente.direccion || 'Sin dirección'}</div>
 	              </div>

@@ -37,16 +37,16 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
 
       if (res.ok) {
         productos = await res.json();
-        console.log('HomePage: fetched productos count=', productos.length);
       } else {
         console.error("Error al obtener productos desde Supabase:", res.status, res.statusText);
       }
     } catch (e) {
       console.error("Fetch productos falló:", e);
     }
-  } else {
-    console.warn("No hay SUPABASE_URL o SERVICE_KEY configurados; lista de productos vacía.");
   }
+
+  // Si no hay productos (error de conexión o falta de variables), mostrar mensaje informativo
+  const noConfig = !SUPABASE_URL || !SERVICE_KEY;
 
   return (
     <main className="min-h-screen bg-gray-50 p-8">
@@ -63,8 +63,20 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
         </section>
 
         {/* Buscador */}
-        {/* Replaced with client-side search UI */}
         <SearchProductos initialProducts={productos} initialQuery={q} />
+
+        {productos.length === 0 && (
+          <div className="mt-12 p-8 bg-blue-50 border border-blue-100 rounded-2xl text-center">
+            <h2 className="text-xl font-bold text-blue-900 mb-2">
+              {noConfig ? 'Configuración pendiente' : 'No se encontraron productos'}
+            </h2>
+            <p className="text-blue-700">
+              {noConfig 
+                ? 'Para ver tus productos, asegúrate de configurar las variables de entorno de Supabase en Vercel.' 
+                : 'Conexión establecida, pero la lista de productos está vacía o no se pudo cargar.'}
+            </p>
+          </div>
+        )}
       </div>
     </main>
   );

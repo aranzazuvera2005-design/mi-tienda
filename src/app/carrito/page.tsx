@@ -98,7 +98,14 @@ export default function CarritoPage() {
         {cart.map((item: any) => (
           <div key={item.id} className="flex justify-between items-center border-b pb-4">
             <div className="flex items-center gap-3">
-              <img src={item.imagen_url || item.imagenUrl || '/globe.svg'} alt={item.nombre} className="w-20 h-20 object-cover rounded-md" />
+              <div className="w-16 h-16 bg-gray-50 rounded-md flex items-center justify-center overflow-hidden border border-gray-100">
+                <img 
+                  src={item.imagen_url || item.imagenUrl || '/globe.svg'} 
+                  alt={item.nombre} 
+                  className="max-w-full max-h-full object-contain p-1"
+                  onError={(e) => { (e.target as HTMLImageElement).src = '/globe.svg'; }}
+                />
+              </div>
               <div>
                 <p className="font-medium">{item.nombre}</p>
                 <p className="text-sm text-gray-500">{Number(item.precio || 0).toFixed(2)}€</p>

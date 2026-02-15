@@ -55,7 +55,8 @@ export default function CarritoPage() {
     return acc + (precio * (item.cantidad || 0));
   }, 0);
 
-  const perfilCompleto = Boolean(nombre && telefono && direccion);
+  // Eliminamos la validación estricta de perfil completo para permitir la compra
+  const perfilCompleto = true; 
 
   const handleConfirmar = async () => {
     if (cart.length === 0) return;
@@ -137,17 +138,24 @@ export default function CarritoPage() {
           <div className="text-sm text-gray-500 mb-3">Cargando datos del perfil...</div>
         ) : null}
 
-        {/* Si no hay usuario logeado: no mostrar inputs y pedir login */}
+        {/* Si no hay usuario logeado: pedir login */}
         {!user ? (
-          <div className="text-sm text-gray-600">Debes <a href="/login" className="text-blue-600 underline">iniciar sesión</a> para usar tus datos de envío. Si ya tienes datos, aparecerán aquí en modo lectura.</div>
-        ) : (!nombre && !telefono && !direccion) ? (
-          <div className="text-sm text-gray-600">Perfil incompleto. Completa tus datos en <a href="/perfil" className="text-blue-600 underline">Perfil</a> para poder confirmar pedidos.</div>
+          <div className="text-sm text-gray-600">Debes <a href="/login" className="text-blue-600 underline font-bold">iniciar sesión</a> para finalizar tu compra.</div>
         ) : (
           <>
-            <input value={nombre} readOnly type="text" placeholder="Tu nombre" className="w-full p-3 mb-3 border rounded-xl bg-gray-100" />
-            <input value={telefono} readOnly type="text" placeholder="Teléfono" className="w-full p-3 mb-3 border rounded-xl bg-gray-100" />
-            <textarea value={direccion} readOnly placeholder="Dirección completa" className="w-full p-3 border rounded-xl bg-gray-100" />
-            <div className="text-xs text-gray-500 mt-2">Para modificar tus datos, ve a <a href="/perfil" className="underline text-blue-600">Perfil</a>.</div>
+            <div className="mb-3">
+              <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Nombre para el envío</label>
+              <input value={nombre} onChange={(e) => setNombre(e.target.value)} type="text" placeholder="Tu nombre" className="w-full p-3 border rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none" />
+            </div>
+            <div className="mb-3">
+              <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Teléfono de contacto</label>
+              <input value={telefono} onChange={(e) => setTelefono(e.target.value)} type="text" placeholder="Teléfono" className="w-full p-3 border rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none" />
+            </div>
+            <div className="mb-1">
+              <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Dirección de entrega</label>
+              <textarea value={direccion} onChange={(e) => setDireccion(e.target.value)} placeholder="Dirección completa" className="w-full p-3 border rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none" />
+            </div>
+            <div className="text-[10px] text-gray-400 mt-1 italic">* Puedes modificar estos datos solo para este pedido.</div>
           </>
         )}
       </div>

@@ -50,13 +50,13 @@ export async function POST(req: Request) {
 
     const userId = (userData as any).user?.id || (userData as any).id;
 
-    // 3. Insertar el perfil (solo si no existe, aunque ya lo comprobamos arriba)
+    // 3. Insertar el perfil
     const profile = { 
       id: userId, 
       nombre, 
       email, 
       telefono: telefono || null, 
-      direccion: direccion || null,
+      direccion: direccion || null, // Mantenemos este por compatibilidad legacy
       updated_at: new Date().toISOString()
     };
 
@@ -67,15 +67,29 @@ export async function POST(req: Request) {
       .single();
 
     if (profileError) {
-      // Limpiar el usuario de Auth si falla la creación del perfil
       try { await supabase.auth.admin.deleteUser(userId); } catch (_) {}
       return NextResponse.json({ error: 'Error al crear el perfil del cliente.' }, { status: 500 });
+    }
+
+    // 4. Insertar la dirección inicial en la tabla 'direcciones'
+    if (direccion) {
+      const { error: dirError } = await supabase
+        .from('direcciones')
+        .insert({
+          cliente_id: userId,
+          calle: direccion,
+          es_principal: true
+        });
+      
+      if (dirError) {
+        console.warn('Error al crear la dirección inicial:', dirError);
+      }
     }
 
     return NextResponse.json({ 
       user: userData, 
       perfil: profileData,
-      message: 'Cliente creado correctamente'
+      message: 'Cliente creado correctamente con su dirección inicial'
     });
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || String(err) }, { status: 500 });

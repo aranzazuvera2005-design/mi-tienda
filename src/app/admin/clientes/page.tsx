@@ -58,7 +58,7 @@ export default function GestionClientes() {
     const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
     const { data, error } = await supabase
       .from('perfiles')
-      .select('*')
+      .select('*, direcciones(*)')
       .order('nombre', { ascending: true });
 
     if (!error) {
@@ -174,9 +174,24 @@ export default function GestionClientes() {
 	              </div>
 	              <div style={{ fontSize: '14px', color: '#4b5563' }}>
 		                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}><Mail size={16} /> {cliente.email || 'Sin email'}</div>
-	                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}><Phone size={16} /> {cliente.telefono || 'Sin teléfono'}</div>
-	                <div style={{ display: 'flex', gap: '8px' }}><MapPin size={16} /> {cliente.direccion || 'Sin dirección'}</div>
-	              </div>
+		                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}><Phone size={16} /> {cliente.telefono || 'Sin teléfono'}</div>
+		                <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '10px', marginTop: '5px' }}>
+		                  <div style={{ display: 'flex', gap: '8px', fontWeight: 'bold', marginBottom: '5px', fontSize: '12px', color: '#9ca3af', textTransform: 'uppercase' }}>
+		                    <MapPin size={14} /> Direcciones ({cliente.direcciones?.length || 0})
+		                  </div>
+		                  <div style={{ maxHeight: '80px', overflowY: 'auto', paddingRight: '5px' }}>
+		                    {cliente.direcciones && cliente.direcciones.length > 0 ? (
+		                      cliente.direcciones.map((d: any, idx: number) => (
+		                        <div key={d.id || idx} style={{ fontSize: '13px', marginBottom: '4px', padding: '4px 8px', backgroundColor: '#f9fafb', borderRadius: '6px' }}>
+		                          {d.calle} {d.es_principal && <span style={{ color: '#2563eb', fontSize: '10px', fontWeight: 'bold' }}>(Principal)</span>}
+		                        </div>
+		                      ))
+		                    ) : (
+		                      <div style={{ fontSize: '13px', color: '#9ca3af italic' }}>Sin direcciones registradas</div>
+		                    )}
+		                  </div>
+		                </div>
+		              </div>
 	              <button 
 	                onClick={() => window.open(`https://wa.me/${cliente.telefono?.replace(/\s+/g, '')}`, '_blank')}
 	                style={{ width: '100%', padding: '10px', backgroundColor: '#25d366', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }}

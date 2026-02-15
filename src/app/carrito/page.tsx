@@ -16,10 +16,12 @@ export default function CarritoPage() {
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
   const [direccion, setDireccion] = useState("");
+  const [direcciones, setDirecciones] = useState<any[]>([]);
+  const [mostrarNuevaDir, setMostrarNuevaDir] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
 
-  // Auto-completar datos del usuario si está logeado
+  // Auto-completar datos del usuario y cargar sus direcciones
   useEffect(() => {
     const fillProfile = async () => {
       if (!user) return;
@@ -27,19 +29,28 @@ export default function CarritoPage() {
         setLoadingPerfil(true);
         const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
         const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
-        if (!SUPABASE_URL || !SUPABASE_ANON) {
-          console.warn('Supabase no configurado; omitiendo carga de perfil.');
-          return;
-        }
+        if (!SUPABASE_URL || !SUPABASE_ANON) return;
+        
         const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
-        const { data, error } = await supabase.from('perfiles').select('nombre, telefono, direccion').eq('id', user.id).single();
-        if (!error && data) {
-          if (data.nombre) setNombre(data.nombre);
-          if (data.telefono) setTelefono(data.telefono);
-          if (data.direccion) setDireccion(data.direccion);
+        
+        // 1. Cargar perfil
+        const { data: perfil } = await supabase.from('perfiles').select('nombre, telefono').eq('id', user.id).single();
+        if (perfil) {
+          setNombre(perfil.nombre || "");
+          setTelefono(perfil.telefono || "");
+        }
+
+        // 2. Cargar direcciones
+        const { data: dirs } = await supabase.from('direcciones').select('*').eq('cliente_id', user.id);
+        if (dirs && dirs.length > 0) {
+          setDirecciones(dirs);
+          const principal = dirs.find(d => d.es_principal) || dirs[0];
+          setDireccion(principal.calle);
+        } else {
+          setMostrarNuevaDir(true);
         }
       } catch (e) {
-        console.error('Error cargando perfil:', e);
+        console.error('Error cargando datos:', e);
       } finally {
         setLoadingPerfil(false);
       }
@@ -151,9 +162,52 @@ export default function CarritoPage() {
               <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Teléfono de contacto</label>
               <input value={telefono} onChange={(e) => setTelefono(e.target.value)} type="text" placeholder="Teléfono" className="w-full p-3 border rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none" />
             </div>
-            <div className="mb-1">
+            
+            <div className="mb-3">
               <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Dirección de entrega</label>
-              <textarea value={direccion} onChange={(e) => setDireccion(e.target.value)} placeholder="Dirección completa" className="w-full p-3 border rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none" />
+              {direcciones.length > 0 && !mostrarNuevaDir ? (
+                <div className="space-y-2">
+                  <select 
+                    value={direccion} 
+                    onChange={(e) => {
+                      if (e.target.value === "nueva") {
+                        setMostrarNuevaDir(true);
+                        setDireccion("");
+                      } else {
+                        setDireccion(e.target.value);
+                      }
+                    }}
+                    className="w-full p-3 border rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                  >
+                    {direcciones.map((d, idx) => (
+                      <option key={d.id || idx} value={d.calle}>{d.calle} {d.es_principal ? '(Principal)' : ''}</option>
+                    ))}
+                    <option value="nueva">+ Añadir nueva dirección...</option>
+                  </select>
+                </div>
+              ) : (
+                <div className="relative">
+                  <textarea 
+                    value={direccion} 
+                    onChange={(e) => setDireccion(e.target.value)} 
+                    placeholder="Dirección completa" 
+                    className="w-full p-3 border rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none" 
+                  />
+                  {direcciones.length > 0 && (
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        setMostrarNuevaDir(false);
+                        const principal = direcciones.find(d => d.es_principal) || direcciones[0];
+                        setDireccion(principal.calle);
+                      }}
+                      className="text-[10px] text-blue-600 font-bold mt-1 block"
+                    >
+                      ← Volver a mis direcciones guardadas
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
             <div className="text-[10px] text-gray-400 mt-1 italic">* Puedes modificar estos datos solo para este pedido.</div>
           </>

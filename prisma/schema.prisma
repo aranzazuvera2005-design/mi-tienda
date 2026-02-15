@@ -57,11 +57,11 @@ model Direccion {
   id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   clienteId   String?  @map("cliente_id") @db.Uuid
   calle       String
-  ciudad      String
-  cp          String
+  ciudad      String?
+  cp          String?
   esPrincipal Boolean  @default(false) @map("es_principal")
   
-  cliente Cliente? @relation(fields: [clienteId], references: [id])
+  cliente Perfil? @relation(fields: [clienteId], references: [id])
   pedidos Pedido[]
 
   @@map("direcciones")
@@ -70,11 +70,13 @@ model Direccion {
 model Perfil {
   id          String    @id @db.Uuid
   nombre      String?
+  email       String?   @unique
   direccion   String?
   telefono    String?
   updatedAt   DateTime? @map("updated_at") @db.Timestamptz(6)
   
   pedidos Pedido[]
+  direcciones Direccion[]
 
   @@map("perfiles")
 }

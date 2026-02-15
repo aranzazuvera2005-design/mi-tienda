@@ -19,7 +19,7 @@ export default function AgregarAlCarritoBtn({ producto }: { producto: any }) {
           alert('Error añadiendo al carrito');
         }
       }}
-      className="w-full bg-blue-600 text-white py-3 rounded-2xl font-bold hover:bg-black transition-colors active:scale-95 shadow-md"
+      className="w-full bg-[#2563eb] text-white py-2.5 rounded-xl font-bold text-sm hover:bg-blue-700 transition-all active:scale-95 shadow-sm"
     >
       Añadir al Carrito
     </button>

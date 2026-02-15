@@ -74,18 +74,22 @@ export default function SearchProductos({ initialProducts = [], initialQuery = '
 
   return (
     <section>
-      <form onSubmit={(e) => { e.preventDefault(); fetchResults(q, 1); }} className="mb-6 flex gap-2 items-center">
+      <form onSubmit={(e) => { e.preventDefault(); fetchResults(q, 1); }} className="mb-8 flex gap-0 items-center overflow-hidden rounded-xl border border-gray-200 shadow-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
         <input
           aria-label="Buscar productos"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Buscar por nombre, descripción, familia o categoría..."
-          className="flex-1 p-3 rounded-md border border-gray-200"
+          className="flex-1 p-4 outline-none text-gray-600 placeholder:text-gray-400"
         />
-        <button type="submit" className="px-4 py-3 rounded-md bg-indigo-600 text-white font-semibold">Buscar</button>
         {q && (
-          <button type="button" onClick={clear} className="ml-2 px-3 py-2 rounded-md border border-gray-200 bg-white">Limpiar</button>
+          <button type="button" onClick={clear} className="px-4 text-gray-400 hover:text-gray-600 transition-colors">
+            ✕
+          </button>
         )}
+        <button type="submit" className="px-8 py-4 bg-[#4f46e5] text-white font-bold hover:bg-blue-700 transition-colors">
+          Buscar
+        </button>
       </form>
 
       <div aria-live="polite">
@@ -97,33 +101,40 @@ export default function SearchProductos({ initialProducts = [], initialQuery = '
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {results && results.map((producto) => (
-          <div key={producto.id} className="bg-white p-4 rounded-xl shadow hover:shadow-md transition-shadow border border-gray-100 flex flex-col">
-            <div className="relative w-full h-40 rounded-md overflow-hidden mb-4 bg-gray-50 flex items-center justify-center border border-gray-100">
+          <div key={producto.id} className="bg-white p-0 rounded-2xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col overflow-hidden">
+            {/* Imagen del producto */}
+            <div className="relative w-full h-48 overflow-hidden bg-gray-100">
               <img
                 src={producto.imagen_url || producto.imagenUrl || '/globe.svg'}
                 alt={producto.nombre || 'Producto'}
-                className="max-w-full max-h-full object-contain p-2"
+                className="w-full h-full object-cover"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = '/globe.svg';
                 }}
               />
+              {/* Etiqueta de categoría/familia */}
               {((producto.familias && producto.familias.nombre) || producto.categoria) && (
-                <span className="absolute left-3 top-3 bg-white/80 text-xs px-2 py-1 rounded-md font-semibold">{producto.familias?.nombre || producto.categoria}</span>
+                <span className="absolute left-3 top-3 bg-black/60 backdrop-blur-sm text-white text-[10px] uppercase tracking-wider px-2 py-1 rounded font-bold">
+                  {producto.familias?.nombre || producto.categoria}
+                </span>
               )}
             </div>
 
-            <div className="flex-1">
-              <h2 className="text-lg font-bold mb-1">{producto.nombre}</h2>
-              <p className="text-sm text-gray-500 line-clamp-2 mb-4">{producto.descripcion}</p>
-            </div>
-
-            <div className="mt-4 flex items-center justify-between">
-              <div>
-                <div className="text-sm text-gray-500">Precio</div>
-                <div className="text-2xl font-extrabold text-indigo-600">{Number(producto.precio || 0).toFixed(2)}€</div>
-              </div>
-              <div className="w-36">
-                <AgregarAlCarritoBtn producto={producto} />
+            {/* Contenido */}
+            <div className="p-5 flex flex-col flex-1">
+              <h2 className="text-lg font-bold text-gray-900 mb-1">{producto.nombre}</h2>
+              <p className="text-sm text-gray-500 line-clamp-1 mb-4">{producto.descripcion || 'Sin descripción disponible'}</p>
+              
+              <div className="mt-auto flex items-end justify-between">
+                <div>
+                  <div className="text-[10px] uppercase font-bold text-gray-400 tracking-tight">Precio</div>
+                  <div className="text-xl font-black text-blue-600 leading-none">
+                    {Number(producto.precio || 0).toFixed(2)}€
+                  </div>
+                </div>
+                <div className="w-32">
+                  <AgregarAlCarritoBtn producto={producto} />
+                </div>
               </div>
             </div>
           </div>

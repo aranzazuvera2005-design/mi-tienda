@@ -24,12 +24,10 @@ export default function LoginPage() {
     setMensaje('');
 
     try {
-      // Antes de intentar autenticar, comprobar que el servidor puede alcanzar Supabase
-      const ping = await fetch('/api/ping-supabase').then(r => r.json()).catch(() => ({ ok: false, error: 'Ping failed' }));
-      if (!ping?.ok) {
-        throw new Error('Servicio de autenticación no disponible. ' + (ping?.error || 'Comprueba tu conexión o configura SUPABASE_URL'));
+      if (!supabase) {
+        throw new Error('La configuración de Supabase no es válida. Verifica las variables de entorno NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY.');
       }
-      if (!supabase) throw new Error('Supabase no configurado. Autenticación no disponible.');
+
       if (isRegister) {
         const { error } = await supabase.auth.signUp({ 
           email, 
@@ -51,23 +49,15 @@ export default function LoginPage() {
     }
   };
 
-  // Comprobar disponibilidad de Supabase en montaje para deshabilitar el formulario si es necesario
+  // Comprobar configuración de Supabase en montaje
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const ping = await fetch('/api/ping-supabase').then(r => r.json()).catch(() => ({ ok: false }));
-        if (!mounted) return;
-        setAuthAvailable(Boolean(ping?.ok));
-        if (!ping?.ok) setMensaje('Servicio de autenticación no disponible actualmente. Intenta más tarde.');
-      } catch (e) {
-        if (!mounted) return;
-        setAuthAvailable(false);
-        setMensaje('Servicio de autenticación no disponible actualmente. Intenta más tarde.');
-      }
-    })();
-    return () => { mounted = false; };
-  }, []);
+    if (!SUPABASE_URL || !SUPABASE_ANON) {
+      setAuthAvailable(false);
+      setMensaje('Las variables de entorno de Supabase no están configuradas. La autenticación no funcionará.');
+    } else {
+      setAuthAvailable(true);
+    }
+  }, [SUPABASE_URL, SUPABASE_ANON]);
 
   return (
     <div style={containerS}>

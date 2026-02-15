@@ -1,6 +1,8 @@
 import AgregarAlCarritoBtn from "../components/AgregarAlCarritoBtn";
 import SearchProductos from "../components/SearchProductos";
 
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   // Usamos el endpoint REST de Supabase desde el servidor para evitar depender
   // de una conexión directa a Postgres (que falla si no hay acceso IPv4 al host)

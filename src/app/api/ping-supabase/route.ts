@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -10,12 +12,13 @@ export async function GET() {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 4000);
     try {
+      // Intentamos un fetch básico. Si falla por red, lo capturamos.
+      // No validamos res.ok porque el endpoint base de Supabase puede devolver 404 o 401 y aún así estar "vivo".
       const res = await fetch(supabaseUrl, { method: 'GET', signal: controller.signal });
       clearTimeout(timeout);
-      if (!res.ok) {
-        return NextResponse.json({ ok: false, status: res.status, statusText: res.statusText }, { status: 200 });
-      }
-      return NextResponse.json({ ok: true }, { status: 200 });
+      
+      // Si llegamos aquí, el host es alcanzable.
+      return NextResponse.json({ ok: true, reachable: true }, { status: 200 });
     } catch (e: any) {
       clearTimeout(timeout);
       return NextResponse.json({ ok: false, error: String(e?.message || e) }, { status: 200 });

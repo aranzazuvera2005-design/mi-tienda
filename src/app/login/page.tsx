@@ -3,13 +3,16 @@
 import { createBrowserClient } from '@supabase/ssr';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Mail, Lock, ArrowLeft, Loader2, UserPlus, LogIn } from 'lucide-react';
+import { Mail, Lock, ArrowLeft, Loader2, UserPlus, LogIn, Phone, MapPin } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LoginPage() {
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [nombre, setNombre] = useState('');
+  const [telefono, setTelefono] = useState('');
+  const [direccion, setDireccion] = useState('');
   const [loading, setLoading] = useState(false);
   const [mensaje, setMensaje] = useState('');
   const router = useRouter();
@@ -29,12 +32,37 @@ export default function LoginPage() {
       }
 
       if (isRegister) {
-        const { error } = await supabase.auth.signUp({ 
+        // 1. Crear el usuario en Auth
+        const { data: authData, error: authError } = await supabase.auth.signUp({ 
           email, 
           password,
-          options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
+          options: { 
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            data: { nombre, telefono, direccion }
+          }
         });
-        if (error) throw error;
+        if (authError) throw authError;
+
+        // 2. Si el usuario se creó (o ya existía pero no estaba confirmado), intentamos guardar en 'perfiles'
+        // Nota: En Supabase, si el email no está confirmado, el usuario no puede hacer mucho, 
+        // pero podemos intentar guardar su perfil inicial si tenemos el ID.
+        const userId = authData.user?.id;
+        if (userId) {
+          const { error: profileError } = await supabase
+            .from('perfiles')
+            .upsert({ 
+              id: userId, 
+              nombre, 
+              telefono, 
+              direccion,
+              updated_at: new Date().toISOString()
+            });
+          
+          if (profileError) {
+            console.warn('Error al guardar el perfil, pero la cuenta se creó:', profileError);
+          }
+        }
+
         setMensaje('¡Cuenta creada! Revisa tu email para confirmar y volver al carrito.');
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -69,9 +97,27 @@ export default function LoginPage() {
           <p style={subtitleS}>{isRegister ? 'Regístrate para finalizar tu pedido.' : 'Entra para continuar con tu compra.'}</p>
         </div>
         <form onSubmit={handleAuth} style={formS}>
+          {isRegister && (
+            <>
+              <div style={inputGroupS}>
+                <UserPlus size={18} style={iconS}/>
+                <input type="text" placeholder="Nombre Completo" style={inputS} value={nombre} onChange={(e)=>setNombre(e.target.value)} required />
+              </div>
+              <div style={inputGroupS}>
+                <Phone size={18} style={iconS}/>
+                <input type="tel" placeholder="Teléfono" style={inputS} value={telefono} onChange={(e)=>setTelefono(e.target.value)} required />
+              </div>
+              <div style={inputGroupS}>
+                <MapPin size={18} style={iconS}/>
+                <input type="text" placeholder="Dirección Completa" style={inputS} value={direccion} onChange={(e)=>setDireccion(e.target.value)} required />
+              </div>
+            </>
+          )}
           <div style={inputGroupS}><Mail size={18} style={iconS}/><input type="email" placeholder="Email" style={inputS} value={email} onChange={(e)=>setEmail(e.target.value)} required /></div>
           <div style={inputGroupS}><Lock size={18} style={iconS}/><input type="password" placeholder="Contraseña" style={inputS} value={password} onChange={(e)=>setPassword(e.target.value)} required /></div>
+          
           {mensaje && <div style={{...msgBoxS, backgroundColor: mensaje.includes('creada') ? '#f0fdf4' : '#fef2f2', color: mensaje.includes('creada') ? 'green' : 'red'}}>{mensaje}</div>}
+          
           <button type="submit" disabled={loading} style={buttonS}>
             {loading ? <Loader2 style={{animation:'spin 1s linear infinite'}}/> : (isRegister ? 'Crear cuenta y comprar' : 'Entrar y comprar')}
           </button>

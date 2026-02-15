@@ -98,11 +98,11 @@ export default function SearchProductos({ initialProducts = [], initialQuery = '
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {results && results.map((producto) => (
           <div key={producto.id} className="bg-white p-4 rounded-xl shadow hover:shadow-md transition-shadow border border-gray-100 flex flex-col">
-            <div className="relative w-full h-48 rounded-md overflow-hidden mb-4">
+            <div className="relative w-full h-64 rounded-md overflow-hidden mb-4 bg-gray-100 flex items-center justify-center">
               <img
                 src={producto.imagen_url || producto.imagenUrl || '/globe.svg'}
                 alt={producto.nombre || 'Producto'}
-                className="w-full h-full object-cover"
+                className="max-w-full max-h-full object-contain"
               />
               {((producto.familias && producto.familias.nombre) || producto.categoria) && (
                 <span className="absolute left-3 top-3 bg-white/80 text-xs px-2 py-1 rounded-md font-semibold">{producto.familias?.nombre || producto.categoria}</span>

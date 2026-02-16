@@ -267,11 +267,11 @@ export default function AdminPedidos() {
               <div>
                 <span style={{ fontSize: '12px', color: '#6b7280', fontWeight: 'bold' }}>PEDIDO #{pedido.id.toString().slice(-5)}</span>
                 <h2 style={{ margin: '5px 0', fontSize: '18px', fontWeight: 900 }}>
-                   {pedido.perfiles?.nombre || 'Cliente sin nombre'}
+                   {pedido.cliente?.nombre || 'Cliente sin nombre'}
                 </h2>
                 <div style={{ display: 'flex', gap: '15px', fontSize: '14px', color: '#4b5563' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><MapPin size={14}/> {pedido.direccion_entrega}</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><User size={14}/> {pedido.perfiles?.telefono}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><User size={14}/> {pedido.cliente?.telefono}</span>
                 </div>
               </div>
               

@@ -22,7 +22,7 @@ export async function GET(req: Request) {
 
     let builder = supabase
       .from('pedidos')
-      .select('*, perfiles(nombre, telefono)', { count: 'exact' })
+      .select('*, cliente:perfiles(nombre, telefono)', { count: 'exact' })
       .order('creado_at', { ascending: false });
 
     if (q) {
@@ -30,9 +30,8 @@ export async function GET(req: Request) {
       const escaped = q.replace(/[%_]/g, '\\$&');
       const parts = [
         `id.ilike.%${escaped}%`,
-        `perfiles.nombre.ilike.%${escaped}%`,
-        `perfiles.telefono.ilike.%${escaped}%`,
-        `productos->>nombre.ilike.%${escaped}%`
+        `cliente.nombre.ilike.%${escaped}%`,
+        `cliente.telefono.ilike.%${escaped}%`
       ];
       builder = builder.or(parts.join(','));
     }

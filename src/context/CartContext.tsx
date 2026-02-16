@@ -84,16 +84,32 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     try {
-      const { error: pError } = await supabase.from('perfiles').upsert({
-        id: user.id,
+      // 1. Actualizar datos básicos del perfil
+      const { error: pError } = await supabase.from('perfiles').update({
         nombre: datosEnvio.nombre,
         telefono: datosEnvio.telefono,
-        direccion: datosEnvio.direccion,
-        updated_at: new Date()
-      }, { onConflict: 'id' });
+        updated_at: new Date().toISOString()
+      }).eq('id', user.id);
 
       if (pError) throw new Error('Error Perfil: ' + pError.message);
 
+      // 2. Verificar si la dirección ya existe para este cliente, si no, añadirla
+      const { data: existingDir } = await supabase
+        .from('direcciones')
+        .select('id')
+        .eq('cliente_id', user.id)
+        .eq('calle', datosEnvio.direccion)
+        .single();
+
+      if (!existingDir) {
+        await supabase.from('direcciones').insert({
+          cliente_id: user.id,
+          calle: datosEnvio.direccion,
+          es_principal: false
+        });
+      }
+
+      // 3. Crear el pedido
       const { data, error: oError } = await supabase.from('pedidos').insert({
         cliente_id: user.id,
         total: total,

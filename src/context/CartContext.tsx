@@ -85,9 +85,9 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
     try {
       // 1. Asegurar que el perfil existe (usar upsert)
+      // Nota: No incluimos 'email' porque la columna física podría no existir en la tabla perfiles de Supabase
       const { error: pError } = await supabase.from('perfiles').upsert({
         id: user.id,
-        email: user.email,
         nombre: datosEnvio.nombre,
         telefono: datosEnvio.telefono,
         updated_at: new Date().toISOString()

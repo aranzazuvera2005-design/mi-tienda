@@ -23,16 +23,8 @@ export async function POST(req: Request) {
       auth: { persistSession: false }
     });
 
-    // 1. Verificar si el email ya existe en la tabla de perfiles para evitar duplicados
-    const { data: existingProfile } = await supabase
-      .from('perfiles')
-      .select('id')
-      .eq('email', email)
-      .single();
-
-    if (existingProfile) {
-      return NextResponse.json({ error: 'Ya existe un cliente registrado con este correo electrónico.' }, { status: 400 });
-    }
+    // 1. Verificar si el email ya existe en Auth (Supabase lo hace automáticamente al crear)
+    // No podemos verificar en 'perfiles' por email si la columna no existe.
 
     // 2. Intentar crear el usuario en Auth
     const { data: userData, error: signError } = await supabase.auth.admin.createUser({
@@ -54,7 +46,6 @@ export async function POST(req: Request) {
     const profile = { 
       id: userId, 
       nombre, 
-      email, 
       telefono: telefono || null, 
       direccion: direccion || null, // Mantenemos este por compatibilidad legacy
       updated_at: new Date().toISOString()

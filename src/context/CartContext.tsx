@@ -84,12 +84,14 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     try {
-      // 1. Actualizar datos básicos del perfil
-      const { error: pError } = await supabase.from('perfiles').update({
+      // 1. Asegurar que el perfil existe (usar upsert)
+      const { error: pError } = await supabase.from('perfiles').upsert({
+        id: user.id,
+        email: user.email,
         nombre: datosEnvio.nombre,
         telefono: datosEnvio.telefono,
         updated_at: new Date().toISOString()
-      }).eq('id', user.id);
+      }, { onConflict: 'id' });
 
       if (pError) throw new Error('Error Perfil: ' + pError.message);
 

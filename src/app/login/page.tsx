@@ -32,14 +32,13 @@ export default function LoginPage() {
       }
 
       if (isRegister) {
-        // 1. Crear el usuario en Auth (sin requerir confirmación de email)
+        // 1. Crear el usuario en Auth
         const { data: authData, error: authError } = await supabase.auth.signUp({ 
           email, 
           password,
           options: { 
             emailRedirectTo: `${window.location.origin}/auth/callback`,
-            data: { nombre, telefono, direccion },
-            shouldCreateUser: true
+            data: { nombre, telefono, direccion }
           }
         });
         if (authError) throw authError;
@@ -48,7 +47,13 @@ export default function LoginPage() {
         if (!userId) throw new Error('No se pudo crear la cuenta');
 
         // Esperar un poco para que Supabase procese el usuario
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Intentar iniciar sesión automáticamente
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInError) {
+          console.warn('Error al iniciar sesión automático:', signInError);
+        }
 
         // 2. Guardar el perfil inicial
         const { error: profileError } = await supabase

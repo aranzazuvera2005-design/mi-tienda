@@ -32,19 +32,23 @@ export default function LoginPage() {
       }
 
       if (isRegister) {
-        // 1. Crear el usuario en Auth
+        // 1. Crear el usuario en Auth (sin requerir confirmación de email)
         const { data: authData, error: authError } = await supabase.auth.signUp({ 
           email, 
           password,
           options: { 
             emailRedirectTo: `${window.location.origin}/auth/callback`,
-            data: { nombre, telefono, direccion }
+            data: { nombre, telefono, direccion },
+            shouldCreateUser: true
           }
         });
         if (authError) throw authError;
 
         const userId = authData.user?.id;
         if (!userId) throw new Error('No se pudo crear la cuenta');
+
+        // Esperar un poco para que Supabase procese el usuario
+        await new Promise(resolve => setTimeout(resolve, 500));
 
         // 2. Guardar el perfil inicial
         const { error: profileError } = await supabase
@@ -77,16 +81,19 @@ export default function LoginPage() {
           console.warn('Error al crear cliente:', clientError);
         }
 
-        // 4. Intentar iniciar sesión automáticamente
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-        if (signInError) {
-          setMensaje('Cuenta creada! Por favor, inicia sesión con tus credenciales.');
-        } else {
+        // 4. Obtener la sesión del usuario recién creado
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionData?.session) {
+          // Si ya hay sesión, redirigir directamente
           setMensaje('Cuenta creada e iniciada! Redirigiendo...');
           setTimeout(() => {
             router.push('/');
             router.refresh();
           }, 1500);
+        } else {
+          // Si no hay sesión, mostrar mensaje para que inicie sesión
+          setMensaje('Cuenta creada! Por favor, inicia sesión con tus credenciales.');
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });

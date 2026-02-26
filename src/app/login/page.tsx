@@ -43,29 +43,51 @@ export default function LoginPage() {
         });
         if (authError) throw authError;
 
-        // 2. Guardar el perfil inicial
         const userId = authData.user?.id;
-        if (userId) {
-          const { error: profileError } = await supabase
-            .from('perfiles')
-            .insert({ 
-              id: userId, 
-              nombre, 
-              email, // Guardamos el email también en el perfil
-              telefono, 
-              direccion,
-              updated_at: new Date().toISOString()
-            });
-          
-          if (profileError) {
-            if (profileError.message.includes('duplicate key')) {
-              throw new Error('Este correo electrónico ya está registrado.');
-            }
-            console.warn('Error al guardar el perfil:', profileError);
-          }
+        if (!userId) throw new Error('No se pudo crear la cuenta');
+
+        // 2. Guardar el perfil inicial
+        const { error: profileError } = await supabase
+          .from('perfiles')
+          .insert({ 
+            id: userId, 
+            nombre, 
+            email,
+            telefono, 
+            direccion,
+            updated_at: new Date().toISOString()
+          });
+        
+        if (profileError && !profileError.message.includes('duplicate')) {
+          console.warn('Error al guardar el perfil:', profileError);
         }
 
-        setMensaje('¡Cuenta creada! Revisa tu email para confirmar y volver al carrito.');
+        // 3. Crear el cliente en la tabla de clientes
+        const { error: clientError } = await supabase
+          .from('clientes')
+          .insert({
+            id: userId,
+            nombre,
+            email,
+            telefono,
+            direccion
+          });
+        
+        if (clientError && !clientError.message.includes('duplicate')) {
+          console.warn('Error al crear cliente:', clientError);
+        }
+
+        // 4. Intentar iniciar sesión automáticamente
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInError) {
+          setMensaje('Cuenta creada! Por favor, inicia sesión con tus credenciales.');
+        } else {
+          setMensaje('Cuenta creada e iniciada! Redirigiendo...');
+          setTimeout(() => {
+            router.push('/');
+            router.refresh();
+          }, 1500);
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -118,7 +140,7 @@ export default function LoginPage() {
           <div style={inputGroupS}><Mail size={18} style={iconS}/><input type="email" placeholder="Email" style={inputS} value={email} onChange={(e)=>setEmail(e.target.value)} required /></div>
           <div style={inputGroupS}><Lock size={18} style={iconS}/><input type="password" placeholder="Contraseña" style={inputS} value={password} onChange={(e)=>setPassword(e.target.value)} required /></div>
           
-          {mensaje && <div style={{...msgBoxS, backgroundColor: mensaje.includes('creada') ? '#f0fdf4' : '#fef2f2', color: mensaje.includes('creada') ? 'green' : 'red'}}>{mensaje}</div>}
+          {mensaje && <div style={{...msgBoxS, backgroundColor: mensaje.includes('creada') || mensaje.includes('Redirigiendo') ? '#f0fdf4' : '#fef2f2', color: mensaje.includes('creada') || mensaje.includes('Redirigiendo') ? 'green' : 'red'}}>{mensaje}</div>}
           
           <button type="submit" disabled={loading} style={buttonS}>
             {loading ? <Loader2 style={{animation:'spin 1s linear infinite'}}/> : (isRegister ? 'Crear cuenta y comprar' : 'Entrar y comprar')}
@@ -132,7 +154,7 @@ export default function LoginPage() {
   );
 }
 
-// Estilos de Login (Iguales a los anteriores)
+// Estilos de Login
 const containerS = { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb', padding: '20px' };
 const cardS = { backgroundColor: 'white', padding: '40px', borderRadius: '32px', boxShadow: '0 20px 40px rgba(0,0,0,0.05)', width: '100%', maxWidth: '420px', border: '1px solid #f3f4f6' };
 const backLinkS = { display: 'flex', alignItems: 'center', gap: '8px', color: '#6b7280', textDecoration: 'none', fontSize: '14px', marginBottom: '20px' };

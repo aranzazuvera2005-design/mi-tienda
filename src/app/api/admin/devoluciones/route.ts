@@ -23,7 +23,7 @@ export async function GET(req: Request) {
       .from('devoluciones')
       .select(`
         *,
-        pedido:pedidos(id, cliente_id, creado_at, total, cliente:perfiles(nombre, email, telefono)),
+        pedido:pedidos(id, cliente_id, creado_at, total, cliente:perfiles(nombre, telefono)),
         producto:productos(id, nombre, precio)
       `, { count: 'exact' })
       .order('fecha_solicitud', { ascending: false });

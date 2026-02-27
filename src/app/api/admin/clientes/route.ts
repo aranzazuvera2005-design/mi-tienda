@@ -81,3 +81,48 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: err?.message || String(err) }, { status: 500 });
   }
 }
+
+export async function PUT(req: Request) {
+  try {
+    const body = await req.json();
+    const { id, nombre, email, telefono, direccion } = body || {};
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID de cliente es obligatorio' }, { status: 400 });
+    }
+
+    if (!SUPABASE_URL || !SERVICE_ROLE) {
+      return NextResponse.json({ error: 'Supabase service role key not configured' }, { status: 500 });
+    }
+
+    const supabase = createClient(SUPABASE_URL, SERVICE_ROLE, {
+      auth: { persistSession: false }
+    });
+
+    // 1. Actualizar en Auth si el email cambió
+    if (email) {
+      const { error: authError } = await supabase.auth.admin.updateUserById(id, { email });
+      if (authError) throw authError;
+    }
+
+    // 2. Actualizar en perfiles
+    const updateData: any = {
+      updated_at: new Date().toISOString()
+    };
+    if (nombre !== undefined) updateData.nombre = nombre;
+    if (email !== undefined) updateData.email = email;
+    if (telefono !== undefined) updateData.telefono = telefono;
+    if (direccion !== undefined) updateData.direccion = direccion;
+
+    const { error: profileError } = await supabase
+      .from('perfiles')
+      .update(updateData)
+      .eq('id', id);
+
+    if (profileError) throw profileError;
+
+    return NextResponse.json({ message: 'Cliente actualizado correctamente' });
+  } catch (err: any) {
+    return NextResponse.json({ error: err?.message || String(err) }, { status: 500 });
+  }
+}

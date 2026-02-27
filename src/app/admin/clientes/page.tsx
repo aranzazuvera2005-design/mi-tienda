@@ -142,8 +142,29 @@ export default function GestionClientes() {
   };
 
   const guardarEdicion = async (id: string) => {
-    addToast({ message: 'Funcionalidad de edición en desarrollo', type: 'info' });
-    setEditingId(null);
+    try {
+      const response = await fetch('/api/admin/clientes', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id,
+          nombre: editNombre.trim(),
+          email: editEmail.trim(),
+          telefono: editTelefono.trim()
+        })
+      });
+
+      if (response.ok) {
+        addToast({ message: 'Cliente actualizado correctamente', type: 'success' });
+        setEditingId(null);
+        fetchClientes();
+      } else {
+        const data = await response.json();
+        addToast({ message: data.error || 'Error al actualizar', type: 'error' });
+      }
+    } catch (error) {
+      addToast({ message: 'Error al conectar con el servidor', type: 'error' });
+    }
   };
 
   const togglePassword = (id: string) => {

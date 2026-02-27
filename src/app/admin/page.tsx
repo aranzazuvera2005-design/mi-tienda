@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Package, ClipboardList, Users, Bell, ArrowLeft } from 'lucide-react';
+import { Package, ClipboardList, Users, Bell, ArrowLeft, RotateCcw } from 'lucide-react';
 
 // --- ESTILOS COMPARTIDOS ---
 const cardS = {
@@ -74,6 +74,15 @@ export default function AdminPanel() {
             <div>
               <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 900 }}>Base de Datos de Clientes</h2>
               <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>Ver perfiles, teléfonos y direcciones de tus compradores.</p>
+            </div>
+          </Link>
+
+          {/* 5. GESTIÓN DE DEVOLUCIONES */}
+          <Link href="/admin/devoluciones" style={cardS}>
+            <div style={{...iconBoxS, backgroundColor: '#fff1f2'}}><RotateCcw size={32} color="#e11d48" /></div>
+            <div>
+              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 900 }}>Gestión de Devoluciones</h2>
+              <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>Aprobar, rechazar y gestionar solicitudes de devolución.</p>
             </div>
           </Link>
 

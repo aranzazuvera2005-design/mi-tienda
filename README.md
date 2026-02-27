@@ -65,6 +65,3 @@ Usa `.env.example` como referencia para las variables necesarias.
 - Para crear usuarios desde el panel admin de forma segura, usa la ruta server-side que añadimos: `POST /api/admin/create-user`. Esta ruta requiere `SUPABASE_SERVICE_ROLE_KEY` definida en Vercel y crea tanto el usuario de Auth como el registro en `perfiles`.
 
 Si quieres, puedo automatizar la creación de las variables en Vercel vía su API (necesitaré un token de Vercel) o añadir un pequeño script para comprobar las variables en tiempo de despliegue.
-
-
-

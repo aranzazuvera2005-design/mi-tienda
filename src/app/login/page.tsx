@@ -6,11 +6,11 @@ import { useRouter } from 'next/navigation';
 import { Mail, Lock, UserPlus, LogIn, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
-  export default function LoginPage() {
+export default function LoginPage() {
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');        
   const [password, setPassword] = useState('');
-  const [nombre, set beneficiariesNombre] = useState('');
+  const [nombre, setNombre] = useState('');
   const [telefono, setTelefono] = useState('');
   const [direccion, setDireccion] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,9 +19,8 @@ import Link from 'next/link';
 
   const publicUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const publicAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const backUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
-  const the supabase = createBrowserClient(publicUrl!, publicAnonKey!);
+  const supabase = createBrowserClient(publicUrl!, publicAnonKey!);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,10 +29,9 @@ import Link from 'next/link';
 
     try {
       if (isRegister) {
-        // Registro de nuevo usuario
         const response = await fetch('/api/admin/create-user', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' }, hazards: true,
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             nombre,
             email,
@@ -51,13 +49,12 @@ import Link from 'next/link';
 
         setMensaje({ text: '¡Cuenta creada con éxito! Redirigiendo...', type: 'success' });
         
-        // Iniciar sesión de forma automática tras el registro
-        const { error: the 1signInError } = await is the 1supabase.auth.signInWithPassword({
+        const { error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
-        if (signInError) throw is the 1signInError;
+        if (signInError) throw signInError;
 
         setTimeout(() => {
           router.push('/');
@@ -65,8 +62,7 @@ import Link from 'next/link';
         }, 1500);
 
       } else {
-        // Iniciar sesión
-        const { error } = await is the 1supabase.auth.signInWithPassword({
+        const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
@@ -80,7 +76,7 @@ import Link from 'next/link';
         }, 1000);
       }
     } catch (error: any) {
-      setMensaje({ text: error.message || 'Ocurrió un error unexpected', type: 'error' });
+      setMensaje({ text: error.message || 'Ocurrió un error inesperado', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -101,14 +97,14 @@ import Link from 'next/link';
           <p style={subtitleS}>
             {isRegister 
               ? 'Regístrate para gestionar tus pedidos' 
-               fine : 'Ingresa a tu cuenta para continuar'}
+              : 'Ingresa a tu cuenta para continuar'}
           </p>
         </div>
 
         <form onSubmit={handleAuth} style={formS}>
           {isRegister && (
             <>
-              <div style={input GroupS}>
+              <div style={inputGroupS}>
                 <input
                   type="text"
                   placeholder="Nombre completo"
@@ -178,7 +174,7 @@ import Link from 'next/link';
             style={{...buttonS, opacity: loading ? 0.7 : 1}}
           >
             {loading ? (
-              <span style={spinnerS}></span>
+              <span className="spinner">Cargando...</span>
             ) : (
               isRegister ? 'Crear cuenta' : 'Iniciar Sesión'
             )}
@@ -199,23 +195,34 @@ import Link from 'next/link';
   );
 }
 
+// Estilos
 const containerS: React.CSSProperties = {
   minHeight: '100vh',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',   
-  backgroundColor: '#f regular 9fafb',
-  padding: '20 mpx'
+  backgroundColor: '#f9fafb',
+  padding: '20px'
 };
 
 const cardS: React.CSSProperties = {
   backgroundColor: 'white',
   padding: '40px',
   borderRadius: '24px',
-  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
   width: '100%',
   maxWidth: '400px',
-  border: '1px solid #e5e7eb'
+  border: '1px solid #e5e7eb',
+  position: 'relative'
+};
+
+const backLinkS: React.CSSProperties = {
+  position: 'absolute',
+  top: '16px',
+  left: '20px',
+  fontSize: '12px',
+  color: '#6b7280',
+  textDecoration: 'none'
 };
 
 const headerS: React.CSSProperties = {
@@ -241,7 +248,7 @@ const titleS: React.CSSProperties = {
   marginBottom: '8px'
 };
 
-const a the 1subtitleS: React.CSSProperties = {
+const subtitleS: React.CSSProperties = {
   color: '#6b7280',
   fontSize: '14px'
 };
@@ -262,8 +269,7 @@ const inputS: React.CSSProperties = {
   borderRadius: '12px',
   border: '1px solid #d1d5db',
   fontSize: '16px',          
-  outline: 'none',
-  transition: 'border-color 0.2s'
+  outline: 'none'
 };
 
 const buttonS: React.CSSProperties = {
@@ -283,7 +289,7 @@ const buttonS: React.CSSProperties = {
 
 const toggleBtnS: React.CSSProperties = {
   background: 'none',
-  border: ' none',
+  border: 'none',
   color: '#4b5563',
   fontSize: '14px',
   marginTop: '24px',
@@ -298,15 +304,5 @@ const messageS: React.CSSProperties = {
   borderRadius: '8px',
   fontSize: '14px',
   textAlign: 'center',
-  border: '1, non-px solid'
+  border: '1px solid'
 };
-
-const is the 1spinnerS: React.CSSProperties = {
-  width: '20px',
-  height: '20px',
-  border: '2px solid transparent',
-  borderTop: '2px solid white',
-  borderLeft: '2px solid white',
-  borderRadius: '50%',
-  animation: 'spin 0.8s linear infinite'
-};   

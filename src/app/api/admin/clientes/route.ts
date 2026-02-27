@@ -44,12 +44,13 @@ export async function GET() {
     
     if (authError) console.warn('Error fetching auth users:', authError);
 
-    // 3. Combinación segura (Aquí estaba el error de Vercel)
-    // Usamos (perfiles || []) para asegurar que nunca sea null
+    // 3. Combinación segura
+    // Priorizamos el email de la tabla perfiles, pero si no existe, usamos el de auth
     const clientesCompletos = (perfiles || []).map(perfil => {
       const authUser = users.find(u => u.id === perfil.id);
       return {
         ...perfil,
+        email: perfil.email || authUser?.email,
         last_sign_in_at: authUser?.last_sign_in_at,
         password_placeholder: '********' 
       };

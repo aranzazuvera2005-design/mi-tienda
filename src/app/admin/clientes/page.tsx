@@ -247,7 +247,8 @@ export default function GestionClientes() {
                       <div>
                         {editingId === cliente.id ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                            <input value={editNombre} onChange={(e) => setEditNombre(e.target.value)} style={inputSmallS} />
+                            <input value={editNombre} onChange={(e) => setEditNombre(e.target.value)} style={inputSmallS} placeholder="Nombre" />
+                            <input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} style={inputSmallS} placeholder="Email" />
                             <select value={editRol} onChange={(e) => setEditRol(e.target.value)} style={inputSmallS}>
                               <option value="usuario">Usuario</option>
                               <option value="admin">Admin</option>

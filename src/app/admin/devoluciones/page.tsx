@@ -9,6 +9,7 @@ export default function AdminDevoluciones() {
   const [devoluciones, setDevoluciones] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();

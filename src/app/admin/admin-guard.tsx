@@ -21,14 +21,17 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const user = session?.user;
-
-        if (!user) {
+        // Usamos getSession() que es más rápido y fiable para el lado del cliente
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !session?.user) {
+          console.log('No session found, redirecting to login');
           setIsAdmin(false);
           router.push('/login');
           return;
         }
+
+        const user = session.user;
 
         const { data: perfil, error } = await supabase
           .from('perfiles')

@@ -22,13 +22,25 @@ export async function GET() {
       auth: { persistSession: false }
     });
 
-    // Obtener perfiles con sus direcciones
-    const { data: perfiles, error: perfilesError } = await supabase
+    // Intentar obtener perfiles con sus direcciones
+    let { data: perfiles, error: perfilesError } = await supabase
       .from('perfiles')
       .select('*, direcciones(*)')
       .order('nombre', { ascending: true });
 
-    if (perfilesError) throw perfilesError;
+    // Si falla por la relación, intentamos obtener solo perfiles
+    if (perfilesError && perfilesError.message.includes('relationship')) {
+      console.warn('Relación perfiles->direcciones no encontrada, reintentando solo perfiles');
+      const { data: soloPerfiles, error: soloPerfilesError } = await supabase
+        .from('perfiles')
+        .select('*')
+        .order('nombre', { ascending: true });
+      
+      if (soloPerfilesError) throw soloPerfilesError;
+      perfiles = soloPerfiles;
+    } else if (perfilesError) {
+      throw perfilesError;
+    }
 
     // Intentar obtener usuarios de Auth para ver contraseñas (si están en metadata o si se puede)
     // Nota: Supabase no devuelve contraseñas en texto plano por seguridad.

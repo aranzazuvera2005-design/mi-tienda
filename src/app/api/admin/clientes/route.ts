@@ -89,7 +89,7 @@ export async function DELETE(req: Request) {
 export async function PUT(req: Request) {
   try {
     const body = await req.json();
-    const { id, nombre, email, telefono, direccion } = body || {};
+    const { id, nombre, email, telefono, direccion, rol } = body || {};
 
     if (!id || !SUPABASE_URL || !SERVICE_ROLE) {
       return NextResponse.json({ error: 'ID faltante o error de configuración' }, { status: 400 });
@@ -111,6 +111,7 @@ export async function PUT(req: Request) {
     if (email !== undefined) updateData.email = email;
     if (telefono !== undefined) updateData.telefono = telefono;
     if (direccion !== undefined) updateData.direccion = direccion;
+    if (rol !== undefined) updateData.rol = rol;
 
     const { error: profileError } = await supabase
       .from('perfiles')

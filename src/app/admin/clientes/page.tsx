@@ -53,6 +53,7 @@ export default function GestionClientes() {
   const [editNombre, setEditNombre] = useState('');
   const [editTelefono, setEditTelefono] = useState('');
   const [editEmail, setEditEmail] = useState('');
+  const [editRol, setEditRol] = useState('usuario');
 
   const { addToast } = useToast();
 
@@ -139,6 +140,7 @@ export default function GestionClientes() {
     setEditNombre(cliente.nombre || '');
     setEditEmail(cliente.email || '');
     setEditTelefono(cliente.telefono || '');
+    setEditRol(cliente.rol || 'usuario');
   };
 
   const guardarEdicion = async (id: string) => {
@@ -150,7 +152,8 @@ export default function GestionClientes() {
           id,
           nombre: editNombre.trim(),
           email: editEmail.trim(),
-          telefono: editTelefono.trim()
+          telefono: editTelefono.trim(),
+          rol: editRol
         })
       });
 
@@ -243,9 +246,28 @@ export default function GestionClientes() {
                       <div style={iconBoxS}><UserIcon size={24} color="#2563eb" /></div>
                       <div>
                         {editingId === cliente.id ? (
-                          <input value={editNombre} onChange={(e) => setEditNombre(e.target.value)} style={inputSmallS} />
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                            <input value={editNombre} onChange={(e) => setEditNombre(e.target.value)} style={inputSmallS} />
+                            <select value={editRol} onChange={(e) => setEditRol(e.target.value)} style={inputSmallS}>
+                              <option value="usuario">Usuario</option>
+                              <option value="admin">Admin</option>
+                            </select>
+                          </div>
                         ) : (
-                          <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 900 }}>{cliente.nombre || 'Invitado'}</h2>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 900 }}>{cliente.nombre || 'Invitado'}</h2>
+                            <span style={{ 
+                              fontSize: '10px', 
+                              padding: '2px 6px', 
+                              borderRadius: '10px', 
+                              backgroundColor: cliente.rol === 'admin' ? '#fee2e2' : '#f3f4f6',
+                              color: cliente.rol === 'admin' ? '#dc2626' : '#4b5563',
+                              fontWeight: 'bold',
+                              textTransform: 'uppercase'
+                            }}>
+                              {cliente.rol || 'usuario'}
+                            </span>
+                          </div>
                         )}
                         <span style={{ fontSize: '11px', color: '#9ca3af', fontFamily: 'monospace' }}>ID: {cliente.id.substring(0,8)}...</span>
                       </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useToast } from '../../../context/ToastContext';
-import { User as UserIcon, Phone, MapPin, Search, ArrowLeft, Mail, Trash2, Edit, Save, X, Eye, EyeOff, Lock, RefreshCw } from 'lucide-react';
+import { User as UserIcon, Phone, MapPin, Search, ArrowLeft, Mail, Trash2, Edit, Save, X, Eye, EyeOff, Lock, RefreshCw, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 
 // --- ESTILOS ---
@@ -289,14 +289,22 @@ export default function GestionClientes() {
                   </div>
 
                   <div style={{ fontSize: '14px', color: '#4b5563', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div style={infoRowS}>
-                      <Mail size={16} color="#9ca3af" /> 
-                      {editingId === cliente.id ? (
-                        <input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} style={inputSmallS} />
-                      ) : (
-                        <span>{cliente.email || 'Sin email'}</span>
-                      )}
-                    </div>
+	                    <div style={{ ...infoRowS, justifyContent: 'space-between' }}>
+	                      <div style={infoRowS}>
+	                        <Mail size={16} color="#9ca3af" /> 
+	                        {editingId === cliente.id ? (
+	                          <input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} style={inputSmallS} />
+	                        ) : (
+	                          <span>{cliente.email || 'Sin email'}</span>
+	                        )}
+	                      </div>
+	                      {cliente.email && !editingId && (
+	                        <div title="Email sincronizado con Auth" style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#ecfdf5', padding: '2px 6px', borderRadius: '10px', border: '1px solid #d1fae5' }}>
+	                          <CheckCircle2 size={12} color="#10b981" />
+	                          <span style={{ fontSize: '10px', color: '#047857', fontWeight: 'bold' }}>SINCRO</span>
+	                        </div>
+	                      )}
+	                    </div>
                     
                     <div style={infoRowS}>
                       <Phone size={16} color="#9ca3af" /> 

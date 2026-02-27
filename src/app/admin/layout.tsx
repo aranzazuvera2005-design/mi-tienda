@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import "../globals.css"; // Subimos un nivel para encontrar el CSS
-import { CartProvider } from "../../context/CartContext"; // Usamos @ para ir directo a src/context
+import "../globals.css";
+import { CartProvider } from "../../context/CartContext";
+import { AdminGuard } from "./admin-guard";
 
 export const metadata: Metadata = {
   title: "MI STORE - ADMIN",
@@ -13,9 +14,11 @@ export default function AdminLayout({
 }) {
   return (
     <CartProvider>
-      <section className="admin-container">
-        {children}
-      </section>
+      <AdminGuard>
+        <section className="admin-container">
+          {children}
+        </section>
+      </AdminGuard>
     </CartProvider>
   );
 }

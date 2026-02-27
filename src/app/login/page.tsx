@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Mail, Lock, UserPlus, LogIn, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
-export default function, non- the LoginPage() {
+  export default function LoginPage() {
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');        
   const [password, setPassword] = useState('');

@@ -21,7 +21,8 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { session } } = await supabase.auth.getSession();
+        const user = session?.user;
 
         if (!user) {
           setIsAdmin(false);
@@ -35,13 +36,19 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
           .eq('id', user.id)
           .single();
 
-        if (error || !perfil || perfil.rol !== 'admin') {
+        if (error || !perfil) {
+          console.error('Error fetching profile:', error);
           setIsAdmin(false);
           router.push('/');
           return;
         }
 
-        setIsAdmin(true);
+        if (perfil.rol === 'admin') {
+          setIsAdmin(true);
+        } else {
+          setIsAdmin(false);
+          router.push('/');
+        }
       } catch (e) {
         console.error('Error checking admin status:', e);
         setIsAdmin(false);

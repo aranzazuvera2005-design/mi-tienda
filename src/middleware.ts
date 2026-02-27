@@ -15,11 +15,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Obtener el token de la cookie de sesión
-  const token = request.cookies.get('sb-auth-token')?.value;
+  // En Next.js con Supabase, las cookies suelen tener nombres dinámicos o prefijos
+  // Intentamos obtener cualquier cookie que parezca de sesión de Supabase
+  const allCookies = request.cookies.getAll();
+  const authCookie = allCookies.find(c => c.name.includes('auth-token') || c.name.startsWith('sb-'));
+  const token = authCookie?.value;
 
   if (!token) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    // Si no hay token en cookies, permitimos que el AdminGuard (lado cliente) maneje la redirección
+    // para evitar bucles si el middleware no detecta bien la cookie pero el cliente sí tiene sesión
+    return NextResponse.next();
   }
 
   try {

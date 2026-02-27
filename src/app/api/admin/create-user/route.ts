@@ -9,7 +9,13 @@ const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_P
 export async function POST(req: Request) {
   try {
     if (!SUPABASE_URL || !SERVICE_ROLE) {
-      return NextResponse.json({ error: 'Supabase service role key not configured' }, { status: 500 });
+      const missing = [];
+      if (!SUPABASE_URL) missing.push('SUPABASE_URL');
+      if (!SERVICE_ROLE) missing.push('SUPABASE_SERVICE_ROLE_KEY');
+      return NextResponse.json({ 
+        error: `Faltan variables de entorno: ${missing.join(', ')}`,
+        details: 'Asegúrate de configurarlas en el panel de Vercel.'
+      }, { status: 500 });
     }
 
     const body = await req.json();

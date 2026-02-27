@@ -9,12 +9,9 @@ const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_P
 export async function GET() {
   try {
     if (!SUPABASE_URL || !SERVICE_ROLE) {
-      const missing = [];
-      if (!SUPABASE_URL) missing.push('SUPABASE_URL');
-      if (!SERVICE_ROLE) missing.push('SUPABASE_SERVICE_ROLE_KEY');
       return NextResponse.json({ 
-        error: `Faltan variables de entorno: ${missing.join(', ')}`,
-        details: 'Asegúrate de configurarlas en el panel de Vercel.'
+        error: "Faltan variables de entorno en Vercel",
+        details: "Revisa SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY"
       }, { status: 500 });
     }
 
@@ -22,15 +19,14 @@ export async function GET() {
       auth: { persistSession: false }
     });
 
-    // Intentar obtener perfiles con sus direcciones
+    // 1. Obtener perfiles
     let { data: perfiles, error: perfilesError } = await supabase
       .from('perfiles')
       .select('*, direcciones(*)')
       .order('nombre', { ascending: true });
 
-    // Si falla por la relación, intentamos obtener solo perfiles
+    // Reintento si falla la relación
     if (perfilesError && perfilesError.message.includes('relationship')) {
-      console.warn('Relación perfiles->direcciones no encontrada, reintentando solo perfiles');
       const { data: soloPerfiles, error: soloPerfilesError } = await supabase
         .from('perfiles')
         .select('*')
@@ -42,22 +38,19 @@ export async function GET() {
       throw perfilesError;
     }
 
-    // Intentar obtener usuarios de Auth para ver contraseñas (si están en metadata o si se puede)
-    // Nota: Supabase no devuelve contraseñas en texto plano por seguridad.
-    // Pero podemos listar usuarios para tener más info si es necesario.
-    const { data: { users }, error: authError } = await supabase.auth.admin.listUsers();
+    // 2. Obtener usuarios de Auth
+    const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
+    const users = authData?.users || [];
     
     if (authError) console.warn('Error fetching auth users:', authError);
 
-    // Combinar info si es necesario (por ahora devolvemos perfiles)
+    // 3. Combinación segura (Aquí estaba el error de Vercel)
+    // Usamos (perfiles || []) para asegurar que nunca sea null
     const clientesCompletos = (perfiles || []).map(perfil => {
-      const authUser = users?.find(u => u.id === perfil.id);
+      const authUser = users.find(u => u.id === perfil.id);
       return {
         ...perfil,
         last_sign_in_at: authUser?.last_sign_in_at,
-        // La contraseña no se puede recuperar de Supabase Auth una vez creada.
-        // Si el usuario la necesita ver, tendríamos que haberla guardado en una tabla (no recomendado)
-        // o mostrar un placeholder.
         password_placeholder: '********' 
       };
     });
@@ -73,30 +66,17 @@ export async function DELETE(req: Request) {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 
-    if (!id) {
-      return NextResponse.json({ error: 'ID de cliente es obligatorio' }, { status: 400 });
-    }
-
-    if (!SUPABASE_URL || !SERVICE_ROLE) {
-      const missing = [];
-      if (!SUPABASE_URL) missing.push('SUPABASE_URL');
-      if (!SERVICE_ROLE) missing.push('SUPABASE_SERVICE_ROLE_KEY');
-      return NextResponse.json({ 
-        error: `Faltan variables de entorno: ${missing.join(', ')}`,
-        details: 'Asegúrate de configurarlas en el panel de Vercel.'
-      }, { status: 500 });
+    if (!id || !SUPABASE_URL || !SERVICE_ROLE) {
+      return NextResponse.json({ error: 'ID faltante o error de configuración' }, { status: 400 });
     }
 
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE, {
       auth: { persistSession: false }
     });
 
-    // 1. Eliminar de Auth (esto debería eliminar en cascada si está configurado, 
-    // pero por si acaso lo hacemos manual en las tablas si no hay triggers)
     const { error: authError } = await supabase.auth.admin.deleteUser(id);
     if (authError) throw authError;
 
-    // 2. Eliminar de perfiles (si no hubo cascada)
     await supabase.from('perfiles').delete().eq('id', id);
     await supabase.from('direcciones').delete().eq('cliente_id', id);
 
@@ -111,31 +91,19 @@ export async function PUT(req: Request) {
     const body = await req.json();
     const { id, nombre, email, telefono, direccion } = body || {};
 
-    if (!id) {
-      return NextResponse.json({ error: 'ID de cliente es obligatorio' }, { status: 400 });
-    }
-
-    if (!SUPABASE_URL || !SERVICE_ROLE) {
-      const missing = [];
-      if (!SUPABASE_URL) missing.push('SUPABASE_URL');
-      if (!SERVICE_ROLE) missing.push('SUPABASE_SERVICE_ROLE_KEY');
-      return NextResponse.json({ 
-        error: `Faltan variables de entorno: ${missing.join(', ')}`,
-        details: 'Asegúrate de configurarlas en el panel de Vercel.'
-      }, { status: 500 });
+    if (!id || !SUPABASE_URL || !SERVICE_ROLE) {
+      return NextResponse.json({ error: 'ID faltante o error de configuración' }, { status: 400 });
     }
 
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE, {
       auth: { persistSession: false }
     });
 
-    // 1. Actualizar en Auth si el email cambió
     if (email) {
       const { error: authError } = await supabase.auth.admin.updateUserById(id, { email });
       if (authError) throw authError;
     }
 
-    // 2. Actualizar en perfiles
     const updateData: any = {
       updated_at: new Date().toISOString()
     };

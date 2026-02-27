@@ -28,6 +28,7 @@ export default function Header() {
           {user ? (
             <div className="flex items-center gap-3">
               <span className="text-sm text-gray-700">{user.email}</span>
+              <Link href="/perfil/mis-pedidos" className="px-3 py-2 rounded-md hover:bg-gray-100 text-sm font-bold">Mis Pedidos</Link>
               <button onClick={handleLogout} className="px-3 py-2 bg-red-600 text-white rounded-md">Cerrar sesión</button>
             </div>
           ) : (

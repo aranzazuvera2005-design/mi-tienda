@@ -27,6 +27,7 @@ model Producto {
   familiaRel  Familia? @relation(fields: [familiaId], references: [id])
   
   lineasPedido LineasPedido[]
+  devoluciones Devolucion[]
 
   @@map("productos")
 }
@@ -85,6 +86,7 @@ model Pedido {
   direccion     Direccion?     @relation(fields: [direccionId], references: [id])
   cliente       Perfil?        @relation(fields: [clienteId], references: [id])
   lineasPedido  LineasPedido[]
+  devoluciones  Devolucion[]
 
   @@map("pedidos")
 }
@@ -100,4 +102,21 @@ model LineasPedido {
   producto Producto? @relation(fields: [productoId], references: [id])
 
   @@map("lineas_pedido")
+}
+
+model Devolucion {
+  id                String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  pedidoId          String   @map("pedido_id") @db.Uuid
+  productoId        String   @map("producto_id") @db.Uuid
+  cantidad          Int
+  motivo            String?
+  estado            String   @default("Pendiente") // Pendiente, Aprobada, Rechazada, Completada
+  fechaSolicitud    DateTime @default(now()) @map("fecha_solicitud") @db.Timestamptz(6)
+  fechaLimite       DateTime @map("fecha_limite") @db.Timestamptz(6) // 30 días desde la compra
+  observacionesAdmin String? @map("observaciones_admin")
+  
+  pedido   Pedido   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  producto Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
+
+  @@map("devoluciones")
 }

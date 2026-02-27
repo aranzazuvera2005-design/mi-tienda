@@ -50,7 +50,7 @@ export async function GET() {
     if (authError) console.warn('Error fetching auth users:', authError);
 
     // Combinar info si es necesario (por ahora devolvemos perfiles)
-    const clientesCompletos = perfiles.map(perfil => {
+    const clientesCompletos = (perfiles || []).map(perfil => {
       const authUser = users?.find(u => u.id === perfil.id);
       return {
         ...perfil,

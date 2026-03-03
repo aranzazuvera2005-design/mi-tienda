@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useToast } from './context/ToastContext';
+
+import { useToast } from '@/context/ToastContext';
 import { User as UserIcon, Phone, MapPin, Search, ArrowLeft, Mail, Trash2, Edit, Save, X, Eye, EyeOff, Lock, RefreshCw, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 

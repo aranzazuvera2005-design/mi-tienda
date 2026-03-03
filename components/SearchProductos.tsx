@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import AgregarAlCarritoBtn from './AgregarAlCarritoBtn';
+import AgregarAlCarritoBtn from '@/AgregarAlCarritoBtn';
 
 export default function SearchProductos({ initialProducts = [], initialQuery = '' }: { initialProducts?: any[], initialQuery?: string }) {
   // debug: log initial products length

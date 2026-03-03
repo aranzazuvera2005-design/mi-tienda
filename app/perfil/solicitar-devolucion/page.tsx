@@ -5,8 +5,8 @@ import { createBrowserClient } from '@supabase/ssr';
 import { ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useCart } from './context/CartContext';
-import { useToast } from './context/ToastContext';
+import { useCart } from '@/context/CartContext';
+import { useToast } from '@/context/ToastContext';
 
 // 1. Componente que contiene la lógica (usa useSearchParams)
 function FormularioDevolucion() {

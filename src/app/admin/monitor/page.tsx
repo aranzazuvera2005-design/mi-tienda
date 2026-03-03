@@ -150,10 +150,10 @@ export default function MonitorVentas() {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
           {/* ÚLTIMOS PEDIDOS */}
           <div style={cardS}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
               <Bell size={20} color="#2563eb" />
               <h2 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>Últimos Pedidos</h2>
             </div>
@@ -169,25 +169,39 @@ export default function MonitorVentas() {
               ))}
               {pedidosRecientes.length === 0 && <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: '14px' }}>No hay pedidos recientes</p>}
             </div>
-            <Link href="/admin/pedidos" style={{ textAlign: 'center', fontSize: '14px', color: '#2563eb', textDecoration: 'none', fontWeight: 'bold', marginTop: '10px' }}>Ver todos los pedidos →</Link>
+            <Link href="/admin/pedidos" style={{ textAlign: 'center', fontSize: '14px', color: '#2563eb', textDecoration: 'none', fontWeight: 'bold', marginTop: '15px' }}>Ver todos los pedidos →</Link>
           </div>
 
           {/* TOP PRODUCTOS */}
           <div style={cardS}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-              <Activity size={20} color="#7c3aed" />
-              <h2 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>Top Productos</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+              <Package size={20} color="#10b981" />
+              <h2 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>Top 5 Productos</h2>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {stats?.topProductos?.map((prod: any, idx: number) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '24px', height: '24px', backgroundColor: '#f3f4f6', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold', color: '#6b7280' }}>{idx + 1}</div>
-                  <div style={{ flex: 1, fontSize: '14px', fontWeight: 'medium' }}>{prod.nombre}</div>
-                  <div style={{ backgroundColor: '#f5f3ff', color: '#7c3aed', padding: '2px 8px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold' }}>{prod.cantidad} uds</div>
-                </div>
-              ))}
-              {(!stats?.topProductos || stats.topProductos.length === 0) && <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: '14px' }}>Sin datos de ventas</p>}
+              {stats?.topProductos && stats.topProductos.length > 0 ? (
+                stats.topProductos.map((prod: any, idx: number) => {
+                  const colors = ['#fbbf24', '#d1d5db', '#f97316'];
+                  const bgColor = idx < 3 ? colors[idx] : '#f3f4f6';
+                  const textColor = idx < 3 ? 'white' : '#6b7280';
+                  return (
+                    <div key={idx} style={{ padding: '12px', backgroundColor: '#f9fafb', borderRadius: '12px', border: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '32px', height: '32px', backgroundColor: bgColor, borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 'bold', color: textColor }}>
+                        {idx + 1}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#111827' }}>{prod.nombre}</div>
+                        <div style={{ fontSize: '12px', color: '#9ca3af' }}>{prod.cantidad} unidades vendidas</div>
+                      </div>
+                      <div style={{ backgroundColor: '#f0fdf4', color: '#10b981', padding: '4px 10px', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold' }}>{prod.cantidad} uds</div>
+                    </div>
+                  );
+                })
+              ) : (
+                <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: '14px', padding: '20px' }}>Sin datos de ventas</p>
+              )}
             </div>
+            <Link href="/admin/inventario" style={{ textAlign: 'center', fontSize: '14px', color: '#10b981', textDecoration: 'none', fontWeight: 'bold', marginTop: '15px' }}>Ver inventario completo →</Link>
           </div>
         </div>
       </div>

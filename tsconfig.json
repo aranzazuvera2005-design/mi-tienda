@@ -10,10 +10,10 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "inventada18092025/*": [
-        "./src/*"
-      ]
+      "@/*": ["./*"],
+      "inventada18092025/*": ["./src/*"]
     },
+   
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,

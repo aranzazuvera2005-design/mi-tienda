@@ -1,5 +1,5 @@
 "use client";
-import { useCart } from "./context/CartContext"; // Salimos de components para entrar en context
+import { useCart } from "@/context/CartContext"; // Salimos de components para entrar en context
 
 export default function AgregarAlCarritoBtn({ producto }: { producto: any }) {
   const { addToCart } = useCart();

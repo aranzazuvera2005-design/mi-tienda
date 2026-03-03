@@ -3,7 +3,8 @@
 import { createBrowserClient } from '@supabase/ssr';
 import { useEffect, useState, useRef } from 'react';
 import { RotateCcw, CheckCircle, XCircle, Clock, RefreshCw, AlertCircle } from 'lucide-react';
-import { useToast } from './context/ToastContext';
+
+import { useToast } from '@/context/ToastContext';
 
 export default function AdminDevoluciones() {
   const [devoluciones, setDevoluciones] = useState<any[]>([]);

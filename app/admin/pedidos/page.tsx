@@ -4,7 +4,7 @@
 import { createBrowserClient } from '@supabase/ssr';
 import { useEffect, useState, useRef } from 'react';
 import { CheckCircle, Clock, Truck, User, MapPin, Package, RefreshCw } from 'lucide-react';
-import { useToast } from '../../../context/ToastContext';
+import { useToast } from './context/ToastContext';
 
 export default function AdminPedidos() {
   const [pedidos, setPedidos] = useState<any[]>([]);

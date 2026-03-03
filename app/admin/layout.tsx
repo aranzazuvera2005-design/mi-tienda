@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "../globals.css";
-import { CartProvider } from "../../context/CartContext";
+import { CartProvider } from "./context/CartContext";
 import { AdminGuard } from "./admin-guard";
 
 export const metadata: Metadata = {

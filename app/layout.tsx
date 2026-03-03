@@ -1,8 +1,8 @@
 import "./globals.css";
 
-import { CartProvider } from "../context/CartContext";
-import Header from "../components/Header";
-import { ToastProvider } from "../context/ToastContext";
+import { CartProvider } from "./context/CartContext";
+import Header from "./components/Header";
+import { ToastProvider } from "./context/ToastContext";
 
 export const metadata = {
   title: "Mi Tienda Online",

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { RotateCcw, AlertCircle, CheckCircle, Clock, XCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useCart } from '../../../context/CartContext';
+import { useCart } from './context/CartContext';
 
 export default function MisDevoluciones() {
   const [devoluciones, setDevoluciones] = useState<any[]>([]);

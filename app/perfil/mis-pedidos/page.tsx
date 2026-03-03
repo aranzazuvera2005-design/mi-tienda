@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { Package, Calendar, DollarSign, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
-import { useCart } from '../../../context/CartContext';
+import { useCart } from './context/CartContext';
 
 export default function MisPedidos() {
   const [pedidos, setPedidos] = useState<any[]>([]);

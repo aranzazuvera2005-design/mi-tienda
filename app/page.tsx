@@ -1,5 +1,5 @@
-import AgregarAlCarritoBtn from "../components/AgregarAlCarritoBtn";
-import SearchProductos from "../components/SearchProductos";
+import AgregarAlCarritoBtn from "./components/AgregarAlCarritoBtn";
+import SearchProductos from "./components/SearchProductos";
 
 export const dynamic = 'force-dynamic';
 

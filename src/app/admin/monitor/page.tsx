@@ -113,7 +113,7 @@ export default function MonitorVentas() {
             <Link href="/admin" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '10px' }}>
               <ArrowLeft size={16} /> Volver al Panel
             </Link>
-            <h1 style={{ fontSize: '32px', fontWeight: 900, margin: 0, color: '#111827' }}>Monitor de Ventas</h1>
+            <h1 style={{ fontSize: '32px', fontWeight: 900, margin: 0, color: '#111827' }}>Monitor de Ventas v2</h1>
             <p style={{ color: '#6b7280', margin: 0 }}>Métricas en tiempo real y alertas de pedidos</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#ecfdf5', padding: '8px 15px', borderRadius: '12px', border: '1px solid #d1fae5' }}>

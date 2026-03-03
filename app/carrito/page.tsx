@@ -1,6 +1,7 @@
 "use client";
 
-import { useCart } from "./context/CartContext";
+
+import { useCart } from '@/context/CartContext';
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { createBrowserClient } from '@supabase/ssr';

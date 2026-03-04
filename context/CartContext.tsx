@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useToast } from './ToastContext';
 
@@ -8,18 +8,42 @@ const CartContext = createContext<any>(null);
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [cart, setCart] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
 
   const supabase = (SUPABASE_URL && SUPABASE_ANON) ? createBrowserClient(SUPABASE_URL, SUPABASE_ANON) : null;
 
+  // Inicializar sesión al montar
   useEffect(() => {
-    if (!supabase) return;
+    if (!supabase) {
+      setIsAuthLoading(false);
+      return;
+    }
+
+    // Obtener sesión actual
+    const initAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setUser(session?.user ?? null);
+        console.debug('CartContext: Initial session loaded', session?.user?.id);
+      } catch (e) {
+        console.error('CartContext: Error loading initial session', e);
+      } finally {
+        setIsAuthLoading(false);
+      }
+    };
+
+    initAuth();
+
+    // Escuchar cambios de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      console.debug('CartContext: Auth state changed', _event, session?.user?.id);
     });
-    return () => subscription.unsubscribe();
+
+    return () => subscription?.unsubscribe();
   }, [supabase]);
 
   const { addToast } = useToast();
@@ -78,40 +102,10 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const enviarPedido = async (datosEnvio: any) => {
     if (!user) throw new Error("Inicia sesión primero");
     if (!supabase) {
-      const msg = 'Supabase no está configurado. No se puede enviar el pedido ahora.';
-      addToast({ message: msg, type: 'error' });
-      throw new Error(msg);
+      throw new Error("Supabase no está configurado");
     }
 
     try {
-      // 1. Asegurar que el perfil existe (usar upsert)
-      // Nota: No incluimos 'email' porque la columna física podría no existir en la tabla perfiles de Supabase
-      const { error: pError } = await supabase.from('perfiles').upsert({
-        id: user.id,
-        nombre: datosEnvio.nombre,
-        telefono: datosEnvio.telefono,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'id' });
-
-      if (pError) throw new Error('Error Perfil: ' + pError.message);
-
-      // 2. Verificar si la dirección ya existe para este cliente, si no, añadirla
-      const { data: existingDir } = await supabase
-        .from('direcciones')
-        .select('id')
-        .eq('cliente_id', user.id)
-        .eq('calle', datosEnvio.direccion)
-        .single();
-
-      if (!existingDir) {
-        await supabase.from('direcciones').insert({
-          cliente_id: user.id,
-          calle: datosEnvio.direccion,
-          es_principal: false
-        });
-      }
-
-      // 3. Crear el pedido - SEGURIDAD: Mapear correctamente cliente_id y direccion_ent
       const { data, error: oError } = await supabase.from('pedidos').insert({
         cliente_id: user.id,  // Vinculamos el ID del usuario autenticado
         total: total,
@@ -132,19 +126,28 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const logout = async () => {
-    if (supabase) {
+    if (!supabase) return;
+    try {
       await supabase.auth.signOut();
+      setUser(null);
+      setCart([]);
+      addToast({ message: 'Sesión cerrada correctamente', type: 'success' });
+    } catch (e: any) {
+      addToast({ message: `Error al cerrar sesión: ${e?.message || e}`, type: 'error' });
     }
-    setUser(null);
   };
 
-  const clearCart = () => setCart([]);
-
   return (
-    <CartContext.Provider value={{ cart, setCart, addToCart, removeFromCart, total, user, enviarPedido, logout, clearCart }}>
+    <CartContext.Provider value={{ cart, user, addToCart, removeFromCart, total, enviarPedido, logout, isAuthLoading }}>
       {children}
     </CartContext.Provider>
   );
 };
 
-export const useCart = () => useContext(CartContext);
+export const useCart = () => {
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error('useCart debe usarse dentro de CartProvider');
+  }
+  return context;
+};

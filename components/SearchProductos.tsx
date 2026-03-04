@@ -29,9 +29,9 @@ function ProductGridSkeleton() {
       {[...Array(6)].map((_, i) => (
         <div 
           key={i} 
-          className="bg-white p-0 rounded-3xl shadow-sm border border-slate-100 flex flex-col overflow-hidden animate-pulse"
+          className="bg-white p-0 rounded-2xl shadow-md border border-slate-100 flex flex-col overflow-hidden animate-pulse"
         >
-          <div className="w-full aspect-square bg-slate-200 rounded-t-3xl"></div>
+          <div className="w-full aspect-square bg-slate-200 rounded-t-2xl"></div>
           <div className="p-6 flex flex-col flex-1 space-y-3">
             <div className="h-6 bg-slate-200 rounded-lg w-3/4"></div>
             <div className="h-4 bg-slate-100 rounded-lg w-full"></div>
@@ -141,7 +141,7 @@ export default function SearchProductos({
   return (
     <section>
       {/* Buscador Premium */}
-      <form onSubmit={(e) => { e.preventDefault(); fetchResults(q, 1); }} className="mb-8 flex gap-0 items-center overflow-hidden rounded-2xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-400 focus-within:shadow-lg transition-all bg-white">
+      <form onSubmit={(e) => { e.preventDefault(); fetchResults(q, 1); }} className="mb-8 flex gap-0 items-center overflow-hidden rounded-2xl border border-slate-200 shadow-md focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-400 focus-within:shadow-lg transition-all bg-white">
         <input
           aria-label="Buscar productos"
           value={q}
@@ -188,9 +188,9 @@ export default function SearchProductos({
               const imageUrl = buildImageUrl(producto.imagen_url || producto.imagenUrl);
               
               return (
-                <div key={producto.id} className="bg-white rounded-3xl shadow-sm hover:shadow-xl transition-all border border-slate-100 flex flex-col overflow-hidden h-full group animate-in fade-in slide-in-from-bottom-4 duration-300">
+                <div key={producto.id} className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all border border-slate-100 flex flex-col overflow-hidden h-full group animate-in fade-in slide-in-from-bottom-4 duration-300 hover:-translate-y-1">
                   {/* Imagen del producto - Premium Design */}
-                  <div className="relative w-full aspect-square overflow-hidden bg-slate-100 rounded-3xl m-4 mb-0">
+                  <div className="relative w-full aspect-square overflow-hidden bg-slate-100 rounded-2xl m-4 mb-0">
                     <Image
                       src={imageUrl}
                       alt={producto.nombre || 'Producto'}

@@ -3,7 +3,30 @@ import SearchProductos from "@/components/SearchProductos";
 
 export const dynamic = 'force-dynamic';
 
-export default async function HomePage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+// Función para ordenar productos en el servidor
+function sortProducts(productos: any[], sortBy: string): any[] {
+  const sorted = [...productos];
+  
+  switch (sortBy) {
+    case 'name_asc':
+      return sorted.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
+    case 'name_desc':
+      return sorted.sort((a, b) => (b.nombre || '').localeCompare(a.nombre || ''));
+    case 'price_asc':
+      return sorted.sort((a, b) => Number(a.precio || 0) - Number(b.precio || 0));
+    case 'price_desc':
+      return sorted.sort((a, b) => Number(b.precio || 0) - Number(a.precio || 0));
+    case 'newest':
+    default:
+      return sorted.sort((a, b) => {
+        const dateA = new Date(a.created_at || 0).getTime();
+        const dateB = new Date(b.created_at || 0).getTime();
+        return dateB - dateA; // Descendente: lo más nuevo primero
+      });
+  }
+}
+
+export default async function HomePage({ searchParams }: { searchParams: Promise<{ q?: string; sort?: string }> }) {
   // Usamos el endpoint REST de Supabase desde el servidor para evitar depender
   // de una conexión directa a Postgres (que falla si no hay acceso IPv4 al host)
   // Priorizamos las variables de servidor si están disponibles
@@ -12,6 +35,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
 
   const params = await searchParams;
   const q = params?.q?.toString()?.trim() || '';
+  const sort = params?.sort?.toString()?.trim() || 'newest';
 
   let productos: any[] = [];
 
@@ -38,6 +62,8 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
 
       if (res.ok) {
         productos = await res.json();
+        // Aplicar ordenación en el servidor
+        productos = sortProducts(productos, sort);
       } else {
         const errorText = await res.text();
         console.error(`Error Supabase API (${res.status}):`, errorText);
@@ -64,8 +90,8 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
           </div>
         </section>
 
-        {/* Buscador */}
-        <SearchProductos initialProducts={productos} initialQuery={q} />
+        {/* Buscador y Ordenación */}
+        <SearchProductos initialProducts={productos} initialQuery={q} initialSort={sort} />
 
         {productos.length === 0 && (
           <div className="mt-12 p-8 bg-blue-50 border border-blue-100 rounded-2xl text-center">

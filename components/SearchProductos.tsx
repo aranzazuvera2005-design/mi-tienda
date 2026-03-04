@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import AgregarAlCarritoBtn from '@/components/AgregarAlCarritoBtn';
+import SortDropdown from '@/components/SortDropdown';
 
 // Base URL de Supabase para construcción de URLs completas
 const SUPABASE_BASE_URL = 'https://vjkdxevzdtjsgabyxdgs.supabase.co/storage/v1/object/public';
@@ -20,7 +21,7 @@ const buildImageUrl = (imagenUrl: string | null | undefined): string => {
   return `${SUPABASE_BASE_URL}/${imagenUrl}`;
 };
 
-export default function SearchProductos({ initialProducts = [], initialQuery = '' }: { initialProducts?: any[], initialQuery?: string }) {
+export default function SearchProductos({ initialProducts = [], initialQuery = '', initialSort = 'newest' }: { initialProducts?: any[], initialQuery?: string, initialSort?: string }) {
   // debug: log initial products length
   useEffect(() => {
     try {
@@ -35,6 +36,7 @@ export default function SearchProductos({ initialProducts = [], initialQuery = '
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [limit] = useState(12);
+  const [isReordering, setIsReordering] = useState(false);
 
   // debounce
   useEffect(() => {
@@ -88,8 +90,16 @@ export default function SearchProductos({ initialProducts = [], initialQuery = '
     fetchResults('', 1);
   };
 
+  // Efecto para mostrar transición cuando se reordena
+  useEffect(() => {
+    setIsReordering(true);
+    const timer = setTimeout(() => setIsReordering(false), 300);
+    return () => clearTimeout(timer);
+  }, [initialSort]);
+
   return (
     <section>
+      {/* Buscador */}
       <form onSubmit={(e) => { e.preventDefault(); fetchResults(q, 1); }} className="mb-8 flex gap-0 items-center overflow-hidden rounded-xl border border-gray-200 shadow-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
         <input
           aria-label="Buscar productos"
@@ -108,19 +118,31 @@ export default function SearchProductos({ initialProducts = [], initialQuery = '
         </button>
       </form>
 
-      <div aria-live="polite">
-        {loading && (<div className="text-gray-500 mb-4">🔍 Buscando…</div>)}
-        {!loading && results && results.length === 0 && (
-          <div className="text-gray-500 mb-4">No se han encontrado productos.</div>
-        )}
+      {/* Controles de Ordenación y Estado */}
+      <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div aria-live="polite" className="text-sm">
+          {loading && (<span className="text-gray-500">🔍 Buscando…</span>)}
+          {!loading && results && results.length === 0 && (
+            <span className="text-gray-500">No se han encontrado productos.</span>
+          )}
+          {!loading && results && results.length > 0 && (
+            <span className="text-gray-600 font-medium">{results.length} producto{results.length !== 1 ? 's' : ''} encontrado{results.length !== 1 ? 's' : ''}</span>
+          )}
+        </div>
+        
+        {/* Dropdown de Ordenación */}
+        <div className="w-full sm:w-auto">
+          <SortDropdown />
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Grid de Productos con Transición */}
+      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 transition-all duration-300 ${isReordering ? 'opacity-50' : 'opacity-100'}`}>
         {results && results.map((producto, index) => {
           const imageUrl = buildImageUrl(producto.imagen_url || producto.imagenUrl);
           
           return (
-            <div key={producto.id} className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all border border-gray-100 flex flex-col overflow-hidden h-full">
+            <div key={producto.id} className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all border border-gray-100 flex flex-col overflow-hidden h-full animate-in fade-in slide-in-from-bottom-4 duration-300">
               {/* Imagen del producto - Fase 4 Design */}
               <div className="relative w-full aspect-square overflow-hidden bg-gray-100">
                 <Image

@@ -56,7 +56,7 @@ export default function SortDropdown() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         disabled={isPending}
-        className={`w-full sm:w-auto px-6 py-3 bg-white border border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-md transition-all flex items-center justify-between gap-3 font-medium text-gray-700 disabled:opacity-60 disabled:cursor-not-allowed`}
+        className={`w-full sm:w-auto px-6 py-3 bg-white border border-slate-200 rounded-xl hover:border-blue-400 hover:shadow-md transition-all flex items-center justify-between gap-3 font-medium text-slate-700 disabled:opacity-60 disabled:cursor-not-allowed`}
       >
         <span className="flex items-center gap-2">
           <span>{selectedOption?.icon}</span>
@@ -75,7 +75,7 @@ export default function SortDropdown() {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 sm:left-auto sm:right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="absolute top-full left-0 right-0 sm:left-auto sm:right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-lg z-10 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
           {SORT_OPTIONS.map((option) => (
             <button
               key={option.value}
@@ -84,7 +84,7 @@ export default function SortDropdown() {
               className={`w-full px-6 py-3 text-left flex items-center gap-3 transition-all disabled:opacity-60 ${
                 selectedSort === option.value
                   ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 font-semibold'
-                  : 'text-gray-700 hover:bg-gray-50'
+                  : 'text-slate-700 hover:bg-slate-50'
               }`}
             >
               <span className="text-lg">{option.icon}</span>

@@ -43,10 +43,10 @@ export default function AgregarAlCarritoBtn({ producto }: { producto: any }) {
     <button 
       onClick={handleAddToCart}
       disabled={isAdding}
-      className={`w-full font-bold text-sm py-3 px-4 rounded-xl transition-all duration-300 active:scale-95 shadow-md border-0 whitespace-nowrap ${
+      className={`w-full font-bold text-sm py-3 px-4 rounded-full transition-all duration-300 active:scale-95 shadow-md border-0 whitespace-nowrap ${
         isAdded
-          ? 'bg-green-500 text-white hover:bg-green-600'
-          : 'bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed'
+          ? 'bg-green-500 text-white hover:bg-green-600 hover:-translate-y-1'
+          : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0'
       }`}
     >
       {isAdding ? (

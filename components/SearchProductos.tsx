@@ -29,19 +29,19 @@ function ProductGridSkeleton() {
       {[...Array(6)].map((_, i) => (
         <div 
           key={i} 
-          className="bg-white p-0 rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden animate-pulse"
+          className="bg-white p-0 rounded-3xl shadow-sm border border-slate-100 flex flex-col overflow-hidden animate-pulse"
         >
-          <div className="w-full aspect-square bg-gray-200"></div>
-          <div className="p-5 flex flex-col flex-1 space-y-3">
-            <div className="h-6 bg-gray-200 rounded-lg w-3/4"></div>
-            <div className="h-4 bg-gray-100 rounded-lg w-full"></div>
-            <div className="h-4 bg-gray-100 rounded-lg w-1/2"></div>
+          <div className="w-full aspect-square bg-slate-200 rounded-t-3xl"></div>
+          <div className="p-6 flex flex-col flex-1 space-y-3">
+            <div className="h-6 bg-slate-200 rounded-lg w-3/4"></div>
+            <div className="h-4 bg-slate-100 rounded-lg w-full"></div>
+            <div className="h-4 bg-slate-100 rounded-lg w-1/2"></div>
             <div className="mt-auto flex items-end justify-between">
               <div className="space-y-2">
-                <div className="h-3 bg-gray-100 rounded w-8"></div>
-                <div className="h-6 bg-gray-200 rounded w-16"></div>
+                <div className="h-3 bg-slate-100 rounded w-8"></div>
+                <div className="h-6 bg-slate-200 rounded w-16"></div>
               </div>
-              <div className="w-32 h-10 bg-gray-200 rounded-xl"></div>
+              <div className="w-32 h-10 bg-slate-200 rounded-full"></div>
             </div>
           </div>
         </div>
@@ -140,34 +140,34 @@ export default function SearchProductos({
 
   return (
     <section>
-      {/* Buscador */}
-      <form onSubmit={(e) => { e.preventDefault(); fetchResults(q, 1); }} className="mb-8 flex gap-0 items-center overflow-hidden rounded-xl border border-gray-200 shadow-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
+      {/* Buscador Premium */}
+      <form onSubmit={(e) => { e.preventDefault(); fetchResults(q, 1); }} className="mb-8 flex gap-0 items-center overflow-hidden rounded-2xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-400 focus-within:shadow-lg transition-all bg-white">
         <input
           aria-label="Buscar productos"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Buscar por nombre, descripción, familia o categoría..."
-          className="flex-1 p-4 outline-none text-gray-600 placeholder:text-gray-400"
+          className="flex-1 p-4 outline-none text-slate-700 placeholder:text-slate-400 bg-transparent"
         />
         {q && (
-          <button type="button" onClick={clear} className="px-4 text-gray-400 hover:text-gray-600 transition-colors">
+          <button type="button" onClick={clear} className="px-4 text-slate-400 hover:text-slate-600 transition-colors">
             ✕
           </button>
         )}
-        <button type="submit" className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold transition-colors active:scale-95">
+        <button type="submit" className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold transition-all active:scale-95 shadow-md">
           Buscar
         </button>
       </form>
 
       {/* Controles de Filtros y Ordenación */}
-      <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div aria-live="polite" className="text-sm">
-          {(loading || isPending) && (<span className="text-gray-500">🔍 Actualizando…</span>)}
+          {(loading || isPending) && (<span className="text-slate-600 font-medium">🔍 Actualizando…</span>)}
           {!loading && !isPending && results && results.length === 0 && (
-            <span className="text-gray-500">No se han encontrado productos.</span>
+            <span className="text-slate-500">No se han encontrado productos.</span>
           )}
           {!loading && !isPending && results && results.length > 0 && (
-            <span className="text-gray-600 font-medium">{results.length} producto{results.length !== 1 ? 's' : ''} encontrado{results.length !== 1 ? 's' : ''}</span>
+            <span className="text-slate-700 font-medium">{results.length} producto{results.length !== 1 ? 's' : ''} encontrado{results.length !== 1 ? 's' : ''}</span>
           )}
         </div>
         
@@ -180,7 +180,7 @@ export default function SearchProductos({
         </div>
       </div>
 
-      {/* Grid de Productos - Sin Suspense para mantener el Header visible */}
+      {/* Grid de Productos - Premium Design */}
       <div className={`transition-opacity duration-300 ${isPending ? 'opacity-60' : 'opacity-100'}`}>
         {results && results.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -188,40 +188,40 @@ export default function SearchProductos({
               const imageUrl = buildImageUrl(producto.imagen_url || producto.imagenUrl);
               
               return (
-                <div key={producto.id} className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all border border-gray-100 flex flex-col overflow-hidden h-full animate-in fade-in slide-in-from-bottom-4 duration-300">
-                  {/* Imagen del producto - Fase 4 Design */}
-                  <div className="relative w-full aspect-square overflow-hidden bg-gray-100">
+                <div key={producto.id} className="bg-white rounded-3xl shadow-sm hover:shadow-xl transition-all border border-slate-100 flex flex-col overflow-hidden h-full group animate-in fade-in slide-in-from-bottom-4 duration-300">
+                  {/* Imagen del producto - Premium Design */}
+                  <div className="relative w-full aspect-square overflow-hidden bg-slate-100 rounded-3xl m-4 mb-0">
                     <Image
                       src={imageUrl}
                       alt={producto.nombre || 'Producto'}
                       width={500}
                       height={500}
-                      className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       priority={index < 3}
                       loading={index < 3 ? undefined : "lazy"}
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       unoptimized={false}
                     />
                     
-                    {/* Badge dinámico - Fase 4: Azul semi-transparente con bordes redondeados */}
+                    {/* Badge Pastel Premium */}
                     {((producto.familias && producto.familias.nombre) || producto.categoria) && (
-                      <div className="absolute left-3 top-3 bg-blue-600/90 backdrop-blur-sm text-white text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-lg border border-blue-400/40 flex items-center gap-1.5">
+                      <div className="absolute left-4 top-4 bg-white/95 backdrop-blur-sm text-slate-700 text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-full shadow-md border border-white/50 flex items-center gap-1.5">
                         <span>🏷️</span>
                         {producto.familias?.nombre || producto.categoria}
                       </div>
                     )}
                   </div>
 
-                  {/* Contenido - Fase 4 Design */}
-                  <div className="p-5 flex flex-col flex-1">
-                    <h2 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">{producto.nombre}</h2>
-                    <p className="text-sm text-gray-500 line-clamp-2 mb-4">{producto.descripcion || 'Sin descripción disponible'}</p>
+                  {/* Contenido - Premium Design */}
+                  <div className="p-6 flex flex-col flex-1">
+                    <h2 className="text-lg font-bold text-slate-900 mb-2 line-clamp-2">{producto.nombre}</h2>
+                    <p className="text-sm text-slate-600 line-clamp-2 mb-4">{producto.descripcion || 'Sin descripción disponible'}</p>
                     
                     <div className="mt-auto flex items-end justify-between gap-4">
                       <div>
-                        <div className="text-xs uppercase font-bold text-gray-400 tracking-tight mb-1">Precio</div>
-                        {/* Fase 4: Precio en negrita y azul vibrante */}
-                        <div className="text-2xl font-black text-blue-600">
+                        <div className="text-xs uppercase font-bold text-slate-400 tracking-tight mb-1">Precio</div>
+                        {/* Precio Premium */}
+                        <div className="text-3xl font-black bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
                           {Number(producto.precio || 0).toFixed(2)}€
                         </div>
                       </div>

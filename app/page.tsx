@@ -121,16 +121,34 @@ export default async function HomePage({
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-6xl mx-auto">
-        {/* HERO */}
-        <section className="bg-white rounded-xl p-8 mb-4 shadow-sm border border-gray-200 flex flex-col md:flex-row items-center gap-6">
+    <main className="min-h-screen bg-slate-50">
+      <div className="max-w-6xl mx-auto px-4 py-12">
+        {/* HERO SECTION - Premium Design */}
+        <section className="bg-white rounded-3xl p-8 md:p-12 mb-12 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center gap-8 overflow-hidden">
           <div className="flex-1">
-            <h1 className="text-4xl font-extrabold text-gray-900">Mi Tienda</h1>
-            <p className="text-gray-600 mt-2">Productos seleccionados con cariño. Compra local, recibe en casa.</p>
+            <h1 className="text-5xl md:text-6xl font-serif font-bold text-slate-900 mb-4 leading-tight">
+              Mi Tienda
+            </h1>
+            <p className="text-lg text-slate-600 mb-6 leading-relaxed">
+              Productos seleccionados con cariño. Compra local, recibe en casa.
+            </p>
+            <div className="flex gap-4">
+              <div className="flex items-center gap-2 text-slate-700">
+                <span className="text-2xl">✨</span>
+                <span className="font-medium">Calidad Premium</span>
+              </div>
+              <div className="flex items-center gap-2 text-slate-700">
+                <span className="text-2xl">🚚</span>
+                <span className="font-medium">Envío Rápido</span>
+              </div>
+            </div>
           </div>
-          <div className="hidden md:block">
-            <img src="/globe.svg" alt="Mi Tienda" className="w-40 h-40" />
+          <div className="hidden md:block flex-shrink-0 w-64 h-64 rounded-2xl overflow-hidden shadow-lg">
+            <img 
+              src="/globe.svg" 
+              alt="Mi Tienda - Productos Premium" 
+              className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+            />
           </div>
         </section>
 
@@ -145,11 +163,11 @@ export default async function HomePage({
 
         {/* Mensaje de configuración pendiente */}
         {noConfig && (
-          <div className="mt-12 p-8 bg-blue-50 border border-blue-100 rounded-2xl text-center">
-            <h2 className="text-xl font-bold text-blue-900 mb-2">
+          <div className="mt-12 p-8 bg-amber-50 border border-amber-200 rounded-3xl text-center">
+            <h2 className="text-xl font-bold text-amber-900 mb-2">
               Configuración pendiente
             </h2>
-            <p className="text-blue-700">
+            <p className="text-amber-700">
               Para ver tus productos, asegúrate de configurar las variables de entorno de Supabase en Vercel.
             </p>
           </div>
@@ -157,11 +175,11 @@ export default async function HomePage({
 
         {/* Mensaje de sin productos */}
         {!noConfig && productos.length === 0 && (
-          <div className="mt-12 p-8 bg-amber-50 border border-amber-100 rounded-2xl text-center">
-            <h2 className="text-xl font-bold text-amber-900 mb-2">
+          <div className="mt-12 p-8 bg-blue-50 border border-blue-200 rounded-3xl text-center">
+            <h2 className="text-xl font-bold text-blue-900 mb-2">
               {categoria ? '📭 No hay productos en esta categoría' : '📭 No se encontraron productos'}
             </h2>
-            <p className="text-amber-700">
+            <p className="text-blue-700">
               {categoria 
                 ? 'Intenta seleccionar otra categoría o ajusta tu búsqueda.' 
                 : 'Conexión establecida, pero la lista de productos está vacía o no se pudo cargar.'}

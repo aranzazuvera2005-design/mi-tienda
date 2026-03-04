@@ -25,11 +25,11 @@ const buildImageUrl = (imagenUrl: string | null | undefined): string => {
 // Componente Skeleton para el grid
 function ProductGridSkeleton() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
       {[...Array(6)].map((_, i) => (
         <div 
           key={i} 
-          className="bg-white p-0 rounded-2xl shadow-md border border-slate-100 flex flex-col overflow-hidden animate-pulse"
+          className="bg-white p-0 rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 flex flex-col overflow-hidden animate-pulse"
         >
           <div className="w-full aspect-square bg-slate-200 rounded-t-2xl"></div>
           <div className="p-6 flex flex-col flex-1 space-y-3">
@@ -41,7 +41,7 @@ function ProductGridSkeleton() {
                 <div className="h-3 bg-slate-100 rounded w-8"></div>
                 <div className="h-6 bg-slate-200 rounded w-16"></div>
               </div>
-              <div className="w-32 h-10 bg-slate-200 rounded-full"></div>
+              <div className="w-32 h-11 bg-slate-200 rounded-full"></div>
             </div>
           </div>
         </div>
@@ -139,15 +139,15 @@ export default function SearchProductos({
   };
 
   return (
-    <section>
+    <section className="space-y-8">
       {/* Buscador Premium */}
-      <form onSubmit={(e) => { e.preventDefault(); fetchResults(q, 1); }} className="mb-8 flex gap-0 items-center overflow-hidden rounded-2xl border border-slate-200 shadow-md focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-400 focus-within:shadow-lg transition-all bg-white">
+      <form onSubmit={(e) => { e.preventDefault(); fetchResults(q, 1); }} className="flex gap-0 items-center overflow-hidden rounded-2xl border border-slate-200 shadow-lg shadow-slate-200/50 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-400 focus-within:shadow-xl transition-all bg-white">
         <input
           aria-label="Buscar productos"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Buscar por nombre, descripción, familia o categoría..."
-          className="flex-1 p-4 outline-none text-slate-700 placeholder:text-slate-400 bg-transparent"
+          className="flex-1 p-4 outline-none text-slate-700 placeholder:text-slate-400 bg-transparent text-base"
         />
         {q && (
           <button type="button" onClick={clear} className="px-4 text-slate-400 hover:text-slate-600 transition-colors">
@@ -160,14 +160,14 @@ export default function SearchProductos({
       </form>
 
       {/* Controles de Filtros y Ordenación */}
-      <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         <div aria-live="polite" className="text-sm">
           {(loading || isPending) && (<span className="text-slate-600 font-medium">🔍 Actualizando…</span>)}
           {!loading && !isPending && results && results.length === 0 && (
             <span className="text-slate-500">No se han encontrado productos.</span>
           )}
           {!loading && !isPending && results && results.length > 0 && (
-            <span className="text-slate-700 font-medium">{results.length} producto{results.length !== 1 ? 's' : ''} encontrado{results.length !== 1 ? 's' : ''}</span>
+            <span className="text-slate-700 font-semibold">{results.length} producto{results.length !== 1 ? 's' : ''} encontrado{results.length !== 1 ? 's' : ''}</span>
           )}
         </div>
         
@@ -183,12 +183,12 @@ export default function SearchProductos({
       {/* Grid de Productos - Premium Design */}
       <div className={`transition-opacity duration-300 ${isPending ? 'opacity-60' : 'opacity-100'}`}>
         {results && results.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {results.map((producto, index) => {
               const imageUrl = buildImageUrl(producto.imagen_url || producto.imagenUrl);
               
               return (
-                <div key={producto.id} className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all border border-slate-100 flex flex-col overflow-hidden h-full group animate-in fade-in slide-in-from-bottom-4 duration-300 hover:-translate-y-1">
+                <div key={producto.id} className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 hover:shadow-2xl hover:shadow-slate-300/50 transition-all border border-slate-100 flex flex-col overflow-hidden h-full group animate-in fade-in slide-in-from-bottom-4 duration-300 hover:-translate-y-2">
                   {/* Imagen del producto - Premium Design */}
                   <div className="relative w-full aspect-square overflow-hidden bg-slate-100 rounded-2xl m-4 mb-0">
                     <Image
@@ -215,7 +215,7 @@ export default function SearchProductos({
                   {/* Contenido - Premium Design */}
                   <div className="p-6 flex flex-col flex-1">
                     <h2 className="text-lg font-bold text-slate-900 mb-2 line-clamp-2">{producto.nombre}</h2>
-                    <p className="text-sm text-slate-600 line-clamp-2 mb-4">{producto.descripcion || 'Sin descripción disponible'}</p>
+                    <p className="text-sm text-slate-600 line-clamp-2 mb-6">{producto.descripcion || 'Sin descripción disponible'}</p>
                     
                     <div className="mt-auto flex items-end justify-between gap-4">
                       <div>

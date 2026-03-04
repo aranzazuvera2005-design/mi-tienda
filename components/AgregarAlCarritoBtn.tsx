@@ -43,28 +43,27 @@ export default function AgregarAlCarritoBtn({ producto }: { producto: any }) {
     <button 
       onClick={handleAddToCart}
       disabled={isAdding}
-      className={`w-full font-bold text-sm py-3 px-4 rounded-full transition-all duration-300 active:scale-95 shadow-md border-0 whitespace-nowrap ${
+      className={`w-full font-bold text-sm py-3 px-4 rounded-full transition-all duration-300 active:scale-95 shadow-md border-0 whitespace-nowrap flex items-center justify-center gap-2 ${
         isAdded
           ? 'bg-green-500 text-white hover:bg-green-600 hover:-translate-y-1'
-          : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0'
+          : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0 shadow-lg'
       }`}
     >
       {isAdding ? (
-        <span className="flex items-center justify-center gap-1.5">
+        <>
           <span className="animate-spin inline-block">⏳</span>
           <span className="hidden sm:inline">Añadiendo...</span>
-        </span>
+        </>
       ) : isAdded ? (
-        <span className="flex items-center justify-center gap-1.5">
+        <>
           <span>✓</span>
           <span className="hidden sm:inline">¡Añadido!</span>
-        </span>
+        </>
       ) : (
-        <span className="flex items-center justify-center gap-1.5">
+        <>
           <span>🛒</span>
-          <span className="hidden sm:inline">Añadir al Carrito</span>
-          <span className="sm:hidden">Añadir</span>
-        </span>
+          <span className="hidden sm:inline">Añadir</span>
+        </>
       )}
     </button>
   );

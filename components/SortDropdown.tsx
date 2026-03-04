@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 
 interface SortOption {
   value: string;
@@ -20,6 +20,7 @@ const SORT_OPTIONS: SortOption[] = [
 export default function SortDropdown() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedSort, setSelectedSort] = useState('newest');
 
@@ -33,14 +34,18 @@ export default function SortDropdown() {
     setSelectedSort(sortValue);
     setIsOpen(false);
 
-    // Construir nueva URL con el parámetro de ordenación
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('sort', sortValue);
-    
-    // Resetear la página a 1 cuando se cambia el ordenamiento
-    params.delete('page');
-    
-    (router.push as any)(`?${params.toString()}`, { scroll: false });
+    // Usar useTransition para evitar recargas completas
+    startTransition(() => {
+      // Construir nueva URL con el parámetro de ordenación
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('sort', sortValue);
+      
+      // Resetear la página a 1 cuando se cambia el ordenamiento
+      params.delete('page');
+      
+      // Usar router.push sin scroll
+      (router.push as any)(`?${params.toString()}`, { scroll: false });
+    });
   };
 
   const selectedOption = SORT_OPTIONS.find(opt => opt.value === selectedSort);
@@ -50,7 +55,8 @@ export default function SortDropdown() {
       {/* Botón del Dropdown */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full sm:w-auto px-6 py-3 bg-white border border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-md transition-all flex items-center justify-between gap-3 font-medium text-gray-700"
+        disabled={isPending}
+        className={`w-full sm:w-auto px-6 py-3 bg-white border border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-md transition-all flex items-center justify-between gap-3 font-medium text-gray-700 disabled:opacity-60 disabled:cursor-not-allowed`}
       >
         <span className="flex items-center gap-2">
           <span>{selectedOption?.icon}</span>
@@ -74,7 +80,8 @@ export default function SortDropdown() {
             <button
               key={option.value}
               onClick={() => handleSort(option.value)}
-              className={`w-full px-6 py-3 text-left flex items-center gap-3 transition-all ${
+              disabled={isPending}
+              className={`w-full px-6 py-3 text-left flex items-center gap-3 transition-all disabled:opacity-60 ${
                 selectedSort === option.value
                   ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 font-semibold'
                   : 'text-gray-700 hover:bg-gray-50'

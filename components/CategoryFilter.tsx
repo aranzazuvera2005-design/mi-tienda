@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 
 interface Category {
   id: number;
@@ -15,6 +15,7 @@ interface CategoryFilterProps {
 export default function CategoryFilter({ categories }: CategoryFilterProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -30,22 +31,26 @@ export default function CategoryFilter({ categories }: CategoryFilterProps) {
 
   const handleCategoryChange = (categoryId: number | null) => {
     setIsOpen(false);
+    setSelectedCategory(categoryId);
 
-    // Construir nueva URL con el parámetro de categoría
-    const params = new URLSearchParams(searchParams.toString());
-    
-    if (categoryId === null) {
-      // Limpiar filtro de categoría
-      params.delete('categoria');
-    } else {
-      params.set('categoria', categoryId.toString());
-    }
-    
-    // Resetear la página a 1 cuando se cambia la categoría
-    params.delete('page');
-    
-    // Usar router.push sin scroll
-    router.push(`?${params.toString()}`, { scroll: false } as any);
+    // Usar useTransition para evitar recargas completas
+    startTransition(() => {
+      // Construir nueva URL con el parámetro de categoría
+      const params = new URLSearchParams(searchParams.toString());
+      
+      if (categoryId === null) {
+        // Limpiar filtro de categoría
+        params.delete('categoria');
+      } else {
+        params.set('categoria', categoryId.toString());
+      }
+      
+      // Resetear la página a 1 cuando se cambia la categoría
+      params.delete('page');
+      
+      // Usar router.push sin scroll
+      (router.push as any)(`?${params.toString()}`, { scroll: false });
+    });
   };
 
   const selectedCategoryName = categories.find(c => c.id === selectedCategory)?.nombre || 'Todas las categorías';
@@ -55,7 +60,8 @@ export default function CategoryFilter({ categories }: CategoryFilterProps) {
       {/* Botón del Dropdown */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full sm:w-auto px-6 py-3 bg-white border border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-md transition-all flex items-center justify-between gap-3 font-medium text-gray-700"
+        disabled={isPending}
+        className={`w-full sm:w-auto px-6 py-3 bg-white border border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-md transition-all flex items-center justify-between gap-3 font-medium text-gray-700 disabled:opacity-60 disabled:cursor-not-allowed`}
       >
         <span className="flex items-center gap-2">
           <span>🏷️</span>
@@ -78,7 +84,8 @@ export default function CategoryFilter({ categories }: CategoryFilterProps) {
           {/* Opción "Ver todo" */}
           <button
             onClick={() => handleCategoryChange(null)}
-            className={`w-full px-6 py-3 text-left flex items-center gap-3 transition-all ${
+            disabled={isPending}
+            className={`w-full px-6 py-3 text-left flex items-center gap-3 transition-all disabled:opacity-60 ${
               selectedCategory === null
                 ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 font-semibold'
                 : 'text-gray-700 hover:bg-gray-50'
@@ -101,7 +108,8 @@ export default function CategoryFilter({ categories }: CategoryFilterProps) {
             <button
               key={category.id}
               onClick={() => handleCategoryChange(category.id)}
-              className={`w-full px-6 py-3 text-left flex items-center gap-3 transition-all ${
+              disabled={isPending}
+              className={`w-full px-6 py-3 text-left flex items-center gap-3 transition-all disabled:opacity-60 ${
                 selectedCategory === category.id
                   ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 font-semibold'
                   : 'text-gray-700 hover:bg-gray-50'

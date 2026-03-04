@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useState, useTransition } from 'react';
 import Image from 'next/image';
 import AgregarAlCarritoBtn from '@/components/AgregarAlCarritoBtn';
 import SortDropdown from '@/components/SortDropdown';
@@ -65,12 +65,12 @@ export default function SearchProductos({
   initialCategoria = null,
   categorias = [],
 }: SearchProductosProps) {
+  const [isPending, startTransition] = useTransition();
   const [q, setQ] = useState(initialQuery || '');
   const [results, setResults] = useState<any[] | null>(initialProducts || null);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [limit] = useState(12);
-  const [isReordering, setIsReordering] = useState(false);
 
   // debug: log initial products length
   useEffect(() => {
@@ -79,6 +79,11 @@ export default function SearchProductos({
     } catch (e) {
       // noop
     }
+  }, [initialProducts]);
+
+  // Actualizar resultados cuando cambian los productos iniciales (desde Server Component)
+  useEffect(() => {
+    setResults(initialProducts || null);
   }, [initialProducts]);
 
   // debounce
@@ -133,13 +138,6 @@ export default function SearchProductos({
     fetchResults('', 1);
   };
 
-  // Efecto para mostrar transición cuando se reordena
-  useEffect(() => {
-    setIsReordering(true);
-    const timer = setTimeout(() => setIsReordering(false), 300);
-    return () => clearTimeout(timer);
-  }, [initialSort, initialCategoria]);
-
   return (
     <section>
       {/* Buscador */}
@@ -164,11 +162,11 @@ export default function SearchProductos({
       {/* Controles de Filtros y Ordenación */}
       <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div aria-live="polite" className="text-sm">
-          {loading && (<span className="text-gray-500">🔍 Buscando…</span>)}
-          {!loading && results && results.length === 0 && (
+          {(loading || isPending) && (<span className="text-gray-500">🔍 Actualizando…</span>)}
+          {!loading && !isPending && results && results.length === 0 && (
             <span className="text-gray-500">No se han encontrado productos.</span>
           )}
-          {!loading && results && results.length > 0 && (
+          {!loading && !isPending && results && results.length > 0 && (
             <span className="text-gray-600 font-medium">{results.length} producto{results.length !== 1 ? 's' : ''} encontrado{results.length !== 1 ? 's' : ''}</span>
           )}
         </div>
@@ -182,8 +180,8 @@ export default function SearchProductos({
         </div>
       </div>
 
-      {/* Grid de Productos con Transición y Suspense */}
-      <div className={`transition-all duration-300 ${isReordering ? 'opacity-50' : 'opacity-100'}`}>
+      {/* Grid de Productos - Sin Suspense para mantener el Header visible */}
+      <div className={`transition-opacity duration-300 ${isPending ? 'opacity-60' : 'opacity-100'}`}>
         {results && results.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {results.map((producto, index) => {

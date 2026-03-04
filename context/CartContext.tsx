@@ -117,7 +117,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         total: total,
         articulos: cart,
         direccion_ent: datosEnvio.direccion,  // Mapeo correcto a la columna direccion_ent
-        estado: 'Pendiente'
+        estado: 'pagado'
       }).select().single();
 
       if (oError) throw new Error('Error Pedido: ' + oError.message);

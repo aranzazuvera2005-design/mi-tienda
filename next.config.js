@@ -8,6 +8,8 @@ const nextConfig = {
         pathname: '/storage/v1/object/public/**',
       },
     ],
+    // Opción de emergencia si sigue fallando:
+    unoptimized: true,
   },
 };
 

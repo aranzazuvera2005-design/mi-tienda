@@ -40,7 +40,7 @@ export default function SortDropdown() {
     // Resetear la página a 1 cuando se cambia el ordenamiento
     params.delete('page');
     
-    router.push(`?${params.toString()}`);
+    (router.push as any)(`?${params.toString()}`, { scroll: false });
   };
 
   const selectedOption = SORT_OPTIONS.find(opt => opt.value === selectedSort);

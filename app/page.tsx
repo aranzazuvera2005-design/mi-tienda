@@ -1,5 +1,8 @@
 import AgregarAlCarritoBtn from "@/components/AgregarAlCarritoBtn";
 import SearchProductos from "@/components/SearchProductos";
+import CategoryFilter from "@/components/CategoryFilter";
+import { Suspense } from "react";
+import Loading from "./loading";
 
 export const dynamic = 'force-dynamic';
 
@@ -26,55 +29,96 @@ function sortProducts(productos: any[], sortBy: string): any[] {
   }
 }
 
-export default async function HomePage({ searchParams }: { searchParams: Promise<{ q?: string; sort?: string }> }) {
-  // Usamos el endpoint REST de Supabase desde el servidor para evitar depender
-  // de una conexión directa a Postgres (que falla si no hay acceso IPv4 al host)
-  // Priorizamos las variables de servidor si están disponibles
+async function fetchCategories(SUPABASE_URL: string, SERVICE_KEY: string) {
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/familias?select=id,nombre&order=nombre.asc`;
+    const res = await fetch(url, {
+      headers: {
+        apikey: SERVICE_KEY,
+        Authorization: `Bearer ${SERVICE_KEY}`,
+      },
+      next: { revalidate: 60 }, // Cache de 60 segundos
+    });
+
+    if (res.ok) {
+      return await res.json();
+    }
+    return [];
+  } catch (e) {
+    console.error("Error fetching categories:", e);
+    return [];
+  }
+}
+
+async function fetchProducts(
+  SUPABASE_URL: string,
+  SERVICE_KEY: string,
+  q: string,
+  categoriaId: string | null,
+  sort: string
+) {
+  try {
+    let url = `${SUPABASE_URL}/rest/v1/productos?select=*,familias(nombre)`;
+    
+    // Filtro por búsqueda
+    if (q) {
+      const inner = `(${`nombre.ilike.*${q}*|descripcion.ilike.*${q}*|familias.nombre.ilike.*${q}*|categoria.ilike.*${q}*`})`;
+      url += `&or=${encodeURIComponent(inner)}`;
+    }
+
+    // Filtro por categoría (familia_id)
+    if (categoriaId) {
+      url += `&familia_id=eq.${categoriaId}`;
+    }
+
+    const res = await fetch(url, {
+      headers: {
+        apikey: SERVICE_KEY,
+        Authorization: `Bearer ${SERVICE_KEY}`,
+      },
+      next: { revalidate: 10 },
+    });
+
+    if (res.ok) {
+      let productos = await res.json();
+      // Aplicar ordenación en el servidor
+      productos = sortProducts(productos, sort);
+      return productos;
+    }
+    return [];
+  } catch (e) {
+    console.error("Error fetching products:", e);
+    return [];
+  }
+}
+
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; categoria?: string; sort?: string }>;
+}) {
   const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL)?.trim();
   const SERVICE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY)?.trim();
 
   const params = await searchParams;
   const q = params?.q?.toString()?.trim() || '';
+  const categoria = params?.categoria?.toString()?.trim() || null;
   const sort = params?.sort?.toString()?.trim() || 'newest';
 
   let productos: any[] = [];
-
-  if (SUPABASE_URL && SERVICE_KEY) {
-    try {
-      console.log('HomePage: SUPABASE_URL detected, attempting fetch from', SUPABASE_URL);
-      // construir query: si hay q, buscar en nombre, descripcion, familia(relacion) y categoria
-      // pedimos también la relación 'familias' para buscar por su nombre
-      let url = `${SUPABASE_URL}/rest/v1/productos?select=*,familias(nombre)`;
-      if (q) {
-        // PostgREST: use `*` as wildcard; use `|` as separator in `or` to avoid parse errors
-        const inner = `(${`nombre.ilike.*${q}*|descripcion.ilike.*${q}*|familias.nombre.ilike.*${q}*|categoria.ilike.*${q}*`})`;
-        url += `&or=${encodeURIComponent(inner)}`;
-      }
-
-      const res = await fetch(url, {
-        headers: {
-          apikey: SERVICE_KEY,
-          Authorization: `Bearer ${SERVICE_KEY}`,
-        },
-        // volver a validar cada 10s en ISR
-        next: { revalidate: 10 },
-      });
-
-      if (res.ok) {
-        productos = await res.json();
-        // Aplicar ordenación en el servidor
-        productos = sortProducts(productos, sort);
-      } else {
-        const errorText = await res.text();
-        console.error(`Error Supabase API (${res.status}):`, errorText);
-      }
-    } catch (e: any) {
-      console.error("Error de red o fetch en HomePage:", e?.message || e);
-    }
-  }
-
-  // Si no hay productos (error de conexión o falta de variables), mostrar mensaje informativo
+  let categorias: any[] = [];
   const noConfig = !SUPABASE_URL || !SERVICE_KEY;
+
+  if (!noConfig) {
+    // Obtener categorías y productos en paralelo
+    const [categoriasData, productosData] = await Promise.all([
+      fetchCategories(SUPABASE_URL, SERVICE_KEY),
+      fetchProducts(SUPABASE_URL, SERVICE_KEY, q, categoria, sort),
+    ]);
+
+    categorias = categoriasData;
+    productos = productosData;
+  }
 
   return (
     <main className="min-h-screen bg-gray-50 p-8">
@@ -90,17 +134,36 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
           </div>
         </section>
 
-        {/* Buscador y Ordenación */}
-        <SearchProductos initialProducts={productos} initialQuery={q} initialSort={sort} />
+        {/* Buscador y Filtros */}
+        <SearchProductos 
+          initialProducts={productos} 
+          initialQuery={q} 
+          initialSort={sort}
+          initialCategoria={categoria}
+          categorias={categorias}
+        />
 
-        {productos.length === 0 && (
+        {/* Mensaje de configuración pendiente */}
+        {noConfig && (
           <div className="mt-12 p-8 bg-blue-50 border border-blue-100 rounded-2xl text-center">
             <h2 className="text-xl font-bold text-blue-900 mb-2">
-              {noConfig ? 'Configuración pendiente' : 'No se encontraron productos'}
+              Configuración pendiente
             </h2>
             <p className="text-blue-700">
-              {noConfig 
-                ? 'Para ver tus productos, asegúrate de configurar las variables de entorno de Supabase en Vercel.' 
+              Para ver tus productos, asegúrate de configurar las variables de entorno de Supabase en Vercel.
+            </p>
+          </div>
+        )}
+
+        {/* Mensaje de sin productos */}
+        {!noConfig && productos.length === 0 && (
+          <div className="mt-12 p-8 bg-amber-50 border border-amber-100 rounded-2xl text-center">
+            <h2 className="text-xl font-bold text-amber-900 mb-2">
+              {categoria ? '📭 No hay productos en esta categoría' : '📭 No se encontraron productos'}
+            </h2>
+            <p className="text-amber-700">
+              {categoria 
+                ? 'Intenta seleccionar otra categoría o ajusta tu búsqueda.' 
                 : 'Conexión establecida, pero la lista de productos está vacía o no se pudo cargar.'}
             </p>
           </div>

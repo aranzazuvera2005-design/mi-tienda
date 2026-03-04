@@ -1,0 +1,131 @@
+'use client';
+
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+
+interface Category {
+  id: number;
+  nombre: string;
+}
+
+interface CategoryFilterProps {
+  categories: Category[];
+}
+
+export default function CategoryFilter({ categories }: CategoryFilterProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Sincronizar el estado con los parámetros de URL
+  useEffect(() => {
+    const categoryParam = searchParams.get('categoria');
+    if (categoryParam) {
+      setSelectedCategory(parseInt(categoryParam, 10));
+    } else {
+      setSelectedCategory(null);
+    }
+  }, [searchParams]);
+
+  const handleCategoryChange = (categoryId: number | null) => {
+    setIsOpen(false);
+
+    // Construir nueva URL con el parámetro de categoría
+    const params = new URLSearchParams(searchParams.toString());
+    
+    if (categoryId === null) {
+      // Limpiar filtro de categoría
+      params.delete('categoria');
+    } else {
+      params.set('categoria', categoryId.toString());
+    }
+    
+    // Resetear la página a 1 cuando se cambia la categoría
+    params.delete('page');
+    
+    // Usar router.push sin scroll
+    router.push(`?${params.toString()}`, { scroll: false } as any);
+  };
+
+  const selectedCategoryName = categories.find(c => c.id === selectedCategory)?.nombre || 'Todas las categorías';
+
+  return (
+    <div className="relative inline-block w-full sm:w-auto">
+      {/* Botón del Dropdown */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full sm:w-auto px-6 py-3 bg-white border border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-md transition-all flex items-center justify-between gap-3 font-medium text-gray-700"
+      >
+        <span className="flex items-center gap-2">
+          <span>🏷️</span>
+          <span className="hidden sm:inline">{selectedCategoryName}</span>
+          <span className="sm:hidden text-sm">Categoría</span>
+        </span>
+        <svg
+          className={`w-5 h-5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+        </svg>
+      </button>
+
+      {/* Dropdown Menu */}
+      {isOpen && (
+        <div className="absolute top-full left-0 right-0 sm:left-auto sm:right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-96 overflow-y-auto">
+          {/* Opción "Ver todo" */}
+          <button
+            onClick={() => handleCategoryChange(null)}
+            className={`w-full px-6 py-3 text-left flex items-center gap-3 transition-all ${
+              selectedCategory === null
+                ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 font-semibold'
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <span className="text-lg">✨</span>
+            <span>Ver todo</span>
+            {selectedCategory === null && (
+              <svg className="w-5 h-5 ml-auto" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            )}
+          </button>
+
+          {/* Separador */}
+          <div className="border-t border-gray-100" />
+
+          {/* Opciones de categorías */}
+          {categories.map((category) => (
+            <button
+              key={category.id}
+              onClick={() => handleCategoryChange(category.id)}
+              className={`w-full px-6 py-3 text-left flex items-center gap-3 transition-all ${
+                selectedCategory === category.id
+                  ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 font-semibold'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <span className="text-lg">📂</span>
+              <span>{category.nombre}</span>
+              {selectedCategory === category.id && (
+                <svg className="w-5 h-5 ml-auto" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Overlay para cerrar el dropdown */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-0"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+    </div>
+  );
+}

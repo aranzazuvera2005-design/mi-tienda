@@ -121,36 +121,42 @@ export default async function HomePage({
   }
 
   return (
-    <main className="min-h-screen bg-zinc-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        {/* HERO SECTION - Premium Design */}
-        <section className="bg-white rounded-3xl p-8 md:p-16 mb-16 shadow-lg shadow-slate-200/50 border border-slate-100 flex flex-col md:flex-row items-center gap-12 overflow-hidden">
-          <div className="flex-1">
-            <h1 className="text-5xl md:text-7xl font-bold text-slate-900 mb-6 leading-tight tracking-tight">
+    <main className="min-h-screen bg-[#f8fafc]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        {/* HERO SECTION - Premium Design con Degradado */}
+        <section className="bg-gradient-to-br from-blue-600 via-blue-700 to-purple-900 rounded-3xl p-12 md:p-20 mb-20 shadow-[0_20px_60px_rgba(0,0,0,0.15)] flex flex-col md:flex-row items-center gap-16 overflow-hidden relative">
+          {/* Efecto de luz de fondo */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+          </div>
+
+          <div className="flex-1 relative z-10">
+            <h1 className="text-6xl md:text-7xl font-extrabold text-white mb-6 leading-tight tracking-tight">
               Mi Tienda
             </h1>
-            <p className="text-xl text-slate-600 mb-8 leading-relaxed font-light">
+            <p className="text-xl text-blue-100 mb-10 leading-relaxed font-light">
               Productos seleccionados con cariño. Compra local, recibe en casa.
             </p>
-            <div className="flex flex-col sm:flex-row gap-6">
-              <div className="flex items-center gap-3 text-slate-700">
-                <span className="text-3xl">✨</span>
+            <div className="flex flex-col sm:flex-row gap-8">
+              <div className="flex items-center gap-3 text-white">
+                <span className="text-4xl">✨</span>
                 <div>
                   <div className="font-semibold">Calidad Premium</div>
-                  <div className="text-sm text-slate-500">Productos seleccionados</div>
+                  <div className="text-sm text-blue-100">Productos seleccionados</div>
                 </div>
               </div>
-              <div className="flex items-center gap-3 text-slate-700">
-                <span className="text-3xl">🚚</span>
+              <div className="flex items-center gap-3 text-white">
+                <span className="text-4xl">🚚</span>
                 <div>
                   <div className="font-semibold">Envío Rápido</div>
-                  <div className="text-sm text-slate-500">En 24-48 horas</div>
+                  <div className="text-sm text-blue-100">En 24-48 horas</div>
                 </div>
               </div>
             </div>
           </div>
-          <div className="hidden md:flex flex-shrink-0 w-72 h-72 rounded-3xl overflow-hidden shadow-xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 items-center justify-center">
-            <div className="text-8xl">🎁</div>
+
+          <div className="hidden md:flex flex-shrink-0 w-80 h-80 rounded-3xl overflow-hidden shadow-2xl bg-white/10 backdrop-blur-sm items-center justify-center border border-white/20">
+            <div className="text-9xl">🎁</div>
           </div>
         </section>
 
@@ -165,11 +171,11 @@ export default async function HomePage({
 
         {/* Mensaje de configuración pendiente */}
         {noConfig && (
-          <div className="mt-16 p-8 bg-amber-50 border border-amber-200 rounded-3xl text-center">
-            <h2 className="text-xl font-bold text-amber-900 mb-2">
+          <div className="mt-20 p-10 bg-white rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-slate-100 text-center">
+            <h2 className="text-2xl font-extrabold text-slate-900 mb-3">
               Configuración pendiente
             </h2>
-            <p className="text-amber-700">
+            <p className="text-slate-600 text-lg">
               Para ver tus productos, asegúrate de configurar las variables de entorno de Supabase en Vercel.
             </p>
           </div>
@@ -177,11 +183,11 @@ export default async function HomePage({
 
         {/* Mensaje de sin productos */}
         {!noConfig && productos.length === 0 && (
-          <div className="mt-16 p-8 bg-blue-50 border border-blue-200 rounded-3xl text-center">
-            <h2 className="text-xl font-bold text-blue-900 mb-2">
+          <div className="mt-20 p-10 bg-white rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-slate-100 text-center">
+            <h2 className="text-2xl font-extrabold text-slate-900 mb-3">
               {categoria ? '📭 No hay productos en esta categoría' : '📭 No se encontraron productos'}
             </h2>
-            <p className="text-blue-700">
+            <p className="text-slate-600 text-lg">
               {categoria 
                 ? 'Intenta seleccionar otra categoría o ajusta tu búsqueda.' 
                 : 'Conexión establecida, pero la lista de productos está vacía o no se pudo cargar.'}

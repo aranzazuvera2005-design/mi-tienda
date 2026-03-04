@@ -3,8 +3,9 @@
 import { createBrowserClient } from '@supabase/ssr';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Mail, Lock, UserPlus, LogIn, Loader2 } from 'lucide-react';
+import { Mail, Lock, UserPlus, LogIn, Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import Card from '@/components/Card';
 
 export default function LoginPage() {
   const [isRegister, setIsRegister] = useState(false);
@@ -83,226 +84,141 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={containerS}>
-      <div style={cardS}>        
-        <Link href="/" style={backLinkS}>
-          ← Volver a la tienda
-        </Link>
-        
-        <div style={headerS}>
-          <div style={logoCircleS}>
-            {isRegister ? <UserPlus size={32} color="white" /> : <LogIn size={32} color="white" />}
-          </div>
-          <h1 style={titleS}>{isRegister ? 'Crear Cuenta' : 'Bienvenido'}</h1>
-          <p style={subtitleS}>
-            {isRegister 
-              ? 'Regístrate para gestionar tus pedidos' 
-              : 'Ingresa a tu cuenta para continuar'}
-          </p>
-        </div>
-
-        <form onSubmit={handleAuth} style={formS}>
-          {isRegister && (
-            <>
-              <div style={inputGroupS}>
-                <input
-                  type="text"
-                  placeholder="Nombre completo"
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  style={inputS}
-                  required
-                />
-              </div>
-              <div style={inputGroupS}>
-                <input
-                  type="tel"
-                  placeholder="Teléfono"
-                  value={telefono}
-                  onChange={(e) => setTelefono(e.target.value)}
-                  style={inputS}
-                />
-              </div>
-              <div style={inputGroupS}>
-                <input
-                  type="text"
-                  placeholder="Dirección"
-                  value={direccion}
-                  onChange={(e) => setDireccion(e.target.value)}
-                  style={inputS}
-                />
-              </div>
-            </>
-          )}
-
-          <div style={inputGroupS}>
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={inputS}
-              required
-            />
-          </div>
-
-          <div style={inputGroupS}>
-            <input
-              type="password"
-              placeholder="Contraseña"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={inputS}
-              required
-            />
-          </div>
-
-          {mensaje.text && (
-            <div style={{
-              ...messageS,
-              backgroundColor: mensaje.type === 'error' ? '#fef2f2' : '#f0fdf4',
-              color: mensaje.type === 'error' ? '#991b1b' : '#166534',
-              borderColor: mensaje.type === 'error' ? '#fecaca' : '#bbf7d0'
-            }}>
-              {mensaje.text}
-            </div>
-          )}
-
-          <button 
-            type="submit" 
-            disabled={loading}
-            style={{...buttonS, opacity: loading ? 0.7 : 1}}
-          >
-            {loading ? (
-              <span className="spinner">Cargando...</span>
-            ) : (
-              isRegister ? 'Crear cuenta' : 'Iniciar Sesión'
-            )}
-          </button>
-        </form>
-
-        <button 
-          onClick={() => {
-            setIsRegister(!isRegister);
-            setMensaje({ text: '', type: '' });
-          }}
-          style={toggleBtnS}
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md">
+        {/* Botón volver */}
+        <Link 
+          href="/" 
+          className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium mb-8 transition-colors"
         >
-          {isRegister ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate'}
-        </button>
+          <ArrowLeft size={18} />
+          Volver a la tienda
+        </Link>
+
+        <Card className="p-8">
+          {/* Encabezado */}
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+              {isRegister ? (
+                <UserPlus size={32} className="text-white" />
+              ) : (
+                <LogIn size={32} className="text-white" />
+              )}
+            </div>
+            <h1 className="text-3xl font-extrabold text-slate-900 mb-2">
+              {isRegister ? 'Crear Cuenta' : 'Bienvenido'}
+            </h1>
+            <p className="text-slate-600">
+              {isRegister 
+                ? 'Regístrate para gestionar tus pedidos' 
+                : 'Ingresa a tu cuenta para continuar'}
+            </p>
+          </div>
+
+          {/* Formulario */}
+          <form onSubmit={handleAuth} className="space-y-4">
+            {isRegister && (
+              <>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Nombre completo</label>
+                  <input
+                    type="text"
+                    placeholder="Tu nombre"
+                    value={nombre}
+                    onChange={(e) => setNombre(e.target.value)}
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Teléfono</label>
+                  <input
+                    type="tel"
+                    placeholder="Tu teléfono"
+                    value={telefono}
+                    onChange={(e) => setTelefono(e.target.value)}
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Dirección</label>
+                  <input
+                    type="text"
+                    placeholder="Tu dirección"
+                    value={direccion}
+                    onChange={(e) => setDireccion(e.target.value)}
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                  />
+                </div>
+              </>
+            )}
+
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">Email</label>
+              <input
+                type="email"
+                placeholder="tu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">Contraseña</label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                required
+              />
+            </div>
+
+            {/* Mensaje */}
+            {mensaje.text && (
+              <div className={`p-4 rounded-xl text-sm font-medium ${
+                mensaje.type === 'error' 
+                  ? 'bg-red-50 text-red-800 border border-red-200' 
+                  : 'bg-green-50 text-green-800 border border-green-200'
+              }`}>
+                {mensaje.text}
+              </div>
+            )}
+
+            {/* Botón submit */}
+            <button 
+              type="submit" 
+              disabled={loading}
+              className={`w-full py-3 rounded-xl font-extrabold text-lg transition-all flex items-center justify-center gap-2 ${
+                loading
+                  ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                  : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
+              }`}
+            >
+              {loading && <Loader2 size={20} className="animate-spin" />}
+              {loading ? 'Procesando...' : (isRegister ? 'Crear cuenta' : 'Iniciar Sesión')}
+            </button>
+          </form>
+
+          {/* Botón toggle */}
+          <button 
+            onClick={() => {
+              setIsRegister(!isRegister);
+              setMensaje({ text: '', type: '' });
+            }}
+            className="w-full mt-6 text-slate-600 hover:text-slate-900 font-medium text-sm transition-colors"
+          >
+            {isRegister 
+              ? '¿Ya tienes cuenta? Inicia sesión' 
+              : '¿No tienes cuenta? Regístrate'}
+          </button>
+        </Card>
       </div>
     </div>
   );
 }
-
-// Estilos
-const containerS: React.CSSProperties = {
-  minHeight: '100vh',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',   
-  backgroundColor: '#f9fafb',
-  padding: '20px'
-};
-
-const cardS: React.CSSProperties = {
-  backgroundColor: 'white',
-  padding: '40px',
-  borderRadius: '24px',
-  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-  width: '100%',
-  maxWidth: '400px',
-  border: '1px solid #e5e7eb',
-  position: 'relative'
-};
-
-const backLinkS: React.CSSProperties = {
-  position: 'absolute',
-  top: '16px',
-  left: '20px',
-  fontSize: '12px',
-  color: '#6b7280',
-  textDecoration: 'none'
-};
-
-const headerS: React.CSSProperties = {
-  textAlign: 'center',
-  marginBottom: '32px'
-};
-
-const logoCircleS: React.CSSProperties= {
-  width: '64px',
-  height: '64px',          
-  backgroundColor: '#000',
-  borderRadius: '50%',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  margin: '0 auto 16px'
-};
-
-const titleS: React.CSSProperties = {
-  fontSize: '24px',
-  fontWeight: 'bold',
-  color: '#111827',
-  marginBottom: '8px'
-};
-
-const subtitleS: React.CSSProperties = {
-  color: '#6b7280',
-  fontSize: '14px'
-};
-
-const formS: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '16px'
-};
-
-const inputGroupS: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column'
-};
-
-const inputS: React.CSSProperties = {
-  padding: '12px 16px',
-  borderRadius: '12px',
-  border: '1px solid #d1d5db',
-  fontSize: '16px',          
-  outline: 'none'
-};
-
-const buttonS: React.CSSProperties = {
-  backgroundColor: '#000',
-  color: 'white',
-  padding: '12px',
-  borderRadius: '12px',
-  fontWeight: 'bold',
-  fontSize: '16px',
-  cursor: 'pointer',
-  border: 'none',
-  marginTop: '8px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center'
-};
-
-const toggleBtnS: React.CSSProperties = {
-  background: 'none',
-  border: 'none',
-  color: '#4b5563',
-  fontSize: '14px',
-  marginTop: '24px',
-  cursor: 'pointer',
-  width: '100%',
-  textAlign: 'center',
-  textDecoration: 'underline'
-};
-
-const messageS: React.CSSProperties = {
-  padding: '12px',
-  borderRadius: '8px',
-  fontSize: '14px',
-  textAlign: 'center',
-  border: '1px solid'
-};

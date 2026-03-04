@@ -2,11 +2,12 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, AlertCircle, CheckCircle, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
+import Card from '@/components/Card';
 
 // 1. Componente que contiene la lógica (usa useSearchParams)
 function FormularioDevolucion() {
@@ -112,39 +113,50 @@ function FormularioDevolucion() {
 
   if (!user) {
     return (
-      <div className="max-w-2xl mx-auto p-8">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 flex items-center gap-3">
-          <AlertCircle className="text-yellow-600" size={24} />
-          <div>
-            <h3 className="font-bold text-yellow-900">Debes iniciar sesión</h3>
-            <p className="text-yellow-800 text-sm">Para solicitar una devolución, inicia sesión primero.</p>
+      <div className="py-12">
+        <Card className="p-8 bg-yellow-50 border-yellow-200">
+          <div className="flex items-start gap-4">
+            <AlertCircle className="text-yellow-600 flex-shrink-0 mt-1" size={24} />
+            <div>
+              <h3 className="font-extrabold text-yellow-900 text-lg">Debes iniciar sesión</h3>
+              <p className="text-yellow-800 text-sm mt-1">Para solicitar una devolución, inicia sesión primero.</p>
+              <Link href="/login" className="inline-block mt-4 text-yellow-700 font-bold hover:underline">
+                Ir a login →
+              </Link>
+            </div>
           </div>
-        </div>
+        </Card>
       </div>
     );
   }
 
   if (cargando) {
     return (
-      <div className="max-w-2xl mx-auto p-8 text-center py-12">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <p className="mt-4 text-gray-600">Cargando información del pedido...</p>
+      <div className="py-12">
+        <Card className="p-12 text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-slate-600 font-medium">Cargando información del pedido...</p>
+        </Card>
       </div>
     );
   }
 
   if (error && !exito) {
     return (
-      <div className="max-w-2xl mx-auto p-8">
-        <Link href="/perfil/mis-pedidos" className="flex items-center gap-2 text-blue-600 hover:text-blue-800 mb-6">
-          <ArrowLeft size={20} /> Volver a mis pedidos
-        </Link>
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 flex items-center gap-3">
-          <AlertCircle className="text-red-600" size={24} />
-          <div>
-            <h3 className="font-bold text-red-900">Error</h3>
-            <p className="text-red-800">{error}</p>
-          </div>
+      <div className="py-12">
+        <div className="max-w-2xl mx-auto">
+          <Link href="/perfil/mis-pedidos" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 mb-6 font-bold">
+            <ArrowLeft size={20} /> Volver a mis pedidos
+          </Link>
+          <Card className="p-8 bg-red-50 border-red-200">
+            <div className="flex items-start gap-4">
+              <AlertCircle className="text-red-600 flex-shrink-0 mt-1" size={24} />
+              <div>
+                <h3 className="font-extrabold text-red-900 text-lg">Error</h3>
+                <p className="text-red-800 mt-1">{error}</p>
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
     );
@@ -152,12 +164,14 @@ function FormularioDevolucion() {
 
   if (exito) {
     return (
-      <div className="max-w-2xl mx-auto p-8 text-center">
-        <div className="bg-green-50 border border-green-200 rounded-lg p-8 flex flex-col items-center gap-3">
-          <CheckCircle className="text-green-600" size={48} />
-          <h3 className="font-bold text-green-900 text-xl">¡Solicitud enviada!</h3>
+      <div className="py-12 flex items-center justify-center min-h-screen">
+        <Card className="p-12 text-center max-w-md bg-green-50 border-green-200">
+          <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="text-green-600" size={32} />
+          </div>
+          <h3 className="font-extrabold text-green-900 text-xl mb-2">¡Solicitud enviada!</h3>
           <p className="text-green-800">Redirigiendo a tus devoluciones...</p>
-        </div>
+        </Card>
       </div>
     );
   }
@@ -165,60 +179,79 @@ function FormularioDevolucion() {
   const productosDisponibles = pedido?.articulos || [];
 
   return (
-    <div className="max-w-2xl mx-auto p-8">
-      <Link href="/perfil/mis-pedidos" className="flex items-center gap-2 text-blue-600 hover:text-blue-800 mb-6">
-        <ArrowLeft size={20} /> Volver a mis pedidos
-      </Link>
+    <div className="py-12">
+      <div className="max-w-2xl mx-auto">
+        <Link href="/perfil/mis-pedidos" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 mb-8 font-bold">
+          <ArrowLeft size={20} /> Volver a mis pedidos
+        </Link>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-8 shadow-sm">
-        <h1 className="text-3xl font-black mb-2">Solicitar Devolución</h1>
-        <p className="text-gray-600 mb-6">Pedido #{pedido?.id?.slice(0, 8).toUpperCase()}</p>
+        <Card className="p-8">
+          {/* Encabezado */}
+          <div className="flex items-center gap-3 mb-8">
+            <div className="bg-orange-100 p-3 rounded-xl">
+              <RotateCcw className="text-orange-600" size={28} />
+            </div>
+            <div>
+              <h1 className="text-3xl font-extrabold text-slate-900">Solicitar Devolución</h1>
+              <p className="text-slate-600 text-sm mt-1">Pedido #{pedido?.id?.slice(0, 8).toUpperCase()}</p>
+            </div>
+          </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Producto a devolver *</label>
-            <select
-              value={formData.productoIdx}
-              onChange={(e) => setFormData({ ...formData, productoIdx: parseInt(e.target.value) })}
-              className="w-full p-3 border border-gray-300 rounded-lg"
+          {/* Formulario */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Producto a devolver */}
+            <div>
+              <label className="block text-sm font-extrabold text-slate-900 mb-3">Producto a devolver *</label>
+              <select
+                value={formData.productoIdx}
+                onChange={(e) => setFormData({ ...formData, productoIdx: parseInt(e.target.value) })}
+                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+              >
+                {productosDisponibles.map((producto: any, idx: number) => (
+                  <option key={idx} value={idx}>{producto.nombre} ({producto.precio}€)</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Cantidad */}
+            <div>
+              <label className="block text-sm font-extrabold text-slate-900 mb-3">Cantidad a devolver *</label>
+              <input
+                type="number"
+                min="1"
+                max={productosDisponibles[formData.productoIdx]?.cantidad || 1}
+                value={formData.cantidad}
+                onChange={(e) => setFormData({ ...formData, cantidad: parseInt(e.target.value) || 1 })}
+                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+              />
+            </div>
+
+            {/* Motivo */}
+            <div>
+              <label className="block text-sm font-extrabold text-slate-900 mb-3">Motivo de la devolución</label>
+              <textarea
+                value={formData.motivo}
+                onChange={(e) => setFormData({ ...formData, motivo: e.target.value })}
+                rows={4}
+                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
+                placeholder="Describe el motivo de tu devolución..."
+              />
+            </div>
+
+            {/* Botón submit */}
+            <button
+              type="submit"
+              disabled={enviando}
+              className={`w-full py-3 rounded-xl font-extrabold text-lg transition-all ${
+                enviando
+                  ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                  : 'bg-orange-600 text-white hover:bg-orange-700 active:scale-95'
+              }`}
             >
-              {productosDisponibles.map((producto: any, idx: number) => (
-                <option key={idx} value={idx}>{producto.nombre} (${producto.precio})</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Cantidad a devolver *</label>
-            <input
-              type="number"
-              min="1"
-              max={productosDisponibles[formData.productoIdx]?.cantidad || 1}
-              value={formData.cantidad}
-              onChange={(e) => setFormData({ ...formData, cantidad: parseInt(e.target.value) || 1 })}
-              className="w-full p-3 border border-gray-300 rounded-lg"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Motivo de la devolución</label>
-            <textarea
-              value={formData.motivo}
-              onChange={(e) => setFormData({ ...formData, motivo: e.target.value })}
-              rows={4}
-              className="w-full p-3 border border-gray-300 rounded-lg"
-              placeholder="Describe el motivo..."
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={enviando}
-            className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-bold disabled:opacity-50"
-          >
-            {enviando ? 'Enviando...' : 'Enviar Solicitud'}
-          </button>
-        </form>
+              {enviando ? 'Enviando...' : 'Enviar Solicitud'}
+            </button>
+          </form>
+        </Card>
       </div>
     </div>
   );
@@ -228,9 +261,11 @@ function FormularioDevolucion() {
 export default function SolicitarDevolucionPage() {
   return (
     <Suspense fallback={
-      <div className="max-w-2xl mx-auto p-8 text-center py-20">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <p className="mt-4 text-gray-600">Cargando...</p>
+      <div className="py-12">
+        <Card className="p-12 text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-slate-600 font-medium">Cargando...</p>
+        </Card>
       </div>
     }>
       <FormularioDevolucion />

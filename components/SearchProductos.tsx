@@ -101,41 +101,43 @@ export default function SearchProductos({ initialProducts = [], initialQuery = '
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {results && results.map((producto, index) => (
-          <div key={producto.id} className="bg-white p-0 rounded-2xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col overflow-hidden">
-            {/* Imagen del producto optimizada con Next/Image */}
-            <div className="relative w-full h-48 overflow-hidden bg-gray-100">
+          <div key={producto.id} className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all border border-gray-100 flex flex-col overflow-hidden h-full">
+            {/* Imagen del producto optimizada con Next/Image - Dimensiones fijas para evitar CLS */}
+            <div className="relative w-full aspect-square overflow-hidden bg-gray-100">
               <Image
                 src={producto.imagen_url || producto.imagenUrl || '/globe.svg'}
                 alt={producto.nombre || 'Producto'}
-                width={400}
-                height={300}
-                className="w-full h-full object-cover transition-opacity duration-300"
-                // Priority para la primera fila (primeros 3 productos) para mejorar LCP
+                width={500}
+                height={500}
+                className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                // Priority para la primera fila (primeros 3 productos)
                 priority={index < 3}
-                // Placeholder para evitar CLS mientras carga
+                // Lazy loading para el resto
                 loading={index < 3 ? undefined : "lazy"}
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               />
-              {/* Etiqueta de categoría/familia */}
+              
+              {/* Badge dinámico con mejor contraste */}
               {((producto.familias && producto.familias.nombre) || producto.categoria) && (
-                <span className="absolute left-3 top-3 bg-black/60 backdrop-blur-sm text-white text-[10px] uppercase tracking-wider px-2 py-1 rounded font-bold">
+                <div className="absolute left-3 top-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-lg backdrop-blur-sm border border-blue-400/30">
                   {producto.familias?.nombre || producto.categoria}
-                </span>
+                </div>
               )}
             </div>
 
             {/* Contenido */}
             <div className="p-5 flex flex-col flex-1">
-              <h2 className="text-lg font-bold text-gray-900 mb-1">{producto.nombre}</h2>
-              <p className="text-sm text-gray-500 line-clamp-1 mb-4">{producto.descripcion || 'Sin descripción disponible'}</p>
+              <h2 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">{producto.nombre}</h2>
+              <p className="text-sm text-gray-500 line-clamp-2 mb-4">{producto.descripcion || 'Sin descripción disponible'}</p>
               
-              <div className="mt-auto flex items-end justify-between">
+              <div className="mt-auto flex items-end justify-between gap-4">
                 <div>
-                  <div className="text-[10px] uppercase font-bold text-gray-400 tracking-tight">Precio</div>
-                  <div className="text-xl font-black text-blue-600 leading-none">
+                  <div className="text-xs uppercase font-bold text-gray-400 tracking-tight mb-1">Precio</div>
+                  <div className="text-2xl font-black text-blue-600">
                     {Number(producto.precio || 0).toFixed(2)}€
                   </div>
                 </div>
-                <div className="w-32">
+                <div className="flex-shrink-0">
                   <AgregarAlCarritoBtn producto={producto} />
                 </div>
               </div>

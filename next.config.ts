@@ -17,20 +17,17 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
+        hostname: 'vjkdxevzdtjsgabyxdgs.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'https',
         hostname: '*.supabase.co',
       },
       {
         protocol: 'https',
         hostname: 'supabase.co',
       },
-      {
-        protocol: 'https',
-        hostname: '**.vercel.app',
-      },
-      {
-        protocol: 'https',
-        hostname: 'raw.githubusercontent.com',
-      }
     ],
     // Formatos modernos para mejor compresión
     formats: ['image/avif', 'image/webp'],

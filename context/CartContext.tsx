@@ -111,12 +111,12 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         });
       }
 
-      // 3. Crear el pedido
+      // 3. Crear el pedido - SEGURIDAD: Mapear correctamente cliente_id y direccion_ent
       const { data, error: oError } = await supabase.from('pedidos').insert({
-        cliente_id: user.id,
+        cliente_id: user.id,  // Vinculamos el ID del usuario autenticado
         total: total,
         articulos: cart,
-        direccion_entrega: datosEnvio.direccion,
+        direccion_ent: datosEnvio.direccion,  // Mapeo correcto a la columna direccion_ent
         estado: 'Pendiente'
       }).select().single();
 

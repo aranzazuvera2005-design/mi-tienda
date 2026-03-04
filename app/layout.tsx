@@ -3,6 +3,7 @@ import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import Header from "@/components/Header";
 import { ToastProvider } from "@/context/ToastContext";
+import CartDrawerWrapper from "@/components/CartDrawerWrapper";
 
 export const metadata = {
   title: "Mi Tienda Online",
@@ -18,13 +19,15 @@ export default function RootLayout({
       <body>
         <ToastProvider>
           <CartProvider>
-            <div className="min-h-screen">
-              {/* Header (cliente) */}
-              {/* Import aquí para que sea renderizado dentro del layout */}
-              <Header />
+            <CartDrawerWrapper>
+              <div className="min-h-screen">
+                {/* Header (cliente) */}
+                {/* Import aquí para que sea renderizado dentro del layout */}
+                <Header />
 
-              {children}
-            </div>
+                {children}
+              </div>
+            </CartDrawerWrapper>
           </CartProvider>
         </ToastProvider>
       </body>

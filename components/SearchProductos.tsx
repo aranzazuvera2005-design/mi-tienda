@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import AgregarAlCarritoBtn from '@/components/AgregarAlCarritoBtn';
-
 
 export default function SearchProductos({ initialProducts = [], initialQuery = '' }: { initialProducts?: any[], initialQuery?: string }) {
   // debug: log initial products length
@@ -13,6 +13,7 @@ export default function SearchProductos({ initialProducts = [], initialQuery = '
       // noop
     }
   }, [initialProducts]);
+
   const [q, setQ] = useState(initialQuery || '');
   const [results, setResults] = useState<any[] | null>(initialProducts || null);
   const [loading, setLoading] = useState(false);
@@ -41,7 +42,6 @@ export default function SearchProductos({ initialProducts = [], initialQuery = '
       }
 
       if (!r.ok) {
-        // si la API devolvió un warning en JSON, trátalo como degradado: mantenemos resultados actuales
         if (json?.warning) {
           console.warn('Search API warning:', json.warning);
           setPage(pageNum);
@@ -51,7 +51,6 @@ export default function SearchProductos({ initialProducts = [], initialQuery = '
         throw new Error(json.error || `Error ${r.status}: ${r.statusText}`);
       }
 
-      // Si la respuesta incluye warning, mantenemos los resultados actuales
       if (json?.warning) {
         console.warn('Search API warning:', json.warning);
         setPage(pageNum);
@@ -94,24 +93,27 @@ export default function SearchProductos({ initialProducts = [], initialQuery = '
       </form>
 
       <div aria-live="polite">
-        {loading && (<div className="text-gray-500">Buscando…</div>)}
+        {loading && (<div className="text-gray-500 mb-4">Buscando…</div>)}
         {!loading && results && results.length === 0 && (
-          <div className="text-gray-500">No se han encontrado productos.</div>
+          <div className="text-gray-500 mb-4">No se han encontrado productos.</div>
         )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {results && results.map((producto) => (
+        {results && results.map((producto, index) => (
           <div key={producto.id} className="bg-white p-0 rounded-2xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col overflow-hidden">
-            {/* Imagen del producto */}
+            {/* Imagen del producto optimizada con Next/Image */}
             <div className="relative w-full h-48 overflow-hidden bg-gray-100">
-              <img
+              <Image
                 src={producto.imagen_url || producto.imagenUrl || '/globe.svg'}
                 alt={producto.nombre || 'Producto'}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = '/globe.svg';
-                }}
+                width={400}
+                height={300}
+                className="w-full h-full object-cover transition-opacity duration-300"
+                // Priority para la primera fila (primeros 3 productos) para mejorar LCP
+                priority={index < 3}
+                // Placeholder para evitar CLS mientras carga
+                loading={index < 3 ? undefined : "lazy"}
               />
               {/* Etiqueta de categoría/familia */}
               {((producto.familias && producto.familias.nombre) || producto.categoria) && (
@@ -141,7 +143,6 @@ export default function SearchProductos({ initialProducts = [], initialQuery = '
           </div>
         ))}
       </div>
-
     </section>
   );
 }

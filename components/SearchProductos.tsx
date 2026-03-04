@@ -87,13 +87,13 @@ export default function SearchProductos({ initialProducts = [], initialQuery = '
             ✕
           </button>
         )}
-        <button type="submit" className="px-8 py-4 bg-[#4f46e5] text-white font-bold hover:bg-blue-700 transition-colors">
+        <button type="submit" className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold transition-colors active:scale-95">
           Buscar
         </button>
       </form>
 
       <div aria-live="polite">
-        {loading && (<div className="text-gray-500 mb-4">Buscando…</div>)}
+        {loading && (<div className="text-gray-500 mb-4">🔍 Buscando…</div>)}
         {!loading && results && results.length === 0 && (
           <div className="text-gray-500 mb-4">No se han encontrado productos.</div>
         )}
@@ -115,11 +115,17 @@ export default function SearchProductos({ initialProducts = [], initialQuery = '
                 // Lazy loading para el resto
                 loading={index < 3 ? undefined : "lazy"}
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                onError={(e) => {
+                  // Fallback si la imagen no carga
+                  const img = e.target as HTMLImageElement;
+                  img.src = '/globe.svg';
+                }}
               />
               
-              {/* Badge dinámico con mejor contraste */}
+              {/* Badge dinámico con mejor contraste - Azul vibrante */}
               {((producto.familias && producto.familias.nombre) || producto.categoria) && (
-                <div className="absolute left-3 top-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-lg backdrop-blur-sm border border-blue-400/30">
+                <div className="absolute left-3 top-3 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-lg backdrop-blur-sm border border-blue-400/40 flex items-center gap-1">
+                  <span>🏷️</span>
                   {producto.familias?.nombre || producto.categoria}
                 </div>
               )}
@@ -137,7 +143,7 @@ export default function SearchProductos({ initialProducts = [], initialQuery = '
                     {Number(producto.precio || 0).toFixed(2)}€
                   </div>
                 </div>
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0 w-32">
                   <AgregarAlCarritoBtn producto={producto} />
                 </div>
               </div>

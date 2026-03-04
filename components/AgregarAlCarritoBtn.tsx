@@ -43,26 +43,26 @@ export default function AgregarAlCarritoBtn({ producto }: { producto: any }) {
     <button 
       onClick={handleAddToCart}
       disabled={isAdding}
-      className={`w-full font-bold text-sm py-3 px-4 rounded-xl transition-all duration-300 active:scale-95 shadow-md ${
+      className={`w-full font-bold text-sm py-3 px-4 rounded-xl transition-all duration-300 active:scale-95 shadow-md border-0 ${
         isAdded
-          ? 'bg-green-500 text-white'
-          : 'bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed'
+          ? 'bg-green-500 text-white hover:bg-green-600'
+          : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 disabled:opacity-70 disabled:cursor-not-allowed'
       }`}
     >
       {isAdding ? (
         <span className="flex items-center justify-center gap-2">
-          <span className="animate-spin">⏳</span>
-          Añadiendo...
+          <span className="animate-spin inline-block">⏳</span>
+          <span>Añadiendo...</span>
         </span>
       ) : isAdded ? (
         <span className="flex items-center justify-center gap-2">
           <span>✓</span>
-          ¡Añadido!
+          <span>¡Añadido!</span>
         </span>
       ) : (
         <span className="flex items-center justify-center gap-2">
           <span>🛒</span>
-          Añadir al Carrito
+          <span>Añadir</span>
         </span>
       )}
     </button>

@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { usePathname } from "next/navigation";
+import { User, LogOut, ShoppingCart } from "lucide-react";
 
 export default function Header() {
   const { cart, user, logout, isAuthLoading } = useCart();
@@ -19,9 +20,9 @@ export default function Header() {
   const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuario';
 
   return (
-    <header className="bg-white border-b border-slate-200/50 sticky top-0 z-50 backdrop-blur-md bg-white/95 shadow-sm">
+    <header className="bg-white border-b border-slate-200 sticky top-0 z-50 backdrop-blur-md bg-white/95 shadow-sm">
       <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4">
-        <Link href="/" className="text-2xl font-extrabold text-slate-900 hover:opacity-80 transition-opacity tracking-tight">
+        <Link href="/" className="text-2xl font-black text-slate-900 hover:opacity-80 transition-opacity tracking-tight">
           Mi Tienda
         </Link>
 
@@ -31,10 +32,10 @@ export default function Header() {
               href="/carrito" 
               className="group flex items-center gap-2 px-4 py-2.5 rounded-full hover:bg-slate-100/80 transition-all text-slate-700 font-medium hover:-translate-y-0.5 active:scale-95"
             >
-              <span className="text-xl">🛒</span>
+              <ShoppingCart size={20} className="text-slate-600" />
               <span className="hidden sm:inline text-sm">Carrito</span>
               {count > 0 && (
-                <span className="bg-gradient-to-r from-blue-600 to-blue-700 text-white text-[10px] px-2.5 py-1 rounded-full font-bold animate-in fade-in zoom-in duration-300">
+                <span className="bg-blue-600 text-white text-[10px] px-2.5 py-1 rounded-full font-bold">
                   {count}
                 </span>
               )}
@@ -42,38 +43,36 @@ export default function Header() {
           )}
 
           {isAuthLoading ? (
-            <div className="px-4 py-2 text-slate-500 text-sm font-medium">
-              ⏳
+            <div className="px-4 py-2 text-slate-500 text-sm font-medium animate-pulse">
+              Cargando...
             </div>
           ) : user ? (
             <div className="flex items-center gap-3 sm:gap-4">
-              <div className="hidden md:flex items-center gap-3 px-4 py-2.5 rounded-full bg-slate-100/50 border border-slate-200/50 backdrop-blur-sm">
-                <span className="text-lg">👤</span>
-                <div className="flex flex-col">
-                  <span className="text-xs text-slate-500 font-medium uppercase tracking-wide">Usuario</span>
-                  <span className="text-sm font-bold text-slate-900">{userName}</span>
-                </div>
-              </div>
               <Link 
                 href="/perfil/mis-pedidos" 
                 className="hidden md:block px-4 py-2.5 rounded-full hover:bg-slate-100/80 text-sm font-medium text-slate-700 transition-all hover:-translate-y-0.5 active:scale-95"
               >
                 Mis Pedidos
               </Link>
+              <div className="bg-white border border-slate-200 shadow-sm rounded-full px-4 py-1 flex items-center gap-2">
+                <User size={16} className="text-slate-700" />
+                <span className="text-slate-700 font-medium text-sm">{userName}</span>
+              </div>
               <button 
                 onClick={handleLogout} 
-                className="px-4 py-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 rounded-full text-sm font-medium transition-all hover:-translate-y-0.5 active:scale-95 flex items-center gap-1.5"
+                className="text-slate-400 hover:text-red-500 font-normal transition-colors flex items-center gap-1.5 px-2 py-1"
               >
-                <span>🚪</span>
-                <span className="hidden sm:inline">Salir</span>
+                <LogOut size={18} />
+                <span className="hidden sm:inline text-sm">Salir</span>
               </button>
             </div>
           ) : (
             <Link 
               href="/login" 
-              className="px-6 py-2.5 bg-gradient-to-r from-slate-900 to-slate-800 text-white hover:from-slate-800 hover:to-slate-700 rounded-full text-sm font-bold transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-95"
+              className="bg-white border border-slate-200 shadow-sm rounded-full px-4 py-1 flex items-center gap-2 text-slate-700 font-medium hover:border-blue-300 transition-colors"
             >
-              Iniciar sesión
+              <User size={16} />
+              <span className="text-sm">Iniciar sesión</span>
             </Link>
           )}
         </nav>

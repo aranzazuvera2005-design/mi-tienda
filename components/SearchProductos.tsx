@@ -1,242 +1,163 @@
 'use client';
 
-import React, { useEffect, useState, useTransition } from 'react';
-import Image from 'next/image';
-import AgregarAlCarritoBtn from '@/components/AgregarAlCarritoBtn';
-import SortDropdown from '@/components/SortDropdown';
-import CategoryFilter from '@/components/CategoryFilter';
+import React, { useEffect, useState } from 'react';
+import AgregarAlCarritoBtn from './AgregarAlCarritoBtn';
+import { Search, X, ChevronDown } from 'lucide-react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
-// Base URL de Supabase para construcción de URLs completas
-const SUPABASE_BASE_URL = 'https://vjkdxevzdtjsgabyxdgs.supabase.co/storage/v1/object/public';
-
-// Función para construir URL completa de imagen
-const buildImageUrl = (imagenUrl: string | null | undefined): string => {
-  if (!imagenUrl) return '/globe.svg';
-  
-  // Si ya es una URL completa, devolverla tal cual
-  if (imagenUrl.startsWith('http://') || imagenUrl.startsWith('https://')) {
-    return imagenUrl;
-  }
-  
-  // Si es solo el nombre del archivo, construir la URL completa
-  return `${SUPABASE_BASE_URL}/${imagenUrl}`;
-};
-
-// Componente Skeleton para el grid
-function ProductGridSkeleton() {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-      {[...Array(6)].map((_, i) => (
-        <div 
-          key={i} 
-          className="bg-white p-0 rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] border-0 flex flex-col overflow-hidden animate-pulse"
-        >
-          <div className="w-full aspect-square bg-slate-200 rounded-t-3xl"></div>
-          <div className="p-6 flex flex-col flex-1 space-y-4">
-            <div className="h-6 bg-slate-200 rounded-lg w-3/4"></div>
-            <div className="h-4 bg-slate-100 rounded-lg w-full"></div>
-            <div className="h-4 bg-slate-100 rounded-lg w-1/2"></div>
-            <div className="mt-auto flex items-end justify-between">
-              <div className="space-y-2">
-                <div className="h-3 bg-slate-100 rounded w-8"></div>
-                <div className="h-6 bg-slate-200 rounded w-16"></div>
-              </div>
-              <div className="w-32 h-11 bg-slate-200 rounded-full"></div>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-interface SearchProductosProps {
-  initialProducts?: any[];
-  initialQuery?: string;
-  initialSort?: string;
-  initialCategoria?: string | null;
-  categorias?: any[];
-}
-
-export default function SearchProductos({
-  initialProducts = [],
+export default function SearchProductos({ 
+  initialProducts = [], 
   initialQuery = '',
   initialSort = 'newest',
   initialCategoria = null,
-  categorias = [],
-}: SearchProductosProps) {
-  const [isPending, startTransition] = useTransition();
+  categorias = []
+}: { 
+  initialProducts?: any[], 
+  initialQuery?: string,
+  initialSort?: string,
+  initialCategoria?: string | null,
+  categorias?: any[]
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [q, setQ] = useState(initialQuery || '');
   const [results, setResults] = useState<any[] | null>(initialProducts || null);
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [limit] = useState(12);
 
-  // debug: log initial products length
+  // Sincronizar resultados cuando cambian las props iniciales (desde el servidor)
   useEffect(() => {
-    try {
-      console.debug('SearchProductos: initialProducts length =', Array.isArray(initialProducts) ? initialProducts.length : 'non-array');
-    } catch (e) {
-      // noop
-    }
+    setResults(initialProducts);
   }, [initialProducts]);
 
-  // Actualizar resultados cuando cambian los productos iniciales (desde Server Component)
-  useEffect(() => {
-    setResults(initialProducts || null);
-  }, [initialProducts]);
+  const updateSearchParams = (newParams: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(newParams).forEach(([key, value]) => {
+      if (value === null) {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
-  // debounce
+  // debounce para búsqueda
   useEffect(() => {
     const t = setTimeout(() => {
-      fetchResults(q, 1);
-    }, 300);
+      if (q !== initialQuery) {
+        updateSearchParams({ q: q || null });
+      }
+    }, 500);
     return () => clearTimeout(t);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q]);
-
-  async function fetchResults(qStr: string, pageNum = 1) {
-    setLoading(true);
-    try {
-      const url = qStr ? `/api/search?q=${encodeURIComponent(qStr)}&page=${pageNum}&limit=${limit}` : `/api/search?limit=${limit}`;
-      const r = await fetch(url);
-      let json: any = {};
-      try {
-        json = await r.json().catch(() => ({}));
-      } catch (err) {
-        // noop
-      }
-
-      if (!r.ok) {
-        if (json?.warning) {
-          console.warn('Search API warning:', json.warning);
-          setPage(pageNum);
-          return;
-        }
-        console.error('Error detallado del servidor:', JSON.stringify(json, null, 2));
-        throw new Error(json.error || `Error ${r.status}: ${r.statusText}`);
-      }
-
-      if (json?.warning) {
-        console.warn('Search API warning:', json.warning);
-        setPage(pageNum);
-        return;
-      }
-
-      setResults(json.items || []);
-      setPage(pageNum);
-    } catch (e) {
-      console.error('Search failed', e);
-      setResults([]);
-    } finally {
-      setLoading(false);
-    }
-  }
+  }, [q, initialQuery]);
 
   const clear = () => {
     setQ('');
-    fetchResults('', 1);
+    updateSearchParams({ q: null });
   };
 
   return (
-    <section className="space-y-12">
-      {/* Buscador Premium */}
-      <form onSubmit={(e) => { e.preventDefault(); fetchResults(q, 1); }} className="flex gap-0 items-center overflow-hidden rounded-2xl border border-slate-200/50 shadow-[0_8px_30px_rgba(0,0,0,0.04)] focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-400 focus-within:shadow-[0_12px_40px_rgba(59,130,246,0.15)] transition-all bg-white">
-        <input
-          aria-label="Buscar productos"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Buscar por nombre, descripción, familia o categoría..."
-          className="flex-1 p-4 outline-none text-slate-700 placeholder:text-slate-400 bg-transparent text-base"
-        />
-        {q && (
-          <button type="button" onClick={clear} className="px-4 text-slate-400 hover:text-slate-600 transition-colors">
-            ✕
-          </button>
-        )}
-        <button type="submit" className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold transition-all active:scale-95 shadow-md">
-          Buscar
-        </button>
-      </form>
-
-      {/* Controles de Filtros y Ordenación */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
-        <div aria-live="polite" className="text-sm">
-          {(loading || isPending) && (<span className="text-slate-600 font-medium">🔍 Actualizando…</span>)}
-          {!loading && !isPending && results && results.length === 0 && (
-            <span className="text-slate-500">No se han encontrado productos.</span>
-          )}
-          {!loading && !isPending && results && results.length > 0 && (
-            <span className="text-slate-700 font-semibold">{results.length} producto{results.length !== 1 ? 's' : ''} encontrado{results.length !== 1 ? 's' : ''}</span>
+    <section className="mb-12">
+      {/* BUSCADOR Y FILTROS */}
+      <div className="flex flex-col lg:flex-row gap-4 mb-12">
+        {/* Buscador */}
+        <div className="flex-1 flex items-center overflow-hidden rounded-2xl bg-white shadow-sm border-none focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+          <Search size={20} className="ml-4 text-slate-400" />
+          <input
+            aria-label="Buscar productos"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Buscar por nombre, descripción..."
+            className="flex-1 p-4 outline-none text-slate-600 placeholder:text-slate-400 bg-transparent"
+          />
+          {q && (
+            <button type="button" onClick={clear} className="px-4 text-slate-400 hover:text-slate-600 transition-colors">
+              <X size={20} />
+            </button>
           )}
         </div>
-        
-        {/* Filtros */}
-        <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-4">
-          {categorias.length > 0 && (
-            <CategoryFilter categories={categorias} />
-          )}
-          <SortDropdown />
+
+        {/* Selectores de Filtro */}
+        <div className="flex flex-wrap gap-3">
+          {/* Categorías */}
+          <div className="relative">
+            <select
+              value={initialCategoria || ''}
+              onChange={(e) => updateSearchParams({ categoria: e.target.value || null })}
+              className="appearance-none bg-white border-none shadow-sm rounded-full px-6 py-3 pr-12 text-slate-600 font-medium cursor-pointer focus:ring-2 focus:ring-blue-500/20 transition-all"
+            >
+              <option value="">Todas las categorías</option>
+              {categorias.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.nombre}</option>
+              ))}
+            </select>
+            <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          </div>
+
+          {/* Ordenación */}
+          <div className="relative">
+            <select
+              value={initialSort}
+              onChange={(e) => updateSearchParams({ sort: e.target.value })}
+              className="appearance-none bg-white border-none shadow-sm rounded-full px-6 py-3 pr-12 text-slate-600 font-medium cursor-pointer focus:ring-2 focus:ring-blue-500/20 transition-all"
+            >
+              <option value="newest">Más nuevos</option>
+              <option value="price_asc">Precio: Menor a Mayor</option>
+              <option value="price_desc">Precio: Mayor a Menor</option>
+              <option value="name_asc">Nombre: A-Z</option>
+              <option value="name_desc">Nombre: Z-A</option>
+            </select>
+            <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          </div>
         </div>
       </div>
 
-      {/* Grid de Productos - Premium Design */}
-      <div className={`transition-opacity duration-300 ${isPending ? 'opacity-60' : 'opacity-100'}`}>
-        {results && results.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {results.map((producto, index) => {
-              const imageUrl = buildImageUrl(producto.imagen_url || producto.imagenUrl);
-              
-              return (
-                <div key={producto.id} className="bg-white rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.12)] transition-all border-0 flex flex-col overflow-hidden h-full group animate-in fade-in slide-in-from-bottom-4 duration-300 hover:-translate-y-3">
-                  {/* Imagen del producto - Premium Design */}
-                  <div className="relative w-full aspect-square overflow-hidden bg-slate-100 rounded-3xl m-4 mb-0">
-                    <Image
-                      src={imageUrl}
-                      alt={producto.nombre || 'Producto'}
-                      width={500}
-                      height={500}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      priority={index < 3}
-                      loading={index < 3 ? undefined : "lazy"}
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      unoptimized={false}
-                    />
-                    
-                    {/* Badge Pastel Premium */}
-                    {((producto.familias && producto.familias.nombre) || producto.categoria) && (
-                      <div className="absolute left-4 top-4 bg-white/95 backdrop-blur-sm text-slate-700 text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-full shadow-md border border-white/50 flex items-center gap-1.5">
-                        <span>🏷️</span>
-                        {producto.familias?.nombre || producto.categoria}
-                      </div>
-                    )}
-                  </div>
+      {/* GRID DE PRODUCTOS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        {results && results.map((producto) => (
+          <div 
+            key={producto.id} 
+            className="bg-white p-4 rounded-[2rem] shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] transition-all duration-300 border-none flex flex-col group"
+          >
+            {/* Imagen del producto */}
+            <div className="relative w-full h-64 overflow-hidden bg-slate-50 rounded-[1.5rem] mb-4">
+              <img
+                src={producto.imagen_url || producto.imagenUrl || '/globe.svg'}
+                alt={producto.nombre || 'Producto'}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/globe.svg';
+                }}
+              />
+              {/* Etiqueta de categoría */}
+              {(producto.familias?.nombre || producto.categoria) && (
+                <span className="absolute left-4 top-4 bg-white/90 backdrop-blur-md text-slate-900 text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-full font-bold shadow-sm">
+                  {producto.familias?.nombre || producto.categoria}
+                </span>
+              )}
+            </div>
 
-                  {/* Contenido - Premium Design */}
-                  <div className="p-6 flex flex-col flex-1">
-                    <h2 className="text-lg font-bold text-slate-900 mb-2 line-clamp-2">{producto.nombre}</h2>
-                    <p className="text-sm text-slate-600 line-clamp-2 mb-6">{producto.descripcion || 'Sin descripción disponible'}</p>
-                    
-                    <div className="mt-auto flex items-end justify-between gap-4">
-                      <div>
-                        <div className="text-xs uppercase font-bold text-slate-400 tracking-tight mb-1">Precio</div>
-                        {/* Precio Premium */}
-                        <div className="text-3xl font-black bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
-                          {Number(producto.precio || 0).toFixed(2)}€
-                        </div>
-                      </div>
-                      <div className="flex-shrink-0 w-32">
-                        <AgregarAlCarritoBtn producto={producto} />
-                      </div>
-                    </div>
-                  </div>
+            {/* Contenido */}
+            <div className="px-2 flex flex-col flex-1">
+              <h2 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">{producto.nombre}</h2>
+              <p className="text-sm text-slate-500 line-clamp-2 mb-6 leading-relaxed">{producto.descripcion || 'Sin descripción disponible'}</p>
+              
+              <div className="mt-auto flex items-center justify-between gap-4">
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest mb-1">Precio</span>
+                  <span className="text-2xl font-black text-slate-900 leading-none">
+                    {Number(producto.precio || 0).toFixed(2)}€
+                  </span>
                 </div>
-              );
-            })}
+                <div className="flex-1 max-w-[160px]">
+                  <AgregarAlCarritoBtn producto={producto} />
+                </div>
+              </div>
+            </div>
           </div>
-        ) : (
-          <ProductGridSkeleton />
-        )}
+        ))}
       </div>
     </section>
   );

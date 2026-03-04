@@ -16,16 +16,19 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body>
+      <body className="bg-slate-50">
         <ToastProvider>
           <CartProvider>
             <CartDrawerWrapper>
-              <div className="min-h-screen">
+              <div className="min-h-screen bg-slate-50">
                 {/* Header (cliente) */}
                 {/* Import aquí para que sea renderizado dentro del layout */}
                 <Header />
 
-                {children}
+                {/* Contenedor principal con max-width y padding */}
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  {children}
+                </main>
               </div>
             </CartDrawerWrapper>
           </CartProvider>

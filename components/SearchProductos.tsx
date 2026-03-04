@@ -141,7 +141,7 @@ export default function SearchProductos({
 
             {/* Contenido */}
             <div className="px-2 flex flex-col flex-1">
-              <h2 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">{producto.nombre}</h2>
+              <h2 className="text-lg font-extrabold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">{producto.nombre}</h2>
               <p className="text-sm text-slate-500 line-clamp-2 mb-6 leading-relaxed">{producto.descripcion || 'Sin descripción disponible'}</p>
               
               <div className="mt-auto flex items-center justify-between gap-4">

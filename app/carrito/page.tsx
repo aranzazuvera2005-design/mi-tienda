@@ -1,10 +1,11 @@
 "use client";
 
-
 import { useCart } from '@/context/CartContext';
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { createBrowserClient } from '@supabase/ssr';
+import { ShoppingCart, Trash2, Plus, Minus } from 'lucide-react';
+import Card from '@/components/Card';
 
 export default function CarritoPage() {
   const { cart, clearCart, removeFromCart, addToCart, enviarPedido, user } = useCart();
@@ -67,8 +68,7 @@ export default function CarritoPage() {
     return acc + (precio * (item.cantidad || 0));
   }, 0);
 
-  // Eliminamos la validación estricta de perfil completo para permitir la compra
-  const perfilCompleto = true; 
+  const perfilCompleto = true;
 
   const handleConfirmar = async () => {
     if (cart.length === 0) return;
@@ -96,135 +96,234 @@ export default function CarritoPage() {
 
   if (completado) {
     return (
-      <div className="p-10 text-center min-h-screen flex flex-col justify-center items-center">
-        <h1 className="text-3xl font-bold text-green-600 mb-4">¡Pedido Recibido!</h1>
-        <p className="text-gray-600 mb-8">Gracias {nombre}, procesaremos tu pedido en breve.</p>
-        <Link href="/" className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold">Volver a la tienda</Link>
+      <div className="py-12 min-h-screen flex flex-col justify-center items-center">
+        <Card className="max-w-md w-full p-8 text-center">
+          <div className="mb-4">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <ShoppingCart className="text-green-600" size={32} />
+            </div>
+          </div>
+          <h1 className="text-3xl font-extrabold text-slate-900 mb-2">¡Pedido Recibido!</h1>
+          <p className="text-slate-600 mb-6">Gracias {nombre}, procesaremos tu pedido en breve.</p>
+          <Link href="/" className="inline-block bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors">
+            Volver a la tienda
+          </Link>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="max-w-md mx-auto p-4 min-h-screen bg-white">
-      <h1 className="text-2xl font-bold mb-6">Resumen del Carrito</h1>
-      <div className="space-y-4 mb-8">
-        {cart.map((item: any) => (
-          <div key={item.id} className="flex justify-between items-center border-b pb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-16 h-16 bg-gray-50 rounded-md flex items-center justify-center overflow-hidden border border-gray-100">
-                <img 
-                  src={item.imagen_url || item.imagenUrl || '/globe.svg'} 
-                  alt={item.nombre} 
-                  className="max-w-full max-h-full object-contain p-1"
-                  onError={(e) => { (e.target as HTMLImageElement).src = '/globe.svg'; }}
-                />
-              </div>
-              <div>
-                <p className="font-medium">{item.nombre}</p>
-                <p className="text-sm text-gray-500">{Number(item.precio || 0).toFixed(2)}€</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button onClick={() => removeFromCart(item.id)} className="px-3 py-1 bg-gray-100 rounded-md">-</button>
-              <span className="w-8 text-center">{item.cantidad || 0}</span>
-              <button onClick={() => addToCart(item)} className="px-3 py-1 bg-gray-100 rounded-md">+</button>
-            </div>
-
-            <div className="text-right">
-              <div className="text-sm text-gray-500">Subtotal</div>
-              <div className="font-bold">{(Number(item.precio || 0) * (item.cantidad || 0)).toFixed(2)}€</div>
-            </div>
+    <div className="py-12">
+      <div className="max-w-2xl mx-auto">
+        {/* Título */}
+        <div className="flex items-center gap-3 mb-8">
+          <div className="bg-blue-100 p-3 rounded-xl">
+            <ShoppingCart className="text-blue-600" size={28} />
           </div>
-        ))}
+          <h1 className="text-3xl font-extrabold text-slate-900">Carrito de Compra</h1>
+        </div>
 
-        {cart.length === 0 && (
-          <div className="text-center text-gray-500">Tu carrito está vacío.</div>
-        )}
-      </div>
-
-      <div className="bg-gray-50 p-6 rounded-2xl shadow-inner mb-6">
-        <h2 className="text-xs font-black text-gray-400 uppercase mb-4">Envío</h2>
-
-        {loadingPerfil ? (
-          <div className="text-sm text-gray-500 mb-3">Cargando datos del perfil...</div>
-        ) : null}
-
-        {/* Si no hay usuario logeado: pedir login */}
-        {!user ? (
-          <div className="text-sm text-gray-600">Debes <a href="/login" className="text-blue-600 underline font-bold">iniciar sesión</a> para finalizar tu compra.</div>
-        ) : (
-          <>
-            <div className="mb-3">
-              <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Nombre para el envío</label>
-              <input value={nombre} onChange={(e) => setNombre(e.target.value)} type="text" placeholder="Tu nombre" className="w-full p-3 border rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none" />
+        {/* Productos */}
+        <Card className="p-6 mb-6">
+          {cart.length === 0 ? (
+            <div className="text-center py-12">
+              <ShoppingCart className="text-slate-300 mx-auto mb-4" size={48} />
+              <p className="text-slate-600 text-lg">Tu carrito está vacío</p>
+              <Link href="/" className="inline-block mt-4 text-blue-600 font-bold hover:underline">
+                Continuar comprando
+              </Link>
             </div>
-            <div className="mb-3">
-              <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Teléfono de contacto</label>
-              <input value={telefono} onChange={(e) => setTelefono(e.target.value)} type="text" placeholder="Teléfono" className="w-full p-3 border rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none" />
-            </div>
-            
-            <div className="mb-3">
-              <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Dirección de entrega</label>
-              {direcciones.length > 0 && !mostrarNuevaDir ? (
-                <div className="space-y-2">
-                  <select 
-                    value={direccion} 
-                    onChange={(e) => {
-                      if (e.target.value === "nueva") {
-                        setMostrarNuevaDir(true);
-                        setDireccion("");
-                      } else {
-                        setDireccion(e.target.value);
-                      }
-                    }}
-                    className="w-full p-3 border rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+          ) : (
+            <div className="space-y-4">
+              {cart.map((item: any) => (
+                <div key={item.id} className="flex gap-4 pb-4 border-b border-slate-100 last:border-0 last:pb-0">
+                  {/* Imagen */}
+                  <div className="w-20 h-20 bg-slate-50 rounded-lg flex items-center justify-center flex-shrink-0 border border-slate-200">
+                    <img 
+                      src={item.imagen_url || item.imagenUrl || '/globe.svg'} 
+                      alt={item.nombre} 
+                      className="max-w-full max-h-full object-contain p-1"
+                      onError={(e) => { (e.target as HTMLImageElement).src = '/globe.svg'; }}
+                    />
+                  </div>
+
+                  {/* Detalles */}
+                  <div className="flex-1">
+                    <h3 className="font-bold text-slate-900">{item.nombre}</h3>
+                    <p className="text-sm text-slate-600 mt-1">{Number(item.precio || 0).toFixed(2)}€</p>
+                  </div>
+
+                  {/* Cantidad */}
+                  <div className="flex items-center gap-2 bg-slate-100 rounded-lg px-2 py-1">
+                    <button 
+                      onClick={() => removeFromCart(item.id)}
+                      className="p-1 hover:bg-slate-200 rounded transition-colors"
+                    >
+                      <Minus size={16} className="text-slate-600" />
+                    </button>
+                    <span className="w-6 text-center font-bold text-slate-900">{item.cantidad || 0}</span>
+                    <button 
+                      onClick={() => addToCart(item)}
+                      className="p-1 hover:bg-slate-200 rounded transition-colors"
+                    >
+                      <Plus size={16} className="text-slate-600" />
+                    </button>
+                  </div>
+
+                  {/* Subtotal */}
+                  <div className="text-right min-w-fit">
+                    <p className="text-sm text-slate-600">Subtotal</p>
+                    <p className="font-extrabold text-slate-900">{(Number(item.precio || 0) * (item.cantidad || 0)).toFixed(2)}€</p>
+                  </div>
+
+                  {/* Eliminar */}
+                  <button 
+                    onClick={() => removeFromCart(item.id)}
+                    className="p-2 hover:bg-red-50 rounded-lg transition-colors text-slate-400 hover:text-red-500"
                   >
-                    {direcciones.map((d, idx) => (
-                      <option key={d.id || idx} value={d.calle}>{d.calle} {d.es_principal ? '(Principal)' : ''}</option>
-                    ))}
-                    <option value="nueva">+ Añadir nueva dirección...</option>
-                  </select>
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        {/* Formulario de envío */}
+        {cart.length > 0 && (
+          <>
+            <Card className="p-6 mb-6">
+              <h2 className="text-lg font-extrabold text-slate-900 mb-4 flex items-center gap-2">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <span className="text-blue-600 font-bold">📦</span>
+                </div>
+                Información de Envío
+              </h2>
+
+              {loadingPerfil ? (
+                <div className="text-sm text-slate-500 text-center py-4">Cargando datos del perfil...</div>
+              ) : !user ? (
+                <div className="text-center py-6">
+                  <p className="text-slate-600 mb-4">Debes <Link href="/login" className="text-blue-600 font-bold hover:underline">iniciar sesión</Link> para finalizar tu compra.</p>
                 </div>
               ) : (
-                <div className="relative">
-                  <textarea 
-                    value={direccion} 
-                    onChange={(e) => setDireccion(e.target.value)} 
-                    placeholder="Dirección completa" 
-                    className="w-full p-3 border rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none" 
-                  />
-                  {direcciones.length > 0 && (
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        setMostrarNuevaDir(false);
-                        const principal = direcciones.find(d => d.es_principal) || direcciones[0];
-                        setDireccion(principal.calle);
-                      }}
-                      className="text-[10px] text-blue-600 font-bold mt-1 block"
-                    >
-                      ← Volver a mis direcciones guardadas
-                    </button>
-                  )}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2">Nombre para el envío</label>
+                    <input 
+                      value={nombre} 
+                      onChange={(e) => setNombre(e.target.value)} 
+                      type="text" 
+                      placeholder="Tu nombre completo" 
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2">Teléfono de contacto</label>
+                    <input 
+                      value={telefono} 
+                      onChange={(e) => setTelefono(e.target.value)} 
+                      type="text" 
+                      placeholder="Tu teléfono" 
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2">Dirección de entrega</label>
+                    {direcciones.length > 0 && !mostrarNuevaDir ? (
+                      <div className="space-y-2">
+                        <select 
+                          value={direccion} 
+                          onChange={(e) => {
+                            if (e.target.value === "nueva") {
+                              setMostrarNuevaDir(true);
+                              setDireccion("");
+                            } else {
+                              setDireccion(e.target.value);
+                            }
+                          }}
+                          className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                        >
+                          {direcciones.map((d, idx) => (
+                            <option key={d.id || idx} value={d.calle}>
+                              {d.calle} {d.es_principal ? '(Principal)' : ''}
+                            </option>
+                          ))}
+                          <option value="nueva">+ Añadir nueva dirección...</option>
+                        </select>
+                      </div>
+                    ) : (
+                      <div>
+                        <textarea 
+                          value={direccion} 
+                          onChange={(e) => setDireccion(e.target.value)} 
+                          placeholder="Calle, número, piso, ciudad, código postal..." 
+                          className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" 
+                          rows={3}
+                        />
+                        {direcciones.length > 0 && (
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              setMostrarNuevaDir(false);
+                              const principal = direcciones.find(d => d.es_principal) || direcciones[0];
+                              setDireccion(principal.calle);
+                            }}
+                            className="text-sm text-blue-600 font-bold mt-2 hover:underline"
+                          >
+                            ← Volver a mis direcciones guardadas
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
-            </div>
-            <div className="text-[10px] text-gray-400 mt-1 italic">* Puedes modificar estos datos solo para este pedido.</div>
+            </Card>
+
+            {/* Resumen y total */}
+            <Card className="p-6 mb-6 bg-gradient-to-br from-slate-50 to-slate-100">
+              <div className="space-y-3">
+                <div className="flex justify-between text-slate-600">
+                  <span>Subtotal</span>
+                  <span>{total.toFixed(2)}€</span>
+                </div>
+                <div className="flex justify-between text-slate-600">
+                  <span>Envío</span>
+                  <span>Gratis</span>
+                </div>
+                <div className="border-t border-slate-200 pt-3 flex justify-between">
+                  <span className="font-extrabold text-slate-900 text-lg">Total</span>
+                  <span className="font-extrabold text-slate-900 text-lg">{total.toFixed(2)}€</span>
+                </div>
+              </div>
+            </Card>
+
+            {/* Errores */}
+            {errorMsg && (
+              <Card className="p-4 mb-6 bg-red-50 border-red-200">
+                <p className="text-red-800 text-sm">{errorMsg}</p>
+              </Card>
+            )}
+
+            {/* Botón confirmar */}
+            <button 
+              onClick={handleConfirmar} 
+              disabled={isSubmitting || cart.length === 0 || !user}
+              className={`w-full py-4 rounded-xl font-extrabold text-lg transition-all ${
+                isSubmitting || cart.length === 0 || !user
+                  ? 'bg-slate-300 text-slate-500 cursor-not-allowed' 
+                  : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
+              }`}
+            >
+              {isSubmitting ? 'Procesando...' : 'CONFIRMAR COMPRA'}
+            </button>
           </>
         )}
       </div>
-
-      {errorMsg && <div className="text-red-500 mb-4">{errorMsg}</div>}
-
-      <div className="flex justify-between items-center mb-6 px-2">
-        <span className="text-xl font-bold">Total:</span>
-        <span className="text-2xl font-black">{total.toFixed(2)}€</span>
-      </div>
-
-      <button onClick={handleConfirmar} disabled={isSubmitting || cart.length === 0} className={`w-full ${isSubmitting ? 'bg-gray-400' : 'bg-green-500'} text-white py-5 rounded-2xl font-bold text-lg shadow-lg`}>
-        {isSubmitting ? 'Procesando...' : 'CONFIRMAR COMPRA'}
-      </button>
     </div>
   );
 }

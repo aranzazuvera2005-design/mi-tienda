@@ -1,6 +1,6 @@
 import AgregarAlCarritoBtn from "@/components/AgregarAlCarritoBtn";
 import SearchProductos from "@/components/SearchProductos";
-import { Gift } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 export const dynamic = 'force-dynamic';
 
@@ -119,8 +119,7 @@ export default async function HomePage({
   }
 
   return (
-    <main className="min-h-screen bg-[#F1F5F9]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="py-12">
         {/* HERO SECTION - Estilo Solicitado */}
         <section className="bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-800 rounded-[2rem] p-12 mb-12 shadow-2xl shadow-blue-200 flex flex-col md:flex-row items-center gap-12 relative overflow-hidden">
           <div className="flex-1 relative z-10">
@@ -140,9 +139,9 @@ export default async function HomePage({
             </div>
           </div>
 
-          <div className="hidden md:flex flex-shrink-0">
-            <div className="backdrop-blur-md bg-white/10 rounded-3xl border border-white/20 p-10 shadow-2xl">
-              <Gift size={120} className="text-white" />
+            <div className="hidden md:flex flex-shrink-0">
+            <div className="backdrop-blur-md bg-white/10 rounded-3xl border border-white/20 p-10 shadow-2xl animate-pulse">
+              <Sparkles size={120} className="text-white" />
             </div>
           </div>
         </section>
@@ -181,7 +180,6 @@ export default async function HomePage({
             </p>
           </div>
         )}
-      </div>
-    </main>
+    </div>
   );
 }

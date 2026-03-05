@@ -1,7 +1,8 @@
 'use client';
+
 import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { Package, Calendar, AlertCircle, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
+import { ShoppingBag, Calendar, ChevronDown, ChevronUp, Package, ArrowLeft, Clock, CheckCircle, XCircle, AlertCircle, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import Card from '@/components/Card';
@@ -46,11 +47,22 @@ export default function MisPedidos() {
     }
   };
 
-  const puedeSolicitarDevolucion = (fechaPedido: string) => {
-    const fecha = new Date(fechaPedido);
-    const ahora = new Date();
-    const diasTranscurridos = Math.floor((ahora.getTime() - fecha.getTime()) / (1000 * 60 * 60 * 24));
-    return diasTranscurridos <= 30;
+  const getStatusColor = (estado: string) => {
+    switch (estado?.toLowerCase()) {
+      case 'enviado': return 'bg-green-100 text-green-700 border-green-200';
+      case 'pendiente': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      case 'cancelado': return 'bg-red-100 text-red-700 border-red-200';
+      default: return 'bg-slate-100 text-slate-700 border-slate-200';
+    }
+  };
+
+  const getStatusIcon = (estado: string) => {
+    switch (estado?.toLowerCase()) {
+      case 'enviado': return <Package size={16} />;
+      case 'pagado': return <CheckCircle size={16} />;
+      case 'cancelado': return <XCircle size={16} />;
+      default: return <Clock size={16} />;
+    }
   };
 
   const formatearFecha = (fecha: string) => {
@@ -61,33 +73,25 @@ export default function MisPedidos() {
     });
   };
 
-  const getStatusColor = (estado: string) => {
-    switch (estado) {
-      case 'Enviado':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'Pendiente':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'Cancelado':
-        return 'bg-red-100 text-red-800 border-red-200';
-      default:
-        return 'bg-slate-100 text-slate-800 border-slate-200';
-    }
+  const puedeSolicitarDevolucion = (fechaPedido: string) => {
+    const fecha = new Date(fechaPedido);
+    const ahora = new Date();
+    const diferenciaDias = Math.floor((ahora.getTime() - fecha.getTime()) / (1000 * 60 * 60 * 24));
+    return diferenciaDias <= 30;
   };
 
   if (!user) {
     return (
-      <div className="py-12">
-        <Card className="p-8 bg-yellow-50 border-yellow-200">
-          <div className="flex items-start gap-4">
-            <AlertCircle className="text-yellow-600 flex-shrink-0 mt-1" size={24} />
-            <div>
-              <h3 className="font-extrabold text-yellow-900 text-lg">Debes iniciar sesión</h3>
-              <p className="text-yellow-800 text-sm mt-1">Para ver tus pedidos, inicia sesión primero.</p>
-              <Link href="/login" className="inline-block mt-4 text-yellow-700 font-bold hover:underline">
-                Ir a login →
-              </Link>
-            </div>
+      <div className="py-12 sm:py-20">
+        <Card className="max-w-2xl mx-auto p-12 text-center rounded-[3rem] shadow-2xl shadow-slate-200/50 border-none animate-in fade-in zoom-in duration-500">
+          <div className="w-20 h-20 bg-yellow-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+            <AlertCircle className="text-yellow-600" size={40} />
           </div>
+          <h1 className="text-3xl font-black text-slate-900 mb-4">Debes iniciar sesión</h1>
+          <p className="text-slate-500 text-lg mb-10 font-medium">Para ver tus pedidos, primero debes identificarte.</p>
+          <Link href="/login" className="inline-flex items-center gap-2 bg-slate-900 text-white px-8 py-4 rounded-full font-black hover:bg-slate-800 transition-all shadow-xl active:scale-95">
+            Iniciar Sesión
+          </Link>
         </Card>
       </div>
     );
@@ -95,141 +99,134 @@ export default function MisPedidos() {
 
   if (cargando) {
     return (
-      <div className="py-12">
-        <Card className="p-12 text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-slate-600 font-medium">Cargando tus pedidos...</p>
-        </Card>
+      <div className="py-12 sm:py-20 flex justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="py-12">
-      <div className="max-w-3xl mx-auto">
+    <div className="py-8 sm:py-12">
+      <div className="max-w-4xl mx-auto">
         {/* Encabezado */}
-        <div className="flex items-center gap-3 mb-8">
-          <div className="bg-blue-100 p-3 rounded-xl">
-            <Package className="text-blue-600" size={28} />
+        <div className="flex items-center gap-4 mb-10">
+          <div className="bg-blue-600 p-3 rounded-2xl shadow-lg shadow-blue-200">
+            <ShoppingBag className="text-white" size={28} />
           </div>
-          <h1 className="text-3xl font-extrabold text-slate-900">Mis Pedidos</h1>
+          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Mis Pedidos</h1>
         </div>
 
-        {/* Error */}
         {error && (
-          <Card className="p-4 mb-6 bg-red-50 border-red-200">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
-              <p className="text-red-800 text-sm">{error}</p>
-            </div>
-          </Card>
+          <div className="mb-8 p-4 bg-red-50 text-red-600 rounded-2xl text-sm font-bold border border-red-100">
+            {error}
+          </div>
         )}
 
-        {/* Sin pedidos */}
         {pedidos.length === 0 ? (
-          <Card className="p-12 text-center">
-            <div className="bg-slate-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Package size={32} className="text-slate-400" />
+          <Card className="p-16 text-center rounded-[3rem] shadow-xl shadow-slate-200/40 border-none">
+            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+              <Package size={40} className="text-slate-300" />
             </div>
-            <h3 className="text-xl font-extrabold text-slate-900 mb-2">No tienes pedidos aún</h3>
-            <p className="text-slate-600 mb-6">Cuando realices tu primer pedido, aparecerá aquí.</p>
-            <Link href="/" className="inline-block bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 font-bold transition-colors">
+            <h3 className="text-2xl font-black text-slate-900 mb-2">Aún no tienes pedidos</h3>
+            <p className="text-slate-500 mb-8 font-medium">Cuando realices tu primera compra, aparecerá aquí.</p>
+            <Link href="/" className="inline-flex items-center gap-2 bg-blue-600 text-white px-8 py-4 rounded-full font-black hover:bg-blue-700 transition-all shadow-xl shadow-blue-200 active:scale-95">
+              <ArrowLeft size={20} />
               Ir a la tienda
             </Link>
           </Card>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {pedidos.map((pedido) => (
-              <Card key={pedido.id} className="overflow-hidden hover:shadow-md transition-shadow">
-                {/* Header del pedido */}
-                <button
+              <Card key={pedido.id} className="overflow-hidden rounded-[2.5rem] shadow-xl shadow-slate-200/40 border-none hover:shadow-2xl transition-all duration-500 group">
+                {/* Cabecera del pedido */}
+                <button 
                   onClick={() => setExpandedId(expandedId === pedido.id ? null : pedido.id)}
-                  className="w-full p-6 flex items-center justify-between hover:bg-slate-50 transition-colors"
+                  className="w-full flex items-center justify-between p-6 sm:p-8 text-left transition-colors hover:bg-slate-50/50"
                 >
-                  <div className="flex items-center gap-4 flex-1 text-left">
-                    <div className="bg-blue-100 p-3 rounded-lg">
-                      <Package size={24} className="text-blue-600" />
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-10">
+                    <div>
+                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-1">ID Pedido</p>
+                      <p className="text-sm font-black text-slate-900">#{pedido.id.slice(0, 8).toUpperCase()}</p>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm text-slate-600 font-medium">Pedido #{pedido.id.slice(0, 8).toUpperCase()}</p>
-                      <p className="text-lg font-extrabold text-slate-900 mt-1">{pedido.total}€</p>
-                    </div>
-                    <div className="text-right hidden sm:block">
-                      <p className="text-sm text-slate-600 flex items-center gap-1 justify-end mb-2">
-                        <Calendar size={16} />
+                    <div>
+                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-1">Fecha</p>
+                      <p className="text-sm font-black text-slate-900 flex items-center gap-1.5">
+                        <Calendar size={14} className="text-blue-600" />
                         {formatearFecha(pedido.creado_at)}
                       </p>
-                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(pedido.estado)}`}>
-                        {pedido.estado}
-                      </span>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-1">Total</p>
+                      <p className="text-lg font-black text-blue-600">{Number(pedido.total).toFixed(2)}€</p>
+                    </div>
+                    <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border flex items-center gap-1.5 ${getStatusColor(pedido.estado)}`}>
+                      {getStatusIcon(pedido.estado)}
+                      {pedido.estado}
                     </div>
                   </div>
-                  <div className="ml-4 text-slate-400">
-                    {expandedId === pedido.id ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
+                  <div className={`p-2 rounded-full bg-slate-50 text-slate-400 transition-transform duration-300 ${expandedId === pedido.id ? 'rotate-180 bg-blue-50 text-blue-600' : ''}`}>
+                    <ChevronDown size={24} />
                   </div>
                 </button>
 
-                {/* Contenido expandido */}
+                {/* Detalles expandidos */}
                 {expandedId === pedido.id && (
-                  <div className="border-t border-slate-200 p-6 bg-slate-50 space-y-4">
-                    {/* Estado en mobile */}
-                    <div className="sm:hidden">
-                      <p className="text-sm text-slate-600 flex items-center gap-1 mb-2">
-                        <Calendar size={16} />
-                        {formatearFecha(pedido.creado_at)}
-                      </p>
-                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(pedido.estado)}`}>
-                        {pedido.estado}
-                      </span>
-                    </div>
-
-                    {/* Dirección de entrega */}
-                    {pedido.direccion_entrega && (
-                      <div>
-                        <p className="text-sm font-extrabold text-slate-900 mb-2">📍 Dirección de entrega:</p>
-                        <p className="text-slate-700 bg-white p-3 rounded-lg border border-slate-200">{pedido.direccion_entrega}</p>
-                      </div>
-                    )}
-
-                    {/* Productos */}
-                    <div>
-                      <p className="text-sm font-extrabold text-slate-900 mb-3">📦 Productos:</p>
-                      <div className="space-y-2">
-                        {pedido.articulos && Array.isArray(pedido.articulos) && pedido.articulos.length > 0 ? (
-                          pedido.articulos.map((item: any, idx: number) => (
-                            <div key={idx} className="flex justify-between text-sm bg-white p-3 rounded-lg border border-slate-200">
-                              <span className="text-slate-700 font-medium">{item.nombre} <span className="text-slate-500">x{item.cantidad}</span></span>
-                              <span className="font-extrabold text-slate-900">{(Number(item.precio) * item.cantidad).toFixed(2)}€</span>
+                  <div className="border-t border-slate-100 p-6 sm:p-8 bg-slate-50/30 animate-in slide-in-from-top-4 duration-500">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      {/* Productos */}
+                      <div className="space-y-4">
+                        <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                          <Package size={14} /> Productos
+                        </h4>
+                        <div className="space-y-3">
+                          {pedido.articulos?.map((item: any, idx: number) => (
+                            <div key={idx} className="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                              <div className="flex flex-col">
+                                <span className="text-sm font-black text-slate-900">{item.nombre}</span>
+                                <span className="text-xs text-slate-500 font-bold">Cantidad: {item.cantidad}</span>
+                              </div>
+                              <span className="text-sm font-black text-blue-600">{(Number(item.precio) * item.cantidad).toFixed(2)}€</span>
                             </div>
-                          ))
-                        ) : (
-                          <p className="text-slate-500 text-sm">No hay productos registrados</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Botones de acción */}
-                    <div className="flex flex-col gap-2 pt-2">
-                      {puedeSolicitarDevolucion(pedido.creado_at) && (
-                        <Link
-                          href={`/perfil/solicitar-devolucion?pedidoId=${pedido.id}`}
-                          className="block w-full bg-orange-600 text-white px-4 py-2.5 rounded-lg hover:bg-orange-700 text-center font-bold transition-colors"
-                        >
-                          Solicitar Devolución
-                        </Link>
-                      )}
-                      {!puedeSolicitarDevolucion(pedido.creado_at) && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
-                          <p className="font-medium">No puedes solicitar devolución</p>
-                          <p className="text-xs mt-1">Han pasado más de 30 días desde la compra</p>
+                          ))}
                         </div>
-                      )}
-                      <Link
-                        href="/perfil/mis-devoluciones"
-                        className="block w-full bg-slate-200 text-slate-800 px-4 py-2.5 rounded-lg hover:bg-slate-300 text-center font-bold transition-colors"
-                      >
-                        Ver mis devoluciones
-                      </Link>
+                      </div>
+
+                      {/* Info adicional */}
+                      <div className="space-y-6">
+                        {/* Dirección */}
+                        <div className="space-y-3">
+                          <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <MapPin size={14} /> Dirección de entrega
+                          </h4>
+                          <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                            <p className="text-sm text-slate-700 font-medium leading-relaxed">
+                              {pedido.direccion_ent || pedido.direccion_entrega || 'No especificada'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Acciones */}
+                        <div className="flex flex-col gap-3">
+                          {puedeSolicitarDevolucion(pedido.creado_at) ? (
+                            <Link
+                              href={`/perfil/solicitar-devolucion?pedidoId=${pedido.id}`}
+                              className="flex items-center justify-center gap-2 w-full bg-orange-600 text-white px-6 py-3.5 rounded-full font-black text-sm hover:bg-orange-700 transition-all shadow-lg shadow-orange-100 active:scale-95"
+                            >
+                              Solicitar Devolución
+                            </Link>
+                          ) : (
+                            <div className="p-4 bg-slate-100 text-slate-500 rounded-2xl text-xs font-bold text-center border border-slate-200">
+                              Plazo de devolución finalizado (30 días)
+                            </div>
+                          )}
+                          <Link
+                            href="/perfil/mis-devoluciones"
+                            className="flex items-center justify-center gap-2 w-full bg-white text-slate-900 px-6 py-3.5 rounded-full font-black text-sm hover:bg-slate-50 transition-all border border-slate-200 shadow-sm active:scale-95"
+                          >
+                            Ver mis devoluciones
+                          </Link>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -239,8 +236,8 @@ export default function MisPedidos() {
         )}
 
         {/* Volver */}
-        <div className="mt-8">
-          <Link href="/" className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline">
+        <div className="mt-12 text-center">
+          <Link href="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-blue-600 font-black text-sm uppercase tracking-widest transition-colors">
             <ArrowLeft size={18} />
             Volver a la tienda
           </Link>

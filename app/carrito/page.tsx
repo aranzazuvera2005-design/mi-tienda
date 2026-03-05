@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
 import { useCart } from '@/context/CartContext';
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { createBrowserClient } from '@supabase/ssr';
-import { ShoppingCart, Trash2, Plus, Minus } from 'lucide-react';
+import { ShoppingCart, Trash2, Plus, Minus, ShoppingBag, ArrowLeft, ArrowRight, MapPin, Phone, User as UserIcon, ShieldCheck } from 'lucide-react';
 import Card from '@/components/Card';
 
 export default function CarritoPage() {
@@ -23,7 +23,6 @@ export default function CarritoPage() {
 
   useEffect(() => { setMounted(true); }, []);
 
-  // Auto-completar datos del usuario y cargar sus direcciones
   useEffect(() => {
     const fillProfile = async () => {
       if (!user) return;
@@ -35,14 +34,12 @@ export default function CarritoPage() {
         
         const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
         
-        // 1. Cargar perfil
         const { data: perfil } = await supabase.from('perfiles').select('nombre, telefono').eq('id', user.id).single();
         if (perfil) {
           setNombre(perfil.nombre || "");
           setTelefono(perfil.telefono || "");
         }
 
-        // 2. Cargar direcciones
         const { data: dirs } = await supabase.from('direcciones').select('*').eq('cliente_id', user.id);
         if (dirs && dirs.length > 0) {
           setDirecciones(dirs);
@@ -68,16 +65,14 @@ export default function CarritoPage() {
     return acc + (precio * (item.cantidad || 0));
   }, 0);
 
-  const perfilCompleto = true;
-
   const handleConfirmar = async () => {
     if (cart.length === 0) return;
     if (!user) {
       alert("Debes iniciar sesión para confirmar la compra");
       return;
     }
-    if (!perfilCompleto) {
-      alert("Tu perfil está incompleto. Completa tus datos en Perfil antes de confirmar.");
+    if (!nombre || !telefono || !direccion) {
+      alert("Por favor, completa todos los datos de envío.");
       return;
     }
 
@@ -96,16 +91,38 @@ export default function CarritoPage() {
 
   if (completado) {
     return (
-      <div className="py-12 min-h-screen flex flex-col justify-center items-center">
-        <Card className="max-w-md w-full p-8 text-center">
-          <div className="mb-4">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <ShoppingCart className="text-green-600" size={32} />
-            </div>
+      <div className="py-12 sm:py-20 min-h-[70vh] flex flex-col justify-center items-center">
+        <Card className="max-w-md w-full p-10 text-center rounded-[3rem] shadow-2xl shadow-green-100 border-none animate-in fade-in zoom-in duration-500">
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+            <ShieldCheck className="text-green-600" size={40} />
           </div>
-          <h1 className="text-3xl font-extrabold text-slate-900 mb-2">¡Pedido Recibido!</h1>
-          <p className="text-slate-600 mb-6">Gracias {nombre}, procesaremos tu pedido en breve.</p>
-          <Link href="/" className="inline-block bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors">
+          <h1 className="text-3xl font-black text-slate-900 mb-2">¡Pedido Recibido!</h1>
+          <p className="text-slate-600 mb-8 font-medium">Gracias {nombre}, procesaremos tu pedido en breve. Recibirás un email con los detalles.</p>
+          <Link href="/" className="inline-flex items-center gap-2 bg-blue-600 text-white px-8 py-4 rounded-full font-black hover:bg-blue-700 transition-all shadow-xl shadow-blue-200 active:scale-95">
+            <ArrowLeft size={20} />
+            Volver a la tienda
+          </Link>
+        </Card>
+      </div>
+    );
+  }
+
+  if (cart.length === 0) {
+    return (
+      <div className="py-12 sm:py-20">
+        <Card className="max-w-2xl mx-auto p-12 sm:p-20 text-center rounded-[3rem] shadow-2xl shadow-slate-200/50 border-none animate-in fade-in zoom-in duration-500">
+          <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
+            <ShoppingBag size={48} className="text-blue-600" />
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 mb-4">Tu carrito está vacío</h1>
+          <p className="text-slate-500 text-lg mb-10 font-medium max-w-md mx-auto">
+            Parece que aún no has añadido nada. ¡Explora nuestra tienda y encuentra algo increíble!
+          </p>
+          <Link 
+            href="/" 
+            className="inline-flex items-center gap-3 bg-blue-600 text-white px-10 py-4 rounded-full font-black text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-200 active:scale-95"
+          >
+            <ArrowLeft size={20} />
             Volver a la tienda
           </Link>
         </Card>
@@ -114,215 +131,197 @@ export default function CarritoPage() {
   }
 
   return (
-    <div className="py-12">
-      <div className="max-w-2xl mx-auto">
-        {/* Título */}
-        <div className="flex items-center gap-3 mb-8">
-          <div className="bg-blue-100 p-3 rounded-xl">
-            <ShoppingCart className="text-blue-600" size={28} />
-          </div>
-          <h1 className="text-3xl font-extrabold text-slate-900">Carrito de Compra</h1>
-        </div>
-
-        {/* Productos */}
-        <Card className="p-6 mb-6">
-          {cart.length === 0 ? (
-            <div className="text-center py-12">
-              <ShoppingCart className="text-slate-300 mx-auto mb-4" size={48} />
-              <p className="text-slate-600 text-lg">Tu carrito está vacío</p>
-              <Link href="/" className="inline-block mt-4 text-blue-600 font-bold hover:underline">
-                Continuar comprando
-              </Link>
+    <div className="py-8 sm:py-12">
+      <div className="flex flex-col lg:flex-row gap-10">
+        {/* Lista de productos */}
+        <div className="flex-1 space-y-6">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="bg-blue-600 p-3 rounded-2xl shadow-lg shadow-blue-200">
+              <ShoppingCart className="text-white" size={28} />
             </div>
-          ) : (
-            <div className="space-y-4">
-              {cart.map((item: any) => (
-                <div key={item.id} className="flex gap-4 pb-4 border-b border-slate-100 last:border-0 last:pb-0">
-                  {/* Imagen */}
-                  <div className="w-20 h-20 bg-slate-50 rounded-lg flex items-center justify-center flex-shrink-0 border border-slate-200">
+            <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Tu Carrito</h1>
+          </div>
+
+          <div className="space-y-4">
+            {cart.map((item: any) => (
+              <Card key={item.id} className="p-4 sm:p-6 rounded-[2rem] shadow-xl shadow-slate-200/40 border-none hover:shadow-2xl transition-all duration-500 group">
+                <div className="flex flex-col sm:flex-row items-center gap-6">
+                  <div className="w-full sm:w-32 h-32 bg-slate-50 rounded-2xl overflow-hidden shadow-inner flex-shrink-0">
                     <img 
                       src={item.imagen_url || item.imagenUrl || '/globe.svg'} 
                       alt={item.nombre} 
-                      className="max-w-full max-h-full object-contain p-1"
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       onError={(e) => { (e.target as HTMLImageElement).src = '/globe.svg'; }}
                     />
                   </div>
 
-                  {/* Detalles */}
-                  <div className="flex-1">
-                    <h3 className="font-bold text-slate-900">{item.nombre}</h3>
-                    <p className="text-sm text-slate-600 mt-1">{Number(item.precio || 0).toFixed(2)}€</p>
+                  <div className="flex-1 text-center sm:text-left">
+                    <h3 className="text-xl font-black text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">{item.nombre}</h3>
+                    <p className="text-blue-600 font-black text-lg">{Number(item.precio || 0).toFixed(2)}€</p>
                   </div>
 
-                  {/* Cantidad */}
-                  <div className="flex items-center gap-2 bg-slate-100 rounded-lg px-2 py-1">
+                  <div className="flex items-center gap-4 bg-slate-50 p-2 rounded-full border border-slate-100 shadow-inner">
                     <button 
                       onClick={() => removeFromCart(item.id)}
-                      className="p-1 hover:bg-slate-200 rounded transition-colors"
+                      className="p-2 hover:bg-white hover:text-red-500 rounded-full transition-all shadow-sm hover:shadow-md active:scale-90"
                     >
-                      <Minus size={16} className="text-slate-600" />
+                      <Minus size={18} />
                     </button>
-                    <span className="w-6 text-center font-bold text-slate-900">{item.cantidad || 0}</span>
+                    <span className="font-black text-slate-900 min-w-[24px] text-center text-lg">{item.cantidad}</span>
                     <button 
                       onClick={() => addToCart(item)}
-                      className="p-1 hover:bg-slate-200 rounded transition-colors"
+                      className="p-2 hover:bg-white hover:text-blue-600 rounded-full transition-all shadow-sm hover:shadow-md active:scale-90"
                     >
-                      <Plus size={16} className="text-slate-600" />
+                      <Plus size={18} />
                     </button>
                   </div>
 
-                  {/* Subtotal */}
-                  <div className="text-right min-w-fit">
-                    <p className="text-sm text-slate-600">Subtotal</p>
-                    <p className="font-extrabold text-slate-900">{(Number(item.precio || 0) * (item.cantidad || 0)).toFixed(2)}€</p>
+                  <div className="text-right min-w-[100px]">
+                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Subtotal</p>
+                    <p className="text-xl font-black text-slate-900">{(Number(item.precio || 0) * item.cantidad).toFixed(2)}€</p>
                   </div>
 
-                  {/* Eliminar */}
                   <button 
                     onClick={() => removeFromCart(item.id)}
-                    className="p-2 hover:bg-red-50 rounded-lg transition-colors text-slate-400 hover:text-red-500"
+                    className="p-3 text-slate-300 hover:text-red-500 transition-colors"
                   >
-                    <Trash2 size={18} />
+                    <Trash2 size={20} />
                   </button>
                 </div>
-              ))}
-            </div>
-          )}
-        </Card>
+              </Card>
+            ))}
+          </div>
+        </div>
 
-        {/* Formulario de envío */}
-        {cart.length > 0 && (
-          <>
-            <Card className="p-6 mb-6">
-              <h2 className="text-lg font-extrabold text-slate-900 mb-4 flex items-center gap-2">
-                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <span className="text-blue-600 font-bold">📦</span>
-                </div>
-                Información de Envío
-              </h2>
+        {/* Resumen y Envío */}
+        <div className="w-full lg:w-[450px] space-y-6">
+          {/* Información de Envío */}
+          <Card className="p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/40 border-none">
+            <h2 className="text-2xl font-black text-slate-900 mb-6 flex items-center gap-2">
+              <MapPin className="text-blue-600" size={24} />
+              Envío
+            </h2>
 
-              {loadingPerfil ? (
-                <div className="text-sm text-slate-500 text-center py-4">Cargando datos del perfil...</div>
-              ) : !user ? (
-                <div className="text-center py-6">
-                  <p className="text-slate-600 mb-4">Debes <Link href="/login" className="text-blue-600 font-bold hover:underline">iniciar sesión</Link> para finalizar tu compra.</p>
+            {loadingPerfil ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : !user ? (
+              <div className="text-center py-6 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                <p className="text-slate-600 mb-4 font-medium">Inicia sesión para finalizar</p>
+                <Link href="/login" className="inline-block bg-slate-900 text-white px-6 py-2 rounded-full font-bold hover:bg-slate-800 transition-all">
+                  Iniciar Sesión
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-5">
+                <div>
+                  <label className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
+                    <UserIcon size={14} /> Nombre completo
+                  </label>
+                  <input 
+                    value={nombre} 
+                    onChange={(e) => setNombre(e.target.value)} 
+                    type="text" 
+                    placeholder="Tu nombre" 
+                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:bg-white outline-none transition-all font-bold text-slate-800"
+                  />
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2">Nombre para el envío</label>
-                    <input 
-                      value={nombre} 
-                      onChange={(e) => setNombre(e.target.value)} 
-                      type="text" 
-                      placeholder="Tu nombre completo" 
-                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+
+                <div>
+                  <label className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
+                    <Phone size={14} /> Teléfono
+                  </label>
+                  <input 
+                    value={telefono} 
+                    onChange={(e) => setTelefono(e.target.value)} 
+                    type="text" 
+                    placeholder="Tu teléfono" 
+                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:bg-white outline-none transition-all font-bold text-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
+                    <MapPin size={14} /> Dirección
+                  </label>
+                  {direcciones.length > 0 && !mostrarNuevaDir ? (
+                    <select 
+                      value={direccion} 
+                      onChange={(e) => e.target.value === "nueva" ? setMostrarNuevaDir(true) : setDireccion(e.target.value)}
+                      className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:bg-white outline-none transition-all font-bold text-slate-800 appearance-none"
+                    >
+                      {direcciones.map((d, idx) => (
+                        <option key={d.id || idx} value={d.calle}>{d.calle}</option>
+                      ))}
+                      <option value="nueva">+ Nueva dirección...</option>
+                    </select>
+                  ) : (
+                    <textarea 
+                      value={direccion} 
+                      onChange={(e) => setDireccion(e.target.value)} 
+                      placeholder="Dirección completa..." 
+                      className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:bg-white outline-none transition-all font-bold text-slate-800 resize-none" 
+                      rows={3}
                     />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2">Teléfono de contacto</label>
-                    <input 
-                      value={telefono} 
-                      onChange={(e) => setTelefono(e.target.value)} 
-                      type="text" 
-                      placeholder="Tu teléfono" 
-                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2">Dirección de entrega</label>
-                    {direcciones.length > 0 && !mostrarNuevaDir ? (
-                      <div className="space-y-2">
-                        <select 
-                          value={direccion} 
-                          onChange={(e) => {
-                            if (e.target.value === "nueva") {
-                              setMostrarNuevaDir(true);
-                              setDireccion("");
-                            } else {
-                              setDireccion(e.target.value);
-                            }
-                          }}
-                          className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                        >
-                          {direcciones.map((d, idx) => (
-                            <option key={d.id || idx} value={d.calle}>
-                              {d.calle} {d.es_principal ? '(Principal)' : ''}
-                            </option>
-                          ))}
-                          <option value="nueva">+ Añadir nueva dirección...</option>
-                        </select>
-                      </div>
-                    ) : (
-                      <div>
-                        <textarea 
-                          value={direccion} 
-                          onChange={(e) => setDireccion(e.target.value)} 
-                          placeholder="Calle, número, piso, ciudad, código postal..." 
-                          className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" 
-                          rows={3}
-                        />
-                        {direcciones.length > 0 && (
-                          <button 
-                            type="button"
-                            onClick={() => {
-                              setMostrarNuevaDir(false);
-                              const principal = direcciones.find(d => d.es_principal) || direcciones[0];
-                              setDireccion(principal.calle);
-                            }}
-                            className="text-sm text-blue-600 font-bold mt-2 hover:underline"
-                          >
-                            ← Volver a mis direcciones guardadas
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </Card>
-
-            {/* Resumen y total */}
-            <Card className="p-6 mb-6 bg-gradient-to-br from-slate-50 to-slate-100">
-              <div className="space-y-3">
-                <div className="flex justify-between text-slate-600">
-                  <span>Subtotal</span>
-                  <span>{total.toFixed(2)}€</span>
-                </div>
-                <div className="flex justify-between text-slate-600">
-                  <span>Envío</span>
-                  <span>Gratis</span>
-                </div>
-                <div className="border-t border-slate-200 pt-3 flex justify-between">
-                  <span className="font-extrabold text-slate-900 text-lg">Total</span>
-                  <span className="font-extrabold text-slate-900 text-lg">{total.toFixed(2)}€</span>
+                  )}
                 </div>
               </div>
-            </Card>
+            )}
+          </Card>
 
-            {/* Errores */}
+          {/* Resumen Final */}
+          <Card className="p-8 rounded-[2.5rem] shadow-2xl shadow-blue-100 border-none bg-white overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+            
+            <h2 className="text-2xl font-black text-slate-900 mb-8 relative z-10">Resumen</h2>
+            
+            <div className="space-y-4 mb-8 relative z-10">
+              <div className="flex justify-between text-slate-500 font-bold">
+                <span>Subtotal</span>
+                <span className="text-slate-900">{total.toFixed(2)}€</span>
+              </div>
+              <div className="flex justify-between text-slate-500 font-bold">
+                <span>Envío</span>
+                <span className="text-green-600">Gratis</span>
+              </div>
+              <div className="h-px bg-slate-100 my-4"></div>
+              <div className="flex justify-between items-end">
+                <span className="text-lg font-black text-slate-900">Total</span>
+                <span className="text-4xl font-black text-blue-600 leading-none">{total.toFixed(2)}€</span>
+              </div>
+            </div>
+
             {errorMsg && (
-              <Card className="p-4 mb-6 bg-red-50 border-red-200">
-                <p className="text-red-800 text-sm">{errorMsg}</p>
-              </Card>
+              <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-2xl text-sm font-bold border border-red-100 animate-shake">
+                {errorMsg}
+              </div>
             )}
 
-            {/* Botón confirmar */}
             <button 
-              onClick={handleConfirmar} 
-              disabled={isSubmitting || cart.length === 0 || !user}
-              className={`w-full py-4 rounded-xl font-extrabold text-lg transition-all ${
-                isSubmitting || cart.length === 0 || !user
-                  ? 'bg-slate-300 text-slate-500 cursor-not-allowed' 
-                  : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
+              onClick={handleConfirmar}
+              disabled={isSubmitting || !user}
+              className={`flex items-center justify-center gap-3 w-full py-5 rounded-full font-black text-xl transition-all shadow-xl active:scale-95 relative z-10 group ${
+                isSubmitting || !user
+                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                  : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200'
               }`}
             >
-              {isSubmitting ? 'Procesando...' : 'CONFIRMAR COMPRA'}
+              {isSubmitting ? (
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+              ) : (
+                <>
+                  Confirmar Pedido
+                  <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </button>
-          </>
-        )}
+
+            <p className="text-center text-slate-400 text-[10px] mt-6 font-black uppercase tracking-widest relative z-10">
+              Seguridad Garantizada SSL
+            </p>
+          </Card>
+        </div>
       </div>
     </div>
   );

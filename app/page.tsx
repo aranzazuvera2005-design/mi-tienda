@@ -2,7 +2,6 @@ export const dynamic = 'force-dynamic';
 
 import SearchProductos from "@/components/SearchProductos";
 
-export const dynamic = 'force-dynamic';
 
 export default async function HomePage({ searchParams }: { searchParams: any }) {
   const params = await searchParams;

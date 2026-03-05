@@ -10,32 +10,29 @@ interface CartDrawerProps {
   onClose: () => void;
 }
 
-// Base URL de Supabase
 const SUPABASE_BASE_URL = 'https://vjkdxevzdtjsgabyxdgs.supabase.co/storage/v1/object/public';
 
-// Función para construir URL completa de imagen
 const buildImageUrl = (imagenUrl: string | null | undefined): string => {
   if (!imagenUrl) return '/globe.svg';
-  
-  // Si ya es una URL completa, devolverla tal cual
   if (imagenUrl.startsWith('http://') || imagenUrl.startsWith('https://')) {
     return imagenUrl;
   }
-  
-  // Si es solo el nombre del archivo, construir la URL completa
   return `${SUPABASE_BASE_URL}/${imagenUrl}`;
 };
 
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
-  const { cart, removeFromCart, total } = useCart();
+  // 1. EL SEGURO: Estado de montaje para evitar errores de hidratación y SSR
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
+  // 2. Consumo del contexto (solo se usará si isMounted es true)
+  const cartContext = useCart();
+  
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && isMounted) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -43,34 +40,40 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen]);
+  }, [isOpen, isMounted]);
 
+  // Si no está montado, no renderizamos NADA para evitar el error de los logs
   if (!isMounted) return null;
+
+  // Extraemos datos del contexto de forma segura
+  const { cart, removeFromCart, total } = cartContext;
 
   return (
     <>
       {/* Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] transition-opacity duration-300"
           onClick={onClose}
           aria-hidden="true"
         />
       )}
 
-      {/* Drawer - Fase 4 Design */}
+      {/* Drawer */}
       <div
-        className={`fixed right-0 top-0 h-screen w-full max-w-md bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-out flex flex-col ${
+        className={`fixed right-0 top-0 h-screen w-full max-w-md bg-white shadow-2xl z-[70] transform transition-transform duration-500 ease-in-out flex flex-col ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        {/* Header - Fase 4: Azul vibrante */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
-          <h2 className="text-2xl font-black text-blue-600">🛒 Tu Carrito</h2>
+        {/* Header con gradiente Fase 4 */}
+        <div className="flex items-center justify-between p-6 border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white">
+          <div>
+            <h2 className="text-2xl font-black text-blue-600">Mi Carrito</h2>
+            <p className="text-xs text-blue-400 font-bold uppercase tracking-wider">Fase 4 - Edición Boutique</p>
+          </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-white rounded-lg transition-colors text-gray-500 hover:text-gray-900"
-            aria-label="Cerrar carrito"
+            className="p-2 hover:bg-blue-600 hover:text-white rounded-full transition-all duration-300 text-blue-600 border border-blue-100 shadow-sm"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -78,88 +81,87 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           </button>
         </div>
 
-        {/* Contenido */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        {/* Contenido con scroll elegante */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/30">
           {cart.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <div className="text-6xl mb-4">📦</div>
-              <p className="text-gray-600 font-medium mb-4">Tu carrito está vacío</p>
-              <p className="text-sm text-gray-500">Añade productos para empezar a comprar</p>
+            <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+              <div className="text-7xl bg-white w-24 h-24 flex items-center justify-center rounded-full shadow-inner">🛒</div>
+              <div>
+                <p className="text-slate-800 font-bold text-xl">¿Aún nada?</p>
+                <p className="text-slate-400 text-sm mt-1">Tus próximos favoritos te están esperando.</p>
+              </div>
+              <button 
+                onClick={onClose}
+                className="text-blue-600 font-bold text-sm underline underline-offset-4"
+              >
+                Volver a la tienda
+              </button>
             </div>
           ) : (
-            cart.map((item: any) => {
-              const imageUrl = buildImageUrl(item.imagen_url || item.imagenUrl);
-              
-              return (
-                <div
-                  key={item.id}
-                  className="bg-gray-50 border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all"
-                >
-                  <div className="flex gap-4">
-                    {/* Imagen */}
-                    <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
-                      <Image
-                        src={imageUrl}
-                        alt={item.nombre}
-                        width={80}
-                        height={80}
-                        className="w-full h-full object-cover"
-                        unoptimized={false}
-                      />
-                    </div>
-
-                    {/* Detalles */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-gray-900 line-clamp-2">{item.nombre}</h3>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {Number(item.precio || 0).toFixed(2)}€ × {item.cantidad || 1}
-                      </p>
-                      {/* Fase 4: Precio en negrita y azul */}
-                      <p className="text-base font-black text-blue-600 mt-2">
-                        {(Number(item.precio || 0) * (item.cantidad || 1)).toFixed(2)}€
-                      </p>
-                    </div>
-
-                    {/* Botón eliminar */}
-                    <button
-                      onClick={() => removeFromCart(item.id)}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                      aria-label="Eliminar del carrito"
-                    >
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                    </button>
+            cart.map((item: any) => (
+              <div
+                key={item.id}
+                className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-300 group"
+              >
+                <div className="flex gap-4">
+                  <div className="relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden bg-slate-100 border border-slate-50">
+                    <Image
+                      src={buildImageUrl(item.imagen_url || item.imagenUrl)}
+                      alt={item.nombre}
+                      fill
+                      className="object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
                   </div>
+
+                  <div className="flex-1 flex flex-col justify-between py-1">
+                    <div>
+                      <h3 className="font-bold text-slate-800 text-base line-clamp-1">{item.nombre}</h3>
+                      <p className="text-xs text-slate-400 mt-1 font-medium">Cant: {item.cantidad || 1}</p>
+                    </div>
+                    <p className="text-blue-600 font-black text-lg">
+                      {(Number(item.precio || 0) * (item.cantidad || 1)).toFixed(2)}€
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => removeFromCart(item.id)}
+                    className="self-start p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
                 </div>
-              );
-            })
+              </div>
+            ))
           )}
         </div>
 
-        {/* Footer - Fase 4: Azul vibrante */}
+        {/* Footer Premium */}
         {cart.length > 0 && (
-          <div className="border-t border-gray-200 p-6 space-y-4 bg-gradient-to-t from-blue-50 to-white">
-            <div className="flex justify-between items-center text-lg font-black">
-              <span className="text-gray-900">Subtotal:</span>
-              <span className="text-blue-600">{total.toFixed(2)}€</span>
+          <div className="border-t border-slate-100 p-8 bg-white shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)]">
+            <div className="flex justify-between items-end mb-6">
+              <span className="text-slate-400 font-bold uppercase text-xs tracking-widest">Total Estimado</span>
+              <span className="text-3xl font-black text-slate-900 tracking-tighter">
+                {total.toFixed(2)}€
+              </span>
             </div>
-            <p className="text-xs text-gray-500 text-center">
-              El envío se calculará al finalizar la compra
-            </p>
-            <Link
-              href="/carrito"
-              onClick={onClose}
-              className="block w-full bg-blue-600 text-white font-bold py-4 px-6 rounded-xl text-center hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 active:scale-95"
-            >
-              Ir al Carrito
-            </Link>
-            <button
-              onClick={onClose}
-              className="w-full bg-white text-gray-700 font-semibold py-3 px-6 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all"
-            >
-              Seguir Comprando
-            </button>
+            
+            <div className="space-y-3">
+              <Link
+                href="/carrito"
+                onClick={onClose}
+                className="block w-full bg-blue-600 text-white font-bold py-4 rounded-2xl text-center hover:bg-blue-700 transition-all shadow-xl shadow-blue-200 active:scale-[0.98]"
+              >
+                Finalizar Compra
+              </Link>
+              <button
+                onClick={onClose}
+                className="w-full text-slate-400 font-bold py-2 text-sm hover:text-slate-600 transition-colors"
+              >
+                Continuar explorando
+              </button>
+            </div>
           </div>
         )}
       </div>

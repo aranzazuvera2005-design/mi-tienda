@@ -2,7 +2,7 @@
 
 import { useCart } from '@/context/CartContext';
 import { usePathname } from 'next/navigation';
-import { User, LogOut, ShoppingCart, LogIn } from 'lucide-react';
+import { User, LogOut, ShoppingCart, LogIn, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -11,7 +11,7 @@ export default function Header() {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
 
-  // Asegurar que el componente solo se renderice en el cliente
+  // Asegurar que el componente solo se renderice en el cliente para evitar errores de hidratación
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -20,13 +20,16 @@ export default function Header() {
   const showCart = !pathname?.startsWith('/admin');
   const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuario';
 
-  // Fallback de carga (esqueleto)
+  // Fallback de carga (esqueleto) mientras no está montado o está cargando auth
   if (!mounted || isAuthLoading) {
     return (
       <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm h-16 sm:h-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex justify-between items-center">
-          <div className="text-2xl sm:text-3xl font-bold text-blue-600 tracking-tighter">MI TIENDA</div>
-          <div className="h-10 w-24 bg-slate-100 animate-pulse rounded-full"></div>
+          <div className="text-2xl sm:text-3xl font-black text-blue-600 tracking-tighter">MI TIENDA</div>
+          <div className="flex items-center gap-4">
+            <div className="h-10 w-24 bg-slate-100 animate-pulse rounded-full"></div>
+            <div className="h-10 w-10 bg-slate-100 animate-pulse rounded-full"></div>
+          </div>
         </div>
       </header>
     );
@@ -37,9 +40,11 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 sm:h-20">
           {/* Logo */}
-          <Link href="/" className="text-2xl sm:text-3xl font-bold text-blue-600 tracking-tighter hover:opacity-90 transition-opacity">
-            MI TIENDA
-          </Link>
+          <div className="flex items-center">
+            <Link href="/" className="text-2xl sm:text-3xl font-black text-blue-600 tracking-tighter hover:opacity-90 transition-opacity">
+              MI TIENDA
+            </Link>
+          </div>
 
           {/* Acciones */}
           <div className="flex items-center gap-2 sm:gap-4">
@@ -60,10 +65,10 @@ export default function Header() {
                 <div className="w-px h-6 bg-slate-200 mx-1 hidden sm:block"></div>
                 <button 
                   onClick={logout}
-                  className="p-1.5 hover:bg-red-50 rounded-full transition-colors text-slate-400 hover:text-red-500"
+                  className="p-1.5 hover:bg-red-50 rounded-full transition-colors text-slate-400 hover:text-red-500 group"
                   title="Cerrar sesión"
                 >
-                  <LogOut size={18} />
+                  <LogOut size={18} className="group-hover:translate-x-0.5 transition-transform" />
                 </button>
               </div>
             ) : (
@@ -85,7 +90,7 @@ export default function Header() {
               >
                 <ShoppingCart size={24} className="group-hover:scale-110 transition-transform" />
                 {count > 0 && (
-                  <span className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[20px] h-5 flex items-center justify-center shadow-lg shadow-blue-200 border-2 border-white">
+                  <span className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[20px] h-5 flex items-center justify-center shadow-lg shadow-blue-200 border-2 border-white animate-in zoom-in">
                     {count}
                   </span>
                 )}

@@ -1,17 +1,17 @@
 'use client';
-
 import React, { createContext, useContext, useState } from 'react';
 
 const CartDrawerContext = createContext<any>(null);
 
 export function CartDrawerProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
-  const openDrawer = () => setIsOpen(true);
-  const closeDrawer = () => setIsOpen(false);
-  const toggleDrawer = () => setIsOpen(prev => !prev);
-
   return (
-    <CartDrawerContext.Provider value={{ isOpen, openDrawer, closeDrawer, toggleDrawer }}>
+    <CartDrawerContext.Provider value={{ 
+      isOpen, 
+      openDrawer: () => setIsOpen(true), 
+      closeDrawer: () => setIsOpen(false), 
+      toggleDrawer: () => setIsOpen(!isOpen) 
+    }}>
       {children}
     </CartDrawerContext.Provider>
   );
@@ -19,16 +19,9 @@ export function CartDrawerProvider({ children }: { children: React.ReactNode }) 
 
 export function useCartDrawer() {
   const context = useContext(CartDrawerContext);
-  
-  // Si no hay contexto, devolvemos un objeto vacío en lugar de romper la web
+  // RETORNO SEGURO: Si el context es null, devolvemos un objeto dummy
   if (!context) {
-    return {
-      isOpen: false,
-      openDrawer: () => {},
-      closeDrawer: () => {},
-      toggleDrawer: () => {}
-    };
+    return { isOpen: false, openDrawer: () => {}, closeDrawer: () => {}, toggleDrawer: () => {} };
   }
-  
   return context;
 }

@@ -9,8 +9,8 @@ import { Suspense } from "react";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Mi Tienda Online",
-  description: "Una experiencia de compra premium",
+  title: "Mi Tienda Boutique",
+  description: "Una experiencia de compra premium y exclusiva",
 };
 
 export default function RootLayout({
@@ -20,10 +20,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={`${inter.className} bg-slate-50 antialiased text-slate-900`}>
+      <body className={`${inter.className} bg-[#F1F5F9] antialiased text-slate-900`}>
         <ToastProvider>
           <CartProvider>
-            <Header />
+            <Suspense fallback={
+              <div className="h-20 w-full bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50">
+                <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
+                  <div className="h-8 w-32 bg-slate-100 animate-pulse rounded-lg"></div>
+                  <div className="h-10 w-24 bg-slate-100 animate-pulse rounded-full"></div>
+                </div>
+              </div>
+            }>
+              <Header />
+            </Suspense>
             <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
               <Suspense fallback={
                 <div className="flex items-center justify-center min-h-[60vh]">

@@ -4,14 +4,31 @@ import { useCart } from '@/context/CartContext';
 import { usePathname } from 'next/navigation';
 import { User, LogOut, ShoppingCart, LogIn } from 'lucide-react';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 export default function Header() {
   const { cart, logout, user, isAuthLoading } = useCart();
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+
+  // Asegurar que el componente solo se renderice en el cliente para evitar errores de hidratación
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-200 h-16 sm:h-20">
+        <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
+          <div className="text-2xl sm:text-3xl font-black text-blue-600 tracking-tighter">MI TIENDA</div>
+          <div className="h-10 w-24 bg-slate-100 animate-pulse rounded-full"></div>
+        </div>
+      </header>
+    );
+  }
+
   const count = cart.reduce((acc: number, item: any) => acc + (item.cantidad || 1), 0);
   const showCart = !pathname?.startsWith('/admin');
-
-  // Obtener el nombre del usuario (metadata o email)
   const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuario';
 
   return (
@@ -30,6 +47,7 @@ export default function Header() {
             {isAuthLoading ? (
               <div className="h-10 w-24 bg-slate-100 animate-pulse rounded-full"></div>
             ) : user ? (
+              /* Cápsula de Usuario Autenticado */
               <div className="flex items-center gap-2 sm:gap-3 bg-white border border-slate-200 shadow-sm rounded-full pl-1 pr-2 sm:pr-3 py-1 transition-all hover:shadow-md">
                 <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-inner">
                   <User size={18} />
@@ -52,9 +70,10 @@ export default function Header() {
                 </button>
               </div>
             ) : (
+              /* Botón de Iniciar Sesión Boutique */
               <Link 
                 href="/login" 
-                className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-full bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200 active:scale-95"
+                className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-100 active:scale-95"
               >
                 <LogIn size={18} />
                 <span>Entrar</span>

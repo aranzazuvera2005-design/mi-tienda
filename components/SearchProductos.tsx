@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import AgregarAlCarritoBtn from './AgregarAlCarritoBtn';
-import { Search, X, ChevronDown, Tag, ShoppingBag } from 'lucide-react';
+import { Search, X, ChevronDown, Tag } from 'lucide-react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
 export default function SearchProductos({ 
@@ -57,7 +57,7 @@ export default function SearchProductos({
 
   return (
     <section className="mb-12">
-      {/* BUSCADOR Y FILTROS */}
+      {/* BUSCADOR Y FILTROS BOUTIQUE */}
       <div className="flex flex-col lg:flex-row gap-4 mb-12">
         <div className="flex-1 flex items-center overflow-hidden rounded-full bg-white shadow-lg shadow-slate-200/50 border border-slate-100 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all px-2">
           <Search size={20} className="ml-4 text-slate-400" />
@@ -107,12 +107,12 @@ export default function SearchProductos({
         </div>
       </div>
 
-      {/* GRID DE PRODUCTOS */}
+      {/* GRID DE PRODUCTOS BOUTIQUE */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10">
         {results && results.map((producto) => (
           <div 
             key={producto.id} 
-            className="bg-white rounded-[2.5rem] p-6 shadow-xl shadow-slate-200/40 border border-slate-50 hover:shadow-2xl hover:shadow-blue-200/30 hover:-translate-y-2 transition-all duration-500 flex flex-col group"
+            className="bg-white rounded-[2.5rem] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.04)] border-0 hover:shadow-xl transition-all duration-500 flex flex-col group"
           >
             {/* Imagen del producto */}
             <div className="relative w-full h-72 overflow-hidden bg-slate-50 rounded-[2rem] mb-6 shadow-inner">

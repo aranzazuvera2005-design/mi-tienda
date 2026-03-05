@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import Header from "@/components/Header";
-// import { Toaster } from "@/components/ui/toaster"; 
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -11,7 +10,7 @@ const geistSans = Geist({
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+  variable: "--font-mono",
   subsets: ["latin"],
 });
 
@@ -28,10 +27,9 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-50 text-slate-900`}>
-        {/* 1. Proveedor del Carrito: Envuelve todo el contenido interactivo */}
+        {/* CartProvider envuelve todo para que el Header y el Carrito funcionen perfectamente */}
         <CartProvider>
           <div className="flex flex-col min-h-screen">
-            {/* 2. Header: Ahora siempre encontrará el contexto del carrito */}
             <Header />
             
             <main className="flex-grow">
@@ -42,9 +40,6 @@ export default function RootLayout({
               <p>&copy; {new Date().getFullYear()} Mi Tienda Boutique - Todos los derechos reservados.</p>
             </footer>
           </div>
-          
-          {/* 3. Toaster: Arregla el error de prerenderizado de la página 404 */}
-          <Toaster />
         </CartProvider>
       </body>
     </html>

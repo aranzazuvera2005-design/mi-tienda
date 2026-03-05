@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { useCartDrawer } from "./CartDrawerWrapper";
+import { ShoppingCart, Check, Loader2 } from "lucide-react";
 
 export default function AgregarAlCarritoBtn({ producto }: { producto: any }) {
   const { addToCart } = useCart();
@@ -11,29 +12,17 @@ export default function AgregarAlCarritoBtn({ producto }: { producto: any }) {
 
   const handleAddToCart = async () => {
     try {
-      if (!producto || !producto.id) {
-        console.error('Producto inválido');
-        return;
-      }
-
+      if (!producto || !producto.id) return;
       setIsAdding(true);
-      
-      // Simulamos un pequeño delay para que el feedback sea visible
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
+      await new Promise(resolve => setTimeout(resolve, 400));
       addToCart(producto);
-      
-      // Mostrar feedback visual de éxito
       setIsAdded(true);
-      
-      // Abrir el drawer automáticamente
       setTimeout(() => {
         openDrawer();
         setIsAdded(false);
-      }, 500);
-      
+      }, 600);
     } catch (e) {
-      console.error('Error añadiendo al carrito', e);
+      console.error('Error adding to cart', e);
     } finally {
       setIsAdding(false);
     }
@@ -43,28 +32,20 @@ export default function AgregarAlCarritoBtn({ producto }: { producto: any }) {
     <button 
       onClick={handleAddToCart}
       disabled={isAdding}
-      className={`w-full font-bold text-sm py-3 px-4 rounded-full transition-all duration-300 active:scale-95 shadow-md border-0 whitespace-nowrap flex items-center justify-center gap-2 ${
+      className={`rounded-full w-full py-3 font-bold transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 ${
         isAdded
-          ? 'bg-green-500 text-white hover:bg-green-600 hover:-translate-y-1'
-          : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0 shadow-lg'
+          ? 'bg-green-500 text-white shadow-lg shadow-green-100'
+          : 'bg-blue-600 text-white shadow-lg shadow-blue-200 hover:bg-blue-700 hover:-translate-y-1 disabled:opacity-70'
       }`}
     >
       {isAdding ? (
-        <>
-          <span className="animate-spin inline-block">⏳</span>
-          <span className="hidden sm:inline">Añadiendo...</span>
-        </>
+        <Loader2 size={18} className="animate-spin" />
       ) : isAdded ? (
-        <>
-          <span>✓</span>
-          <span className="hidden sm:inline">¡Añadido!</span>
-        </>
+        <Check size={18} />
       ) : (
-        <>
-          <span>🛒</span>
-          <span className="hidden sm:inline">Añadir</span>
-        </>
+        <ShoppingCart size={18} />
       )}
+      <span>{isAdding ? 'Añadiendo...' : isAdded ? '¡Añadido!' : 'Añadir'}</span>
     </button>
   );
 }

@@ -1,36 +1,31 @@
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
-
-import { CartProvider } from "@/context/CartContext";
 import Header from "@/components/Header";
+import { CartProvider } from "@/context/CartContext";
 import { ToastProvider } from "@/context/ToastContext";
-import CartDrawerWrapper from "@/components/CartDrawerWrapper";
 
-export const metadata = {
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
   title: "Mi Tienda Online",
+  description: "Una experiencia de compra premium",
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <html lang="es">
-      <body className="bg-slate-50">
+      <body className={`${inter.className} bg-[#f1f5f9] antialiased`}>
         <ToastProvider>
           <CartProvider>
-            <CartDrawerWrapper>
-              <div className="min-h-screen bg-slate-50">
-                {/* Header (cliente) */}
-                {/* Import aquí para que sea renderizado dentro del layout */}
-                <Header />
-
-                {/* Contenedor principal con max-width y padding */}
-                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  {children}
-                </main>
-              </div>
-            </CartDrawerWrapper>
+            <Header />
+            <main className="max-w-7xl mx-auto p-6">
+              {children}
+            </main>
           </CartProvider>
         </ToastProvider>
       </body>

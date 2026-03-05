@@ -24,9 +24,7 @@ export default function SearchProductos({
 
   const [q, setQ] = useState(initialQuery || '');
   const [results, setResults] = useState<any[] | null>(initialProducts || null);
-  const [loading, setLoading] = useState(false);
 
-  // Sincronizar resultados cuando cambian las props iniciales (desde el servidor)
   useEffect(() => {
     setResults(initialProducts);
   }, [initialProducts]);
@@ -43,7 +41,6 @@ export default function SearchProductos({
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  // debounce para búsqueda
   useEffect(() => {
     const t = setTimeout(() => {
       if (q !== initialQuery) {
@@ -62,8 +59,7 @@ export default function SearchProductos({
     <section className="mb-12">
       {/* BUSCADOR Y FILTROS */}
       <div className="flex flex-col lg:flex-row gap-4 mb-12">
-        {/* Buscador */}
-        <div className="flex-1 flex items-center overflow-hidden rounded-2xl bg-white shadow-sm border-none focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+        <div className="flex-1 flex items-center overflow-hidden rounded-2xl bg-white shadow-sm border border-slate-100 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
           <Search size={20} className="ml-4 text-slate-400" />
           <input
             aria-label="Buscar productos"
@@ -79,14 +75,12 @@ export default function SearchProductos({
           )}
         </div>
 
-        {/* Selectores de Filtro */}
         <div className="flex flex-wrap gap-3">
-          {/* Categorías */}
           <div className="relative">
             <select
               value={initialCategoria || ''}
               onChange={(e) => updateSearchParams({ categoria: e.target.value || null })}
-              className="appearance-none bg-white border-none shadow-sm rounded-full px-6 py-3 pr-12 text-slate-600 font-medium cursor-pointer focus:ring-2 focus:ring-blue-500/20 transition-all"
+              className="appearance-none bg-white border border-slate-100 shadow-sm rounded-full px-6 py-3 pr-12 text-slate-600 font-medium cursor-pointer focus:ring-2 focus:ring-blue-500/20 transition-all"
             >
               <option value="">Todas las categorías</option>
               {categorias.map((cat) => (
@@ -96,12 +90,11 @@ export default function SearchProductos({
             <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           </div>
 
-          {/* Ordenación */}
           <div className="relative">
             <select
               value={initialSort}
               onChange={(e) => updateSearchParams({ sort: e.target.value })}
-              className="appearance-none bg-white border-none shadow-sm rounded-full px-6 py-3 pr-12 text-slate-600 font-medium cursor-pointer focus:ring-2 focus:ring-blue-500/20 transition-all"
+              className="appearance-none bg-white border border-slate-100 shadow-sm rounded-full px-6 py-3 pr-12 text-slate-600 font-medium cursor-pointer focus:ring-2 focus:ring-blue-500/20 transition-all"
             >
               <option value="newest">Más nuevos</option>
               <option value="price_asc">Precio: Menor a Mayor</option>
@@ -119,10 +112,9 @@ export default function SearchProductos({
         {results && results.map((producto) => (
           <div 
             key={producto.id} 
-            className="bg-white p-4 rounded-[2rem] shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] transition-all duration-300 border-none flex flex-col group"
+            className="bg-white rounded-[2.5rem] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.04)] border-none hover:-translate-y-2 transition-all duration-300 flex flex-col group"
           >
-            {/* Imagen del producto */}
-            <div className="relative w-full h-64 overflow-hidden bg-slate-50 rounded-[1.5rem] mb-4">
+            <div className="relative w-full h-64 overflow-hidden bg-slate-50 rounded-[1.5rem] mb-5">
               <img
                 src={producto.imagen_url || producto.imagenUrl || '/globe.svg'}
                 alt={producto.nombre || 'Producto'}
@@ -131,7 +123,6 @@ export default function SearchProductos({
                   (e.target as HTMLImageElement).src = '/globe.svg';
                 }}
               />
-              {/* Etiqueta de categoría */}
               {(producto.familias?.nombre || producto.categoria) && (
                 <span className="absolute left-4 top-4 bg-white/90 backdrop-blur-md text-slate-900 text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-full font-bold shadow-sm">
                   {producto.familias?.nombre || producto.categoria}
@@ -139,9 +130,8 @@ export default function SearchProductos({
               )}
             </div>
 
-            {/* Contenido */}
             <div className="px-2 flex flex-col flex-1">
-              <h2 className="text-lg font-extrabold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">{producto.nombre}</h2>
+              <h2 className="text-xl font-extrabold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">{producto.nombre}</h2>
               <p className="text-sm text-slate-500 line-clamp-2 mb-6 leading-relaxed">{producto.descripcion || 'Sin descripción disponible'}</p>
               
               <div className="mt-auto flex items-center justify-between gap-4">
@@ -151,7 +141,7 @@ export default function SearchProductos({
                     {Number(producto.precio || 0).toFixed(2)}€
                   </span>
                 </div>
-                <div className="flex-1 max-w-[160px]">
+                <div className="flex-1">
                   <AgregarAlCarritoBtn producto={producto} />
                 </div>
               </div>

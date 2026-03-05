@@ -1,102 +1,55 @@
 'use client';
-
 import { useCart } from '@/context/CartContext';
-import { usePathname } from 'next/navigation';
-import { User, LogOut, ShoppingCart, LogIn, Loader2 } from 'lucide-react';
+import { User, LogOut, ShoppingCart, LogIn } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 export default function Header() {
-  const { cart, logout, user, isAuthLoading } = useCart();
-  const pathname = usePathname();
+  const { cart, logout } = useCart();
+  const [user, setUser] = useState<any>(null);
   const [mounted, setMounted] = useState(false);
+  const supabase = createClientComponentClient();
 
-  // Asegurar que el componente solo se renderice en el cliente para evitar errores de hidratación
   useEffect(() => {
     setMounted(true);
+    const fetchUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
+    };
+    fetchUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   const count = cart.reduce((acc: number, item: any) => acc + (item.cantidad || 1), 0);
-  const showCart = !pathname?.startsWith('/admin');
-  const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuario';
+  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuario';
 
-  // Fallback de carga (esqueleto) mientras no está montado o está cargando auth
-  if (!mounted || isAuthLoading) {
-    return (
-      <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm h-16 sm:h-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex justify-between items-center">
-          <div className="text-2xl sm:text-3xl font-black text-blue-600 tracking-tighter">MI TIENDA</div>
-          <div className="flex items-center gap-4">
-            <div className="h-10 w-24 bg-slate-100 animate-pulse rounded-full"></div>
-            <div className="h-10 w-10 bg-slate-100 animate-pulse rounded-full"></div>
-          </div>
-        </div>
-      </header>
-    );
-  }
+  if (!mounted) return <div className="h-20 bg-white border-b border-slate-200" />;
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16 sm:h-20">
-          {/* Logo */}
-          <div className="flex items-center">
-            <Link href="/" className="text-2xl sm:text-3xl font-black text-blue-600 tracking-tighter hover:opacity-90 transition-opacity">
-              MI TIENDA
-            </Link>
-          </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 h-16 sm:h-20 flex justify-between items-center">
+        <Link href="/" className="text-2xl font-black text-blue-600 tracking-tighter">MI TIENDA</Link>
 
-          {/* Acciones */}
-          <div className="flex items-center gap-2 sm:gap-4">
-            {user ? (
-              /* Cápsula de Usuario Autenticado */
-              <div className="flex items-center gap-2 sm:gap-3 bg-white border border-slate-200 shadow-sm rounded-full pl-1 pr-2 sm:pr-3 py-1 transition-all hover:shadow-md">
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-inner">
-                  <User size={18} />
-                </div>
-                <div className="flex flex-col max-w-[100px] sm:max-w-[150px]">
-                  <span className="text-xs sm:text-sm font-bold text-slate-800 truncate leading-tight">
-                    {userName}
-                  </span>
-                  <span className="text-[10px] text-slate-500 truncate hidden sm:block">
-                    {user.email}
-                  </span>
-                </div>
-                <div className="w-px h-6 bg-slate-200 mx-1 hidden sm:block"></div>
-                <button 
-                  onClick={logout}
-                  className="p-1.5 hover:bg-red-50 rounded-full transition-colors text-slate-400 hover:text-red-500 group"
-                  title="Cerrar sesión"
-                >
-                  <LogOut size={18} className="group-hover:translate-x-0.5 transition-transform" />
-                </button>
-              </div>
-            ) : (
-              /* Botón de Iniciar Sesión Premium */
-              <Link 
-                href="/login" 
-                className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-100 active:scale-95"
-              >
-                <LogIn size={18} />
-                <span>Entrar</span>
-              </Link>
-            )}
-
-            {/* Carrito */}
-            {showCart && (
-              <Link 
-                href="/carrito" 
-                className="relative p-2.5 text-slate-600 hover:bg-slate-100 rounded-full transition-all group active:scale-90"
-              >
-                <ShoppingCart size={24} className="group-hover:scale-110 transition-transform" />
-                {count > 0 && (
-                  <span className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[20px] h-5 flex items-center justify-center shadow-lg shadow-blue-200 border-2 border-white animate-in zoom-in">
-                    {count}
-                  </span>
-                )}
-              </Link>
-            )}
-          </div>
+        <div className="flex items-center gap-4">
+          {user ? (
+            <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-full px-4 py-1.5">
+              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white"><User size={16} /></div>
+              <span className="text-sm font-bold text-slate-700 hidden sm:block">{userName}</span>
+              <button onClick={logout} className="text-slate-400 hover:text-red-500 transition-colors"><LogOut size={18} /></button>
+            </div>
+          ) : (
+            <Link href="/login" className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-full font-bold shadow-lg hover:bg-blue-700 transition-all"><LogIn size={18} /><span>Entrar</span></Link>
+          )}
+          
+          <Link href="/carrito" className="relative p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-all">
+            <ShoppingCart size={24} />
+            {count > 0 && <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">{count}</span>}
+          </Link>
         </div>
       </div>
     </header>

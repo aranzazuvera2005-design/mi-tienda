@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import Header from "@/components/Header";
+import { Toaster } from "@/components/ui/toaster"; // <--- ESTO ARREGLA EL ERROR DEL BUILD
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,21 +28,22 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-50 text-slate-900`}>
-        {/* 1. EL PROVEEDOR DEBE ENVOLVERLO TODO */}
+        {/* El CartProvider envuelve todo para que el Header y el Carrito funcionen */}
         <CartProvider>
           <div className="flex flex-col min-h-screen">
-            {/* 2. El Header ahora puede usar useCart() sin romperse */}
             <Header />
             
             <main className="flex-grow">
               {children}
             </main>
 
-            {/* Footer opcional para darle el toque final */}
             <footer className="bg-white border-t py-8 text-center text-slate-400 text-sm">
               <p>&copy; {new Date().getFullYear()} Mi Tienda Boutique - Todos los derechos reservados.</p>
             </footer>
           </div>
+          
+          {/* El Toaster debe estar AQUÍ, dentro del body pero fuera del div principal */}
+          <Toaster />
         </CartProvider>
       </body>
     </html>

@@ -1,9 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { usePathname } from 'next/navigation';
-import { User, LogOut, ShoppingCart, LogIn, Loader2 } from 'lucide-react';
+import { User, LogOut, ShoppingCart, LogIn } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Header() {
   const { cart, logout, user, isAuthLoading } = useCart();

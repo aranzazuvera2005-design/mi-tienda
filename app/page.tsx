@@ -2,45 +2,42 @@ import SearchProductos from "@/components/SearchProductos";
 
 export const dynamic = 'force-dynamic';
 
-async function fetchSafe(url: string, key: string) {
-  try {
-    const res = await fetch(url, {
-      headers: { apikey: key, Authorization: `Bearer ${key}` },
-      next: { revalidate: 10 },
-    });
-    return res.ok ? await res.json() : [];
-  } catch (error) {
-    console.error("Fallo en la carga de datos:", error);
-    return [];
-  }
-}
-
 export default async function HomePage({ searchParams }: { searchParams: any }) {
-  const params = await searchParams;
   const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!URL || !KEY) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <p className="text-slate-500 font-medium">Configurando conexión...</p>
-      </div>
-    );
+  let productos = [];
+  let categorias = [];
+
+  try {
+    // Intentamos cargar, pero si falla, no rompemos la web
+    if (URL && KEY) {
+      const res = await fetch(`${URL}/rest/v1/productos?select=*,familias(nombre)`, {
+        headers: { apikey: KEY, Authorization: `Bearer ${KEY}` },
+        next: { revalidate: 1 }
+      });
+      if (res.ok) productos = await res.json();
+    }
+  } catch (e) {
+    console.log("Error silencioso de base de datos");
   }
 
-  const [productos, categorias] = await Promise.all([
-    fetchSafe(`${URL}/rest/v1/productos?select=*,familias(nombre)`, KEY),
-    fetchSafe(`${URL}/rest/v1/familias?select=*&order=nombre.asc`, KEY)
-  ]);
-
   return (
-    <div className="space-y-8">
-      <section className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[2rem] p-8 text-white shadow-xl">
-        <h1 className="text-4xl font-black mb-2">Mi Tienda</h1>
-        <p className="text-blue-100">Productos exclusivos seleccionados para ti.</p>
-      </section>
+    <div className="min-h-screen bg-[#F1F5F9]">
+      <div className="max-w-7xl mx-auto p-4 sm:p-8 space-y-8">
+        <header className="bg-blue-600 rounded-[2rem] p-12 text-white shadow-xl">
+          <h1 className="text-4xl font-black">Mi Tienda Boutique</h1>
+          <p className="opacity-90">Si ves esto, el diseño ya funciona. Ahora solo falta la conexión.</p>
+        </header>
 
-      <SearchProductos initialProducts={productos} categorias={categorias} />
+        {productos.length > 0 ? (
+          <SearchProductos initialProducts={productos} categorias={categorias} />
+        ) : (
+          <div className="bg-white p-20 rounded-[2rem] text-center shadow-md">
+            <p className="text-slate-400 font-bold">Conectando con el inventario...</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

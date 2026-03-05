@@ -57,7 +57,7 @@ export default function SearchProductos({
 
   return (
     <section className="mb-12">
-      {/* BUSCADOR Y FILTROS BOUTIQUE */}
+      {/* BUSCADOR Y FILTROS */}
       <div className="flex flex-col lg:flex-row gap-4 mb-12">
         <div className="flex-1 flex items-center overflow-hidden rounded-full bg-white shadow-lg shadow-slate-200/50 border border-slate-100 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all px-2">
           <Search size={20} className="ml-4 text-slate-400" />
@@ -112,10 +112,10 @@ export default function SearchProductos({
         {results && results.map((producto) => (
           <div 
             key={producto.id} 
-            className="bg-white rounded-[2.5rem] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.04)] border-0 hover:shadow-xl transition-all duration-500 flex flex-col group"
+            className="bg-white rounded-[2rem] p-6 shadow-xl shadow-slate-200/50 border-0 hover:shadow-2xl hover:shadow-slate-300/50 hover:-translate-y-2 transition-all duration-500 flex flex-col group"
           >
             {/* Imagen del producto */}
-            <div className="relative w-full h-72 overflow-hidden bg-slate-50 rounded-[2rem] mb-6 shadow-inner">
+            <div className="relative w-full h-72 overflow-hidden bg-slate-50 rounded-[1.5rem] mb-6">
               <img
                 src={producto.imagen_url || producto.imagenUrl || '/globe.svg'}
                 alt={producto.nombre || 'Producto'}
@@ -126,7 +126,7 @@ export default function SearchProductos({
               />
               {/* Etiqueta de categoría */}
               {(producto.familias?.nombre || producto.categoria) && (
-                <span className="absolute left-4 top-4 bg-white/90 backdrop-blur-md text-blue-600 text-[10px] uppercase tracking-widest px-4 py-2 rounded-full font-black shadow-lg border border-white/50 flex items-center gap-1.5">
+                <span className="absolute left-4 top-4 bg-white/90 backdrop-blur-md text-blue-600 text-[10px] uppercase tracking-widest px-4 py-2 rounded-full font-bold shadow-lg border border-white/50 flex items-center gap-1.5">
                   <Tag size={12} />
                   {producto.familias?.nombre || producto.categoria}
                 </span>
@@ -134,8 +134,8 @@ export default function SearchProductos({
             </div>
 
             {/* Contenido */}
-            <div className="px-2 flex flex-col flex-1">
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 mb-3 group-hover:text-blue-600 transition-colors line-clamp-2 leading-tight">
+            <div className="flex flex-col flex-1">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors line-clamp-2 leading-tight">
                 {producto.nombre}
               </h2>
               <p className="text-sm sm:text-base text-slate-500 line-clamp-2 mb-8 leading-relaxed font-medium">
@@ -144,8 +144,8 @@ export default function SearchProductos({
               
               <div className="mt-auto flex items-center justify-between gap-4 pt-4 border-t border-slate-50">
                 <div className="flex flex-col">
-                  <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-1">Precio</span>
-                  <span className="text-2xl sm:text-3xl font-black text-blue-600 leading-none">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest mb-1">Precio</span>
+                  <span className="text-2xl sm:text-3xl font-bold text-blue-600 leading-none">
                     {Number(producto.precio || 0).toFixed(2)}€
                   </span>
                 </div>

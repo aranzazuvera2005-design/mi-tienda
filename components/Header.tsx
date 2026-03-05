@@ -3,6 +3,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { useToast } from "@/context/ToastContext";
 
 // Importamos el carrito de forma dinámica
 const CartDrawer = dynamic(() => import('./CartDrawer'), { ssr: false });

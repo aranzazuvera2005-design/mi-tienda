@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import Header from "@/components/Header";
-import { Toaster } from "@/components/ui/toaster"; // <--- ESTO ARREGLA EL ERROR DEL BUILD
+import { Toaster } from "@/components/ui/toaster"; // Asegúrate de que esta ruta sea correcta
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-50 text-slate-900`}>
-        {/* El CartProvider envuelve todo para que el Header y el Carrito funcionen */}
+        {/* El CartProvider envuelve todo para evitar errores de contexto en el Header */}
         <CartProvider>
           <div className="flex flex-col min-h-screen">
             <Header />
@@ -42,7 +42,7 @@ export default function RootLayout({
             </footer>
           </div>
           
-          {/* El Toaster debe estar AQUÍ, dentro del body pero fuera del div principal */}
+          {/* El Toaster permite que cualquier página (incluida la 404) use notificaciones */}
           <Toaster />
         </CartProvider>
       </body>

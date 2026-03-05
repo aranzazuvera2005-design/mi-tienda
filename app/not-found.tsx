@@ -1,57 +1,19 @@
-export const dynamic = 'force-dynamic'; // <--- AÑADE ESTO
+'use client';
 
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import { CartProvider } from "@/context/CartContext";
-import Header from "@/components/Header";
-import React from "react";
+import Link from 'next/link';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-export const metadata: Metadata = {
-  title: "Mi Tienda Boutique | Fase 4",
-  description: "La mejor experiencia de compra online",
-};
-
-// --- EL PARCHE MÁGICO ---
-// Definimos un Provider vacío aquí mismo para que useToast no rompa el build
-const ToastContext = React.createContext({ toast: () => {} });
-function InternalToastProvider({ children }: { children: React.ReactNode }) {
-  return <ToastContext.Provider value={{ toast: () => {} }}>{children}</ToastContext.Provider>;
-}
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function NotFound() {
   return (
-    <html lang="es">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-50 text-slate-900`}>
-        {/* Envolvemos TODO con el InternalToastProvider primero */}
-        <InternalToastProvider>
-          <CartProvider>
-            <div className="flex flex-col min-h-screen">
-              <Header />
-              <main className="flex-grow">
-                {children}
-              </main>
-              <footer className="bg-white border-t py-8 text-center text-slate-400 text-sm">
-                <p>&copy; {new Date().getFullYear()} Mi Tienda Boutique</p>
-              </footer>
-            </div>
-          </CartProvider>
-        </InternalToastProvider>
-      </body>
-    </html>
+    <div className="flex flex-col items-center justify-center min-h-screen text-center px-4">
+      <h1 className="text-6xl font-bold text-blue-600 mb-4">404</h1>
+      <h2 className="text-2xl font-semibold mb-4">¡Página no encontrada!</h2>
+      <p className="text-gray-600 mb-8">Lo sentimos, no pudimos encontrar la página que buscas.</p>
+      <Link 
+        href="/" 
+        className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+      >
+        Volver a la tienda
+      </Link>
+    </div>
   );
 }

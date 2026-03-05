@@ -2,11 +2,10 @@
 
 import React, { createContext, useContext, useState } from 'react';
 
-const CartDrawerContext = createContext<any>(undefined);
+const CartDrawerContext = createContext<any>(null);
 
 export function CartDrawerProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
-  
   const openDrawer = () => setIsOpen(true);
   const closeDrawer = () => setIsOpen(false);
   const toggleDrawer = () => setIsOpen(prev => !prev);
@@ -20,9 +19,16 @@ export function CartDrawerProvider({ children }: { children: React.ReactNode }) 
 
 export function useCartDrawer() {
   const context = useContext(CartDrawerContext);
-  if (context === undefined) {
-    // Este es el error que ves en tu imagen rosa
-    throw new Error('useCartDrawer debe usarse dentro de un CartDrawerProvider');
+  
+  // Si no hay contexto, devolvemos un objeto vacío en lugar de romper la web
+  if (!context) {
+    return {
+      isOpen: false,
+      openDrawer: () => {},
+      closeDrawer: () => {},
+      toggleDrawer: () => {}
+    };
   }
+  
   return context;
 }

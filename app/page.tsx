@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import SearchProductos from "@/components/SearchProductos";
 
 export const dynamic = 'force-dynamic';

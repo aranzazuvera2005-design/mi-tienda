@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
-import { useCartDrawer } from "./CartDrawerWrapper";
+import { useCartDrawer } from "@/context/CartDrawerContext";
 import { ShoppingCart, Check, Loader2 } from "lucide-react";
 
 export default function AgregarAlCarritoBtn({ producto }: { producto: any }) {

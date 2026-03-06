@@ -110,12 +110,12 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     </CartContext.Provider>
   );
 };
-
 export const useCart = () => {
   const context = useContext(CartContext);
-  // Si el contexto no existe (SSR), devolvemos un objeto vacío seguro
-  if (!context) {
-    return { cart: [], total: 0, addToCart: () => {}, removeFromCart: () => {}, user: null };
+  // No devolvemos un objeto vacío, lanzamos un error claro si falta el Provider
+  // Esto ayuda a React a identificar fallos de jerarquía inmediatamente
+  if (context === undefined) {
+    throw new Error('useCart debe usarse dentro de un CartProvider');
   }
-  return context;
+  return context || { cart: [], total: 0, addToCart: () => {} }; 
 };

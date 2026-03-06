@@ -8,6 +8,7 @@ const CartContext = createContext<any>(null);
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [cart, setCart] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
+  const [perfil, setPerfil] = useState<any>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
@@ -35,10 +36,21 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
+    const fetchPerfil = async (userId: string) => {
+      try {
+        const { data, error } = await supabase.from('perfiles').select('*').eq('id', userId).single();
+        if (!error && data) setPerfil(data);
+      } catch (e) {
+        console.error('Error fetching profile:', e);
+      }
+    };
+
     const initAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        setUser(session?.user ?? null);
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+        if (currentUser) fetchPerfil(currentUser.id);
       } catch (e) {
         console.error('CartContext: Auth Error', e);
       } finally {
@@ -49,7 +61,13 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     initAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        fetchPerfil(currentUser.id);
+      } else {
+        setPerfil(null);
+      }
     });
 
     return () => subscription?.unsubscribe();
@@ -170,6 +188,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const value = useMemo(() => ({
     cart,
     user,
+    perfil,
     addToCart,
     removeFromCart,
     clearCart,
@@ -181,9 +200,10 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         await supabase.auth.signOut();
         setCart([]);
         setUser(null);
+        setPerfil(null);
       }
     }
-  }), [cart, user, isAuthLoading, supabase]);
+  }), [cart, user, perfil, isAuthLoading, supabase]);
 
   return (
     <CartContext.Provider value={value}>

@@ -53,7 +53,10 @@ export default async function HomePage({ searchParams }: { searchParams: any }) 
             Descubre una selección curada de piezas exclusivas diseñadas para quienes buscan la excelencia en cada detalle.
           </p>
           <div className="pt-4">
-            <button className="bg-white text-slate-900 px-10 py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-xl active:scale-95">
+            <button 
+              onClick={() => document.getElementById('productos')?.scrollIntoView({ behavior: 'smooth' })}
+              className="bg-white text-slate-900 px-10 py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-xl active:scale-95"
+            >
               Explorar Ahora
             </button>
           </div>
@@ -61,7 +64,9 @@ export default async function HomePage({ searchParams }: { searchParams: any }) 
       </section>
 
       {/* Componente de búsqueda y productos */}
-      <SearchProductos initialProducts={productos} categorias={categorias} />
+      <div id="productos">
+        <SearchProductos initialProducts={productos} categorias={categorias} />
+      </div>
       
       {productos.length === 0 && (
         <div className="text-center py-20 bg-white rounded-[2rem] border border-slate-100 shadow-sm">

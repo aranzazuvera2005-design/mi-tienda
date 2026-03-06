@@ -1,35 +1,24 @@
 'use client';
 
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { useCartDrawer } from "@/context/CartDrawerContext"; // Importamos el hook global
+import { useCartDrawer } from "@/context/CartDrawerContext";
+import { useCart } from "@/context/CartContext";
 
 // Importamos el componente de forma dinámica y segura
 const CartDrawer = dynamic(() => import('./CartDrawer'), { ssr: false });
 
 export default function Header() {
-  const [user, setUser] = useState<any>(null);
+  const { user, perfil, logout } = useCart();
   const [mounted, setMounted] = useState(false);
   
   // USAMOS EL ESTADO GLOBAL (Esto elimina el conflicto de nombres)
   const { isOpen, openDrawer, closeDrawer } = useCartDrawer();
-  
-  const supabase = createClientComponentClient(); 
 
   useEffect(() => {
     setMounted(true);
-    const checkUser = async () => {
-      try {
-        const { data } = await supabase.auth.getUser();
-        setUser(data?.user || null);
-      } catch (e) {
-        console.error("Error de conexión");
-      }
-    };
-    checkUser();
-  }, [supabase]);
+  }, []);
 
   // Si no está montado (SSR), devolvemos un header básico para evitar errores de hidratación
   if (!mounted) {
@@ -78,14 +67,25 @@ export default function Header() {
           <div className="flex items-center gap-4 pl-6 border-l border-slate-100">
             <div className="hidden sm:flex flex-col items-end">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bienvenido</span>
-              <span className="text-sm font-bold text-slate-900">{user.user_metadata?.nombre || user.email?.split('@')[0]}</span>
+              <span className="text-sm font-bold text-slate-900">{perfil?.nombre || user.user_metadata?.nombre || user.email?.split('@')[0]}</span>
             </div>
-            <Link href="/perfil" className="group relative">
-              <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center font-bold shadow-xl shadow-slate-200 group-hover:bg-blue-600 group-hover:rotate-3 transition-all duration-500">
-                {user.email?.charAt(0).toUpperCase()}
-              </div>
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link href="/perfil" className="group relative">
+                <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center font-bold shadow-xl shadow-slate-200 group-hover:bg-blue-600 group-hover:rotate-3 transition-all duration-500">
+                  {user.email?.charAt(0).toUpperCase()}
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+              </Link>
+              <button 
+                onClick={logout}
+                className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                title="Cerrar Sesión"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
+            </div>
           </div>
         ) : (
           <Link 

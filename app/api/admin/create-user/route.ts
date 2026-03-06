@@ -48,29 +48,32 @@ export async function POST(req: Request) {
 
     const userId = (userData as any).user?.id || (userData as any).id;
 
-    // 3. Insertar el perfil
-    const profile = { 
+    // 3. Insertar el perfil (con manejo de errores detallado)
+    const profile: any = { 
       id: userId, 
-      nombre, 
-      email, // Añadimos el email para evitar errores si la columna es obligatoria o UNIQUE
-      telefono: telefono || null, 
-      direccion: direccion || null, // Mantenemos este por compatibilidad legacy
+      nombre,
       updated_at: new Date().toISOString()
     };
+    
+    // Solo añadimos campos si no son undefined para evitar errores de esquema
+    if (email) profile.email = email;
+    if (telefono) profile.telefono = telefono;
+    if (direccion) profile.direccion = direccion;
 
     const { data: profileData, error: profileError } = await supabase
       .from('perfiles')
       .insert(profile)
-      .select()
-      .single();
+      .select();
 
     if (profileError) {
-      console.error('Error al crear perfil:', profileError);
-      try { await supabase.auth.admin.deleteUser(userId); } catch (_) {}
+      console.error('CRITICAL DATABASE ERROR:', profileError);
+      // Intentamos borrar el usuario de auth para no dejar basura si falla el perfil
+      try { await supabase.auth.admin.deleteUser(userId); } catch (e) { console.error('Failed to cleanup auth user:', e); }
+      
       return NextResponse.json({ 
-        error: 'Error al crear el perfil del cliente en la base de datos.',
-        details: profileError.message,
-        code: profileError.code
+        error: `Error de base de datos: ${profileError.message}`,
+        details: profileError,
+        hint: "Verifica que la tabla 'perfiles' tenga las columnas correctas y que el SERVICE_ROLE tenga permisos."
       }, { status: 500 });
     }
 

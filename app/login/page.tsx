@@ -45,7 +45,10 @@ export default function LoginPage() {
         const result = await response.json();
 
         if (!response.ok) {
-          throw new Error(result.error || 'Error al crear la cuenta');
+          // Si hay detalles técnicos, los mostramos para depuración
+          const technicalError = result.details ? `\nDetalles: ${JSON.stringify(result.details)}` : '';
+          const hint = result.hint ? `\nSugerencia: ${result.hint}` : '';
+          throw new Error(`${result.error}${technicalError}${hint}` || 'Error al crear la cuenta');
         }
 
         setMensaje({ text: '¡Cuenta creada con éxito! Redirigiendo...', type: 'success' });

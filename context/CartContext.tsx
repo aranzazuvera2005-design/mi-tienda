@@ -87,12 +87,93 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     return cart.reduce((acc, item) => acc + (Number(item.precio || 0) * (item.cantidad || 1)), 0);
   }, [cart]);
 
+  const clearCart = () => {
+    setCart([]);
+  };
+
+  const enviarPedido = async (datos: { nombre: string; telefono: string; direccion: string }) => {
+    if (!supabase || !user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    if (cart.length === 0) {
+      throw new Error('El carrito está vacío');
+    }
+
+    try {
+      // 1. Calcular el total del pedido
+      const totalPedido = cart.reduce((acc, item) => {
+        const precio = Number(item.precio || 0);
+        return acc + (precio * (item.cantidad || 1));
+      }, 0);
+
+      // 2. Crear el pedido en la tabla 'pedidos'
+      const { data: pedidoData, error: pedidoError } = await supabase
+        .from('pedidos')
+        .insert([
+          {
+            cliente_id: user.id,
+            total: totalPedido,
+            estado: 'pagado',
+            articulos: cart,
+            direccion_entrega: datos.direccion,
+          },
+        ])
+        .select('id')
+        .single();
+
+      if (pedidoError) {
+        throw new Error(`Error al crear el pedido: ${pedidoError.message}`);
+      }
+
+      if (!pedidoData?.id) {
+        throw new Error('No se pudo obtener el ID del pedido');
+      }
+
+      // 3. Crear las líneas de pedido
+      const lineasPedido = cart.map((item) => ({
+        pedido_id: pedidoData.id,
+        producto_id: item.id,
+        cantidad: item.cantidad || 1,
+        precio_unitario_historico: Number(item.precio || 0),
+      }));
+
+      const { error: lineasError } = await supabase
+        .from('lineas_pedido')
+        .insert(lineasPedido);
+
+      if (lineasError) {
+        throw new Error(`Error al crear las líneas del pedido: ${lineasError.message}`);
+      }
+
+      // 4. Actualizar el perfil del cliente con los datos de envío
+      const { error: perfilError } = await supabase
+        .from('perfiles')
+        .update({
+          nombre: datos.nombre,
+          telefono: datos.telefono,
+        })
+        .eq('id', user.id);
+
+      if (perfilError) {
+        console.warn('Advertencia: No se pudo actualizar el perfil', perfilError);
+        // No lanzamos error aquí porque el pedido ya se creó exitosamente
+      }
+
+      return { success: true, pedidoId: pedidoData.id };
+    } catch (error: any) {
+      throw new Error(error?.message || 'Error desconocido al enviar el pedido');
+    }
+  };
+
   // Objeto de valor memoizado para evitar re-renders masivos
   const value = useMemo(() => ({
     cart,
     user,
     addToCart,
     removeFromCart,
+    clearCart,
+    enviarPedido,
     total,
     isAuthLoading,
     logout: async () => {

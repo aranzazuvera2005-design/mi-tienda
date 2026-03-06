@@ -52,6 +52,7 @@ export async function POST(req: Request) {
     const profile = { 
       id: userId, 
       nombre, 
+      email, // Añadimos el email para evitar errores si la columna es obligatoria o UNIQUE
       telefono: telefono || null, 
       direccion: direccion || null, // Mantenemos este por compatibilidad legacy
       updated_at: new Date().toISOString()
@@ -64,8 +65,13 @@ export async function POST(req: Request) {
       .single();
 
     if (profileError) {
+      console.error('Error al crear perfil:', profileError);
       try { await supabase.auth.admin.deleteUser(userId); } catch (_) {}
-      return NextResponse.json({ error: 'Error al crear el perfil del cliente.' }, { status: 500 });
+      return NextResponse.json({ 
+        error: 'Error al crear el perfil del cliente en la base de datos.',
+        details: profileError.message,
+        code: profileError.code
+      }, { status: 500 });
     }
 
     // 4. Insertar la dirección inicial en la tabla 'direcciones'

@@ -41,38 +41,56 @@ export default function Header() {
   }
 
   return (
-    <header className="bg-white/80 backdrop-blur-md border-b sticky top-0 z-50 h-20 flex items-center px-6 sm:px-12 justify-between">
-      <Link href="/" className="text-2xl font-black text-blue-600 tracking-tighter">
-        MI TIENDA
-      </Link>
+    <header className="bg-white/90 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-50 h-24 flex items-center px-6 sm:px-16 justify-between transition-all duration-300">
+      <div className="flex items-center gap-12">
+        <Link href="/" className="group flex flex-col">
+          <span className="text-2xl font-black text-slate-900 tracking-[0.2em] group-hover:text-blue-600 transition-colors">
+            BOUTIQUE
+          </span>
+          <span className="text-[10px] font-bold text-slate-400 tracking-[0.4em] uppercase -mt-1">
+            v2026
+          </span>
+        </Link>
 
-      <div className="flex items-center gap-4 sm:gap-6">
-        {/* Botón que usa el Hook Global */}
+        <nav className="hidden md:flex items-center gap-8">
+          <Link href="/" className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest">Inicio</Link>
+          <Link href="/perfil/mis-pedidos" className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest">Mis Pedidos</Link>
+        </nav>
+      </div>
+
+      <div className="flex items-center gap-6 sm:gap-10">
+        {/* Carrito con contador visual */}
         <button 
           onClick={openDrawer}
-          className="relative p-2 text-slate-600 hover:text-blue-600 transition-colors"
+          className="relative p-2.5 text-slate-700 hover:text-blue-600 transition-all hover:scale-110 active:scale-95"
         >
           <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
           </svg>
         </button>
 
-        {/* Pasamos las funciones del Contexto Global al componente */}
         <CartDrawer 
           isOpen={isOpen} 
           onClose={closeDrawer} 
         />
 
         {user ? (
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold shadow-lg shadow-blue-200">
-              {user.email?.charAt(0).toUpperCase()}
+          <div className="flex items-center gap-4 pl-6 border-l border-slate-100">
+            <div className="hidden sm:flex flex-col items-end">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bienvenido</span>
+              <span className="text-sm font-bold text-slate-900">{user.user_metadata?.nombre || user.email?.split('@')[0]}</span>
             </div>
+            <Link href="/perfil" className="group relative">
+              <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center font-bold shadow-xl shadow-slate-200 group-hover:bg-blue-600 group-hover:rotate-3 transition-all duration-500">
+                {user.email?.charAt(0).toUpperCase()}
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+            </Link>
           </div>
         ) : (
           <Link 
             href="/login" 
-            className="bg-blue-600 text-white px-6 py-2 rounded-full font-bold text-sm hover:bg-blue-700 transition-all shadow-md"
+            className="bg-slate-900 text-white px-8 py-3 rounded-2xl font-bold text-sm hover:bg-blue-600 transition-all shadow-xl shadow-slate-200 active:scale-95 uppercase tracking-widest"
           >
             Entrar
           </Link>

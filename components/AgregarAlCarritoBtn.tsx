@@ -32,20 +32,20 @@ export default function AgregarAlCarritoBtn({ producto }: { producto: any }) {
     <button 
       onClick={handleAddToCart}
       disabled={isAdding}
-      className={`rounded-full w-full py-3 font-bold transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 ${
+      className={`rounded-2xl w-full py-4 font-black transition-all duration-500 active:scale-95 flex items-center justify-center gap-3 uppercase tracking-widest text-[10px] ${
         isAdded
-          ? 'bg-green-500 text-white shadow-lg shadow-green-100'
-          : 'bg-blue-600 text-white shadow-lg shadow-blue-200 hover:bg-blue-700 hover:-translate-y-1 disabled:opacity-70'
+          ? 'bg-green-500 text-white shadow-2xl shadow-green-200'
+          : 'bg-slate-900 text-white shadow-xl shadow-slate-200 hover:bg-blue-600 hover:shadow-blue-200 hover:-translate-y-1 disabled:opacity-70'
       }`}
     >
       {isAdding ? (
-        <Loader2 size={18} className="animate-spin" />
+        <Loader2 size={16} className="animate-spin" />
       ) : isAdded ? (
-        <Check size={18} />
+        <Check size={16} />
       ) : (
-        <ShoppingCart size={18} />
+        <ShoppingCart size={16} />
       )}
-      <span>{isAdding ? 'Añadiendo...' : isAdded ? '¡Añadido!' : 'Añadir'}</span>
+      <span>{isAdding ? 'Procesando' : isAdded ? 'En el Carrito' : 'Adquirir'}</span>
     </button>
   );
 }

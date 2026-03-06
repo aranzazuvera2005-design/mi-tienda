@@ -108,48 +108,53 @@ export default function SearchProductos({
       </div>
 
       {/* GRID DE PRODUCTOS BOUTIQUE */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
         {results && results.map((producto) => (
           <div 
             key={producto.id} 
-            className="bg-white rounded-[2rem] p-6 shadow-xl shadow-slate-200/50 border-0 hover:shadow-2xl hover:shadow-slate-300/50 hover:-translate-y-2 transition-all duration-500 flex flex-col group"
+            className="bg-white rounded-[2.5rem] p-5 shadow-2xl shadow-slate-200/30 border border-slate-50 hover:shadow-blue-200/40 hover:-translate-y-3 transition-all duration-700 flex flex-col group"
           >
-            {/* Imagen del producto */}
-            <div className="relative w-full h-72 overflow-hidden bg-slate-50 rounded-[1.5rem] mb-6">
+            {/* Imagen del producto con efecto premium */}
+            <div className="relative w-full h-80 overflow-hidden bg-slate-50 rounded-[2rem] mb-8 shadow-inner">
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"></div>
               <img
                 src={producto.imagen_url || producto.imagenUrl || '/globe.svg'}
                 alt={producto.nombre || 'Producto'}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = '/globe.svg';
                 }}
               />
-              {/* Etiqueta de categoría */}
+              {/* Etiqueta de categoría flotante */}
               {(producto.familias?.nombre || producto.categoria) && (
-                <span className="absolute left-4 top-4 bg-white/90 backdrop-blur-md text-blue-600 text-[10px] uppercase tracking-widest px-4 py-2 rounded-full font-bold shadow-lg border border-white/50 flex items-center gap-1.5">
-                  <Tag size={12} />
+                <span className="absolute left-5 top-5 bg-slate-900/80 backdrop-blur-md text-white text-[9px] uppercase tracking-[0.2em] px-5 py-2.5 rounded-full font-black shadow-2xl z-20 border border-white/10 flex items-center gap-2">
+                  <Tag size={10} className="text-blue-400" />
                   {producto.familias?.nombre || producto.categoria}
                 </span>
               )}
             </div>
 
-            {/* Contenido */}
-            <div className="flex flex-col flex-1">
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors line-clamp-2 leading-tight">
-                {producto.nombre}
-              </h2>
-              <p className="text-sm sm:text-base text-slate-500 line-clamp-2 mb-8 leading-relaxed font-medium">
-                {producto.descripcion || 'Sin descripción disponible'}
+            {/* Contenido Elegante */}
+            <div className="flex flex-col flex-1 px-2">
+              <div className="mb-4">
+                <h2 className="text-2xl font-black text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1 tracking-tight">
+                  {producto.nombre}
+                </h2>
+                <div className="h-1 w-12 bg-blue-600/20 rounded-full mt-2 group-hover:w-24 transition-all duration-500"></div>
+              </div>
+              
+              <p className="text-sm text-slate-400 line-clamp-2 mb-10 leading-relaxed font-bold uppercase tracking-wider">
+                {producto.descripcion || 'Exclusividad en cada detalle'}
               </p>
               
-              <div className="mt-auto flex items-center justify-between gap-4 pt-4 border-t border-slate-50">
+              <div className="mt-auto flex items-center justify-between gap-6 pt-6 border-t border-slate-50">
                 <div className="flex flex-col">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest mb-1">Precio</span>
-                  <span className="text-2xl sm:text-3xl font-bold text-blue-600 leading-none">
-                    {Number(producto.precio || 0).toFixed(2)}€
+                  <span className="text-[9px] uppercase font-black text-slate-300 tracking-[0.2em] mb-1">Inversión</span>
+                  <span className="text-3xl font-black text-slate-900 leading-none group-hover:text-blue-600 transition-colors">
+                    {Number(producto.precio || 0).toFixed(2)}<span className="text-lg ml-0.5">€</span>
                   </span>
                 </div>
-                <div className="flex-1 max-w-[160px]">
+                <div className="flex-1">
                   <AgregarAlCarritoBtn producto={producto} />
                 </div>
               </div>

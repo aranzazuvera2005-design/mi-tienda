@@ -34,14 +34,22 @@ export function CartDrawerProvider({ children }: { children: React.ReactNode }) 
 export const CartDrawerWrapper = CartDrawerProvider;
 
 export function useCartDrawer() {
-  const context = useContext(CartDrawerContext);
+  // Intentamos obtener el contexto de forma segura
+  let context;
+  try {
+    context = useContext(CartDrawerContext);
+  } catch (e) {
+    console.error("Error accediendo a CartDrawerContext:", e);
+  }
   
-  // Si el contexto no existe, devolvemos un objeto funcional "dummy" 
-  // para que la app NO se rompa (esto es lo que evita el error que ves)
+  // Si el contexto no existe o falla, devolvemos un objeto funcional "dummy" 
+  // para que la app NO se rompa bajo ninguna circunstancia.
   if (!context) {
     return {
       isOpen: false,
-      openDrawer: () => console.warn("CartDrawerProvider no encontrado"),
+      openDrawer: () => {
+        console.warn("CartDrawerProvider no encontrado o inaccesible.");
+      },
       closeDrawer: () => {},
       toggleDrawer: () => {}
     };

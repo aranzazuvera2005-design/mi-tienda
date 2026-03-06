@@ -1,17 +1,21 @@
 'use client';
+
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { useToast } from "@/context/ToastContext";
+import { useCartDrawer } from "@/context/CartDrawerContext"; // Importamos el hook global
 
-// Importamos el carrito de forma dinámica
+// Importamos el componente de forma dinámica y segura
 const CartDrawer = dynamic(() => import('./CartDrawer'), { ssr: false });
 
 export default function Header() {
   const [user, setUser] = useState<any>(null);
   const [mounted, setMounted] = useState(false);
-  const [isCartOpen, setIsCartOpen] = useState(false); // Estado para abrir/cerrar
+  
+  // USAMOS EL ESTADO GLOBAL (Esto elimina el conflicto de nombres)
+  const { isOpen, openDrawer, closeDrawer } = useCartDrawer();
+  
   const supabase = createClientComponentClient(); 
 
   useEffect(() => {
@@ -25,7 +29,16 @@ export default function Header() {
       }
     };
     checkUser();
-  }, []);
+  }, [supabase]);
+
+  // Si no está montado (SSR), devolvemos un header básico para evitar errores de hidratación
+  if (!mounted) {
+    return (
+      <header className="bg-white border-b h-20 flex items-center px-12 justify-between">
+        <div className="text-2xl font-black text-blue-600">MI TIENDA</div>
+      </header>
+    );
+  }
 
   return (
     <header className="bg-white/80 backdrop-blur-md border-b sticky top-0 z-50 h-20 flex items-center px-6 sm:px-12 justify-between">
@@ -34,9 +47,9 @@ export default function Header() {
       </Link>
 
       <div className="flex items-center gap-4 sm:gap-6">
-        {/* Botón para abrir el carrito */}
+        {/* Botón que usa el Hook Global */}
         <button 
-          onClick={() => setIsCartOpen(true)}
+          onClick={openDrawer}
           className="relative p-2 text-slate-600 hover:text-blue-600 transition-colors"
         >
           <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -44,13 +57,11 @@ export default function Header() {
           </svg>
         </button>
 
-        {/* Carrito con sus propiedades obligatorias */}
-        {mounted && (
-          <CartDrawer 
-            isOpen={isCartOpen} 
-            onClose={() => setIsCartOpen(false)} 
-          />
-        )}
+        {/* Pasamos las funciones del Contexto Global al componente */}
+        <CartDrawer 
+          isOpen={isOpen} 
+          onClose={closeDrawer} 
+        />
 
         {user ? (
           <div className="flex items-center gap-3">

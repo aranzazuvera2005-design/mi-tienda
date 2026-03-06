@@ -3,18 +3,17 @@ import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
+// Priorizamos las variables de servidor (SERVICE_ROLE es obligatoria aquí)
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export async function POST(req: Request) {
   try {
+    // 1. Verificación robusta de variables de entorno
     if (!SUPABASE_URL || !SERVICE_ROLE) {
-      const missing = [];
-      if (!SUPABASE_URL) missing.push('SUPABASE_URL');
-      if (!SERVICE_ROLE) missing.push('SUPABASE_SERVICE_ROLE_KEY');
       return NextResponse.json({ 
-        error: `Faltan variables de entorno: ${missing.join(', ')}`,
-        details: 'Asegúrate de configurarlas en el panel de Vercel.'
+        error: 'Error de configuración en el servidor', 
+        details: 'Faltan SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY en Vercel.' 
       }, { status: 500 });
     }
 
@@ -22,82 +21,84 @@ export async function POST(req: Request) {
     const { nombre, email, password, telefono, direccion } = body || {};
 
     if (!nombre || !email || !password) {
-      return NextResponse.json({ error: 'nombre, email y password son obligatorios' }, { status: 400 });
+      return NextResponse.json({ error: 'Nombre, email y password son obligatorios' }, { status: 400 });
     }
 
+    // Cliente con privilegios de administrador (Service Role)
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE, {
       auth: { persistSession: false }
     });
 
-    // 1. Verificar si el email ya existe en Auth (Supabase lo hace automáticamente al crear)
-    // No podemos verificar en 'perfiles' por email si la columna no existe.
-
-    // 2. Intentar crear el usuario en Auth
+    // 2. Crear el usuario en el sistema de Autenticación
     const { data: userData, error: signError } = await supabase.auth.admin.createUser({
       email,
       password,
-      email_confirm: true
-    } as any);
+      email_confirm: true,
+      user_metadata: { nombre } // Metadata útil para recuperación
+    });
 
     if (signError) {
-      if (signError.message.includes('already been registered')) {
-        return NextResponse.json({ error: 'Este correo ya está registrado en el sistema de autenticación.' }, { status: 400 });
-      }
-      return NextResponse.json({ error: signError.message || signError }, { status: 500 });
+      const isRegistered = signError.message.includes('already been registered');
+      return NextResponse.json({ 
+        error: isRegistered ? 'Este correo ya está registrado.' : signError.message 
+      }, { status: isRegistered ? 400 : 500 });
     }
 
-    const userId = (userData as any).user?.id || (userData as any).id;
+    const userId = userData.user.id;
 
-    // 3. Insertar el perfil (con manejo de errores detallado)
-    const profile: any = { 
+    // 3. Insertar el perfil en la tabla 'perfiles' (Ajustado a tu esquema real)
+    const profileDataToInsert = { 
       id: userId, 
-      nombre,
+      nombre, 
+      email, 
+      telefono: telefono || null, 
+      direccion: direccion || null,
+      rol: 'usuario', // Aseguramos el rol por defecto de tu tabla
       updated_at: new Date().toISOString()
     };
-    
-    // Solo añadimos campos si no son undefined para evitar errores de esquema
-    if (email) profile.email = email;
-    if (telefono) profile.telefono = telefono;
-    if (direccion) profile.direccion = direccion;
 
     const { data: profileData, error: profileError } = await supabase
       .from('perfiles')
-      .insert(profile)
-      .select();
+      .insert([profileDataToInsert])
+      .select()
+      .single();
 
     if (profileError) {
-      console.error('CRITICAL DATABASE ERROR:', profileError);
-      // Intentamos borrar el usuario de auth para no dejar basura si falla el perfil
-      try { await supabase.auth.admin.deleteUser(userId); } catch (e) { console.error('Failed to cleanup auth user:', e); }
+      console.error('CRITICAL DATABASE ERROR (perfiles):', profileError);
+      
+      // Limpieza: Si el perfil falla, borramos el usuario de Auth para permitir reintentos
+      await supabase.auth.admin.deleteUser(userId);
       
       return NextResponse.json({ 
-        error: `Error de base de datos: ${profileError.message}`,
-        details: profileError,
-        hint: "Verifica que la tabla 'perfiles' tenga las columnas correctas y que el SERVICE_ROLE tenga permisos."
+        error: 'Database error creating profile',
+        message: profileError.message,
+        details: profileError.hint || 'Verifica nombres de columnas y políticas RLS.'
       }, { status: 500 });
     }
 
-    // 4. Insertar la dirección inicial en la tabla 'direcciones'
+    // 4. Insertar dirección en tabla independiente (Opcional, no bloquea el éxito total)
     if (direccion) {
       const { error: dirError } = await supabase
         .from('direcciones')
-        .insert({
+        .insert([{
           cliente_id: userId,
           calle: direccion,
           es_principal: true
-        });
+        }]);
       
-      if (dirError) {
-        console.warn('Error al crear la dirección inicial:', dirError);
-      }
+      if (dirError) console.warn('Aviso: No se pudo guardar en tabla direcciones:', dirError.message);
     }
 
+    // Éxito total
     return NextResponse.json({ 
-      user: userData, 
+      success: true,
+      user: userData.user, 
       perfil: profileData,
-      message: 'Cliente creado correctamente con su dirección inicial'
+      message: 'Cuenta creada y configurada correctamente.'
     });
+
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message || String(err) }, { status: 500 });
+    console.error('UNEXPECTED API ERROR:', err);
+    return NextResponse.json({ error: 'Error interno del servidor', details: err.message }, { status: 500 });
   }
 }

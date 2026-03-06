@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-// IMPORTANTE: Asegúrate de que estas rutas son exactas
+// IMPORTANTE: Verifica que 'CartDrawerProvider' sea el nombre exportado en tu archivo de contexto
 import { CartProvider } from "@/context/CartContext";
 import { ToastProvider } from "@/context/ToastContext";
 import { CartDrawerProvider } from "@/context/CartDrawerContext"; 
@@ -16,11 +16,15 @@ export const metadata: Metadata = {
   description: "Despliegue Exitoso",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="es">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {/* EL ORDEN ES CRUCIAL: El Header debe estar DENTRO de todos los Providers */}
+        {/* Envolvemos TODO el contenido para que el Header y las Pages tengan acceso */}
         <ToastProvider>
           <CartProvider>
             <CartDrawerProvider>

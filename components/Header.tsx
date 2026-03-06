@@ -10,11 +10,9 @@ import { useCart } from "@/context/CartContext";
 const CartDrawer = dynamic(() => import('./CartDrawer'), { ssr: false });
 
 export default function Header() {
-  const { user, perfil, logout } = useCart();
+  const cartContext = useCart();
+  const drawerContext = useCartDrawer();
   const [mounted, setMounted] = useState(false);
-  
-  // USAMOS EL ESTADO GLOBAL (Esto elimina el conflicto de nombres)
-  const { isOpen, openDrawer, closeDrawer } = useCartDrawer();
 
   useEffect(() => {
     setMounted(true);
@@ -23,11 +21,17 @@ export default function Header() {
   // Si no está montado (SSR), devolvemos un header básico para evitar errores de hidratación
   if (!mounted) {
     return (
-      <header className="bg-white border-b h-20 flex items-center px-12 justify-between">
-        <div className="text-2xl font-black text-blue-600">MI TIENDA</div>
+      <header className="bg-white/90 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-50 h-24 flex items-center px-6 sm:px-16 justify-between">
+        <div className="flex flex-col">
+          <span className="text-2xl font-black text-slate-900 tracking-[0.2em]">BOUTIQUE</span>
+          <span className="text-[10px] font-bold text-slate-400 tracking-[0.4em] uppercase -mt-1">v2026</span>
+        </div>
       </header>
     );
   }
+
+  const { user, perfil, logout } = cartContext || {};
+  const { isOpen, openDrawer, closeDrawer } = drawerContext || {};
 
   return (
     <header className="bg-white/90 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-50 h-24 flex items-center px-6 sm:px-16 justify-between transition-all duration-300">

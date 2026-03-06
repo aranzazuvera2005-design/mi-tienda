@@ -213,10 +213,21 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 };
 export const useCart = () => {
   const context = useContext(CartContext);
-  // No devolvemos un objeto vacío, lanzamos un error claro si falta el Provider
-  // Esto ayuda a React a identificar fallos de jerarquía inmediatamente
-  if (context === undefined) {
-    throw new Error('useCart debe usarse dentro de un CartProvider');
+  // Devolvemos un objeto seguro por defecto para evitar que la app se rompa
+  // si se llama fuera del Provider o durante la hidratación inicial.
+  if (!context) {
+    return { 
+      cart: [], 
+      total: 0, 
+      user: null, 
+      perfil: null,
+      isAuthLoading: true,
+      addToCart: () => {},
+      removeFromCart: () => {},
+      clearCart: () => {},
+      enviarPedido: async () => { throw new Error('CartProvider no encontrado'); },
+      logout: async () => {}
+    };
   }
-  return context || { cart: [], total: 0, addToCart: () => {} }; 
+  return context;
 };

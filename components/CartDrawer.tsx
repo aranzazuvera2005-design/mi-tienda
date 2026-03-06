@@ -21,14 +21,13 @@ const buildImageUrl = (imagenUrl: string | null | undefined): string => {
 };
 
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
-  // 1. EL SEGURO: Estado de montaje para evitar errores de hidratación y SSR
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // 2. Consumo del contexto (solo se usará si isMounted es true)
+  // Consumo seguro del contexto
   const cartContext = useCart();
   
   useEffect(() => {
@@ -42,11 +41,12 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     };
   }, [isOpen, isMounted]);
 
-  // Si no está montado, no renderizamos NADA para evitar el error de los logs
-  if (!isMounted) return null;
+  // Si no está montado, o por alguna razón el contexto no carga, 
+  // devolvemos null para que Next.js no lance el error de "Vaya, algo salió mal"
+  if (!isMounted || !cartContext) return null;
 
-  // Extraemos datos del contexto de forma segura
-  const { cart, removeFromCart, total } = cartContext;
+  // Ahora extraemos con total seguridad
+  const { cart = [], removeFromCart = () => {}, total = 0 } = cartContext;
 
   return (
     <>
@@ -55,7 +55,6 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] transition-opacity duration-300"
           onClick={onClose}
-          aria-hidden="true"
         />
       )}
 
@@ -65,15 +64,15 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        {/* Header con gradiente Fase 4 */}
+        {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white">
           <div>
             <h2 className="text-2xl font-black text-blue-600">Mi Carrito</h2>
-            <p className="text-xs text-blue-400 font-bold uppercase tracking-wider">Fase 4 - Edición Boutique</p>
+            <p className="text-xs text-blue-400 font-bold uppercase tracking-wider">Boutique v2026</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-blue-600 hover:text-white rounded-full transition-all duration-300 text-blue-600 border border-blue-100 shadow-sm"
+            className="p-2 hover:bg-blue-600 hover:text-white rounded-full transition-all text-blue-600 border border-blue-100"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -81,51 +80,35 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           </button>
         </div>
 
-        {/* Contenido con scroll elegante */}
+        {/* Contenido */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/30">
           {cart.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-              <div className="text-7xl bg-white w-24 h-24 flex items-center justify-center rounded-full shadow-inner">🛒</div>
-              <div>
-                <p className="text-slate-800 font-bold text-xl">¿Aún nada?</p>
-                <p className="text-slate-400 text-sm mt-1">Tus próximos favoritos te están esperando.</p>
-              </div>
-              <button 
-                onClick={onClose}
-                className="text-blue-600 font-bold text-sm underline underline-offset-4"
-              >
+              <div className="text-7xl">🛒</div>
+              <p className="text-slate-800 font-bold text-xl">Tu carrito está vacío</p>
+              <button onClick={onClose} className="text-blue-600 font-bold underline">
                 Volver a la tienda
               </button>
             </div>
           ) : (
             cart.map((item: any) => (
-              <div
-                key={item.id}
-                className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-300 group"
-              >
+              <div key={item.id} className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm group">
                 <div className="flex gap-4">
-                  <div className="relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden bg-slate-100 border border-slate-50">
+                  <div className="relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden">
                     <Image
                       src={buildImageUrl(item.imagen_url || item.imagenUrl)}
                       alt={item.nombre}
                       fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-500"
+                      className="object-cover"
                     />
                   </div>
-
-                  <div className="flex-1 flex flex-col justify-between py-1">
-                    <div>
-                      <h3 className="font-bold text-slate-800 text-base line-clamp-1">{item.nombre}</h3>
-                      <p className="text-xs text-slate-400 mt-1 font-medium">Cant: {item.cantidad || 1}</p>
-                    </div>
-                    <p className="text-blue-600 font-black text-lg">
-                      {(Number(item.precio || 0) * (item.cantidad || 1)).toFixed(2)}€
-                    </p>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-slate-800">{item.nombre}</h3>
+                    <p className="text-blue-600 font-black">{(Number(item.precio) * (item.cantidad || 1)).toFixed(2)}€</p>
                   </div>
-
                   <button
                     onClick={() => removeFromCart(item.id)}
-                    className="self-start p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                    className="text-slate-300 hover:text-red-500"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -137,31 +120,20 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           )}
         </div>
 
-        {/* Footer Premium */}
+        {/* Footer */}
         {cart.length > 0 && (
-          <div className="border-t border-slate-100 p-8 bg-white shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)]">
-            <div className="flex justify-between items-end mb-6">
-              <span className="text-slate-400 font-bold uppercase text-xs tracking-widest">Total Estimado</span>
-              <span className="text-3xl font-black text-slate-900 tracking-tighter">
-                {total.toFixed(2)}€
-              </span>
+          <div className="border-t p-8 bg-white">
+            <div className="flex justify-between mb-6">
+              <span className="text-slate-400 font-bold uppercase text-xs">Total</span>
+              <span className="text-3xl font-black text-slate-900">{total.toFixed(2)}€</span>
             </div>
-            
-            <div className="space-y-3">
-              <Link
-                href="/carrito"
-                onClick={onClose}
-                className="block w-full bg-blue-600 text-white font-bold py-4 rounded-2xl text-center hover:bg-blue-700 transition-all shadow-xl shadow-blue-200 active:scale-[0.98]"
-              >
-                Finalizar Compra
-              </Link>
-              <button
-                onClick={onClose}
-                className="w-full text-slate-400 font-bold py-2 text-sm hover:text-slate-600 transition-colors"
-              >
-                Continuar explorando
-              </button>
-            </div>
+            <Link
+              href="/carrito"
+              onClick={onClose}
+              className="block w-full bg-blue-600 text-white font-bold py-4 rounded-2xl text-center shadow-xl shadow-blue-100"
+            >
+              Finalizar Compra
+            </Link>
           </div>
         )}
       </div>

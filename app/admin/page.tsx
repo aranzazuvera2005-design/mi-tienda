@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Package, ClipboardList, Users, Bell, ArrowLeft, RotateCcw } from 'lucide-react';
+import { Package, ClipboardList, Users, Bell, ArrowLeft, RotateCcw, TrendingUp } from 'lucide-react';
 
 export default function AdminPanel() {
   return (
@@ -60,6 +60,15 @@ export default function AdminPanel() {
             <div>
               <h2 className="text-lg md:text-xl font-black">Gestión de Devoluciones</h2>
               <p className="text-gray-600 text-sm">Aprobar, rechazar y gestionar solicitudes de devolución.</p>
+            </div>
+          </Link>
+
+          {/* 6. VENTAS POR CLIENTE */}
+          <Link href="/admin/ventas-cliente" className="flex flex-col items-start gap-4 bg-white p-6 rounded-xl border border-gray-200 text-gray-900 hover:shadow-lg transition-shadow">
+            <div className="p-3 rounded-lg bg-indigo-50"><TrendingUp size={32} className="text-indigo-600" /></div>
+            <div>
+              <h2 className="text-lg md:text-xl font-black">Ventas por Cliente</h2>
+              <p className="text-gray-600 text-sm">Top clientes, métricas individuales, frecuentes y obsequios.</p>
             </div>
           </Link>
 

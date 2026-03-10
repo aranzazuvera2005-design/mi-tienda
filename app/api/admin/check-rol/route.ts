@@ -11,7 +11,7 @@ const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 export async function GET() {
   try {
     // Leer la sesión del usuario desde las cookies del servidor
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabaseAuth = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

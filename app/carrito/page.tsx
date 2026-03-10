@@ -19,7 +19,6 @@ export default function CarritoPage() {
   const [telefono, setTelefono] = useState("");
   const [direccion, setDireccion] = useState("");
   const [direcciones, setDirecciones] = useState<any[]>([]);
-  const [mostrarNuevaDir, setMostrarNuevaDir] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -243,27 +242,25 @@ export default function CarritoPage() {
 
                 <div>
                   <label className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
-                    <MapPin size={14} /> Dirección
+                    <MapPin size={14} /> Dirección de entrega
                   </label>
-                  {direcciones.length > 0 && !mostrarNuevaDir ? (
-                    <select 
-                      value={direccion} 
-                      onChange={(e) => e.target.value === "nueva" ? setMostrarNuevaDir(true) : setDireccion(e.target.value)}
+                  {direcciones.length > 0 ? (
+                    <select
+                      value={direccion}
+                      onChange={(e) => setDireccion(e.target.value)}
                       className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:bg-white outline-none transition-all font-bold text-slate-800 appearance-none"
                     >
                       {direcciones.map((d, idx) => (
-                        <option key={d.id || idx} value={d.calle}>{d.calle}</option>
+                        <option key={d.id || idx} value={d.calle}>{d.calle}{d.es_principal ? ' (Principal)' : ''}</option>
                       ))}
-                      <option value="nueva">+ Nueva dirección...</option>
                     </select>
                   ) : (
-                    <textarea 
-                      value={direccion} 
-                      onChange={(e) => setDireccion(e.target.value)} 
-                      placeholder="Dirección completa..." 
-                      className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:bg-white outline-none transition-all font-bold text-slate-800 resize-none" 
-                      rows={3}
-                    />
+                    <div className="px-5 py-4 bg-amber-50 border border-amber-200 rounded-2xl text-sm font-bold text-amber-700 flex items-center justify-between gap-3">
+                      <span>No tienes direcciones guardadas</span>
+                      <Link href="/perfil" className="text-blue-600 underline font-black text-xs whitespace-nowrap">
+                        Añadir en Mi Perfil →
+                      </Link>
+                    </div>
                   )}
                 </div>
               </div>

@@ -53,6 +53,7 @@ export default function Header() {
 
         <nav className="hidden md:flex items-center gap-8">
           <Link href="/" className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest">Inicio</Link>
+          <Link href="/perfil" className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest">Mi Perfil</Link>
           <Link href="/perfil/mis-pedidos" className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest">Mis Pedidos</Link>
         </nav>
       </div>

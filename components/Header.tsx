@@ -1,7 +1,8 @@
+'use client';
+
 import dynamic from 'next/dynamic';
 
-// Cargamos el Header de cliente de forma dinámica con ssr: false
-// Esto asegura que el componente que consume contextos se renderice SOLO en el cliente
+// Ahora que el archivo tiene 'use client', Next.js permite usar ssr: false
 const HeaderClient = dynamic(() => import('./HeaderClient'), { 
   ssr: false,
   loading: () => (

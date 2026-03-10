@@ -21,6 +21,7 @@ export default function Header() {
   const user = mounted ? cartContext?.user : null;
   const perfil = mounted ? cartContext?.perfil : null;
   const logout = mounted ? (cartContext?.logout || (() => {})) : (() => {});
+  const totalItems = mounted ? (cartContext?.totalItems || 0) : 0;
   const isOpen = mounted ? (drawerContext?.isOpen || false) : false;
   const openDrawer = mounted ? (drawerContext?.openDrawer || (() => {})) : (() => {});
   const closeDrawer = mounted ? (drawerContext?.closeDrawer || (() => {})) : (() => {});
@@ -65,6 +66,11 @@ export default function Header() {
           <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
           </svg>
+          {totalItems > 0 && (
+            <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-[10px] font-black rounded-full w-5 h-5 flex items-center justify-center shadow-lg shadow-blue-200 animate-in zoom-in duration-200">
+              {totalItems > 99 ? '99+' : totalItems}
+            </span>
+          )}
         </button>
 
         {mounted && (

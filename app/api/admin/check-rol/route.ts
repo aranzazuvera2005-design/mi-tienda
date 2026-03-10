@@ -12,8 +12,15 @@ export async function GET(req: Request) {
     const authHeader = req.headers.get('Authorization');
     const token = authHeader?.replace('Bearer ', '').trim();
 
+    console.log('[check-rol] token present:', !!token, '| token length:', token?.length);
+
     if (!token) {
       return NextResponse.json({ isAdmin: false, reason: 'no_token' }, { status: 401 });
+    }
+
+    if (!SUPABASE_URL || !SERVICE_ROLE) {
+      console.error('[check-rol] Faltan variables de entorno SUPABASE_URL o SERVICE_ROLE');
+      return NextResponse.json({ isAdmin: false, reason: 'missing_env' }, { status: 500 });
     }
 
     // Verificar el token con service role
@@ -23,8 +30,10 @@ export async function GET(req: Request) {
 
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
 
+    console.log('[check-rol] user:', user?.id, '| userError:', userError?.message);
+
     if (userError || !user) {
-      return NextResponse.json({ isAdmin: false, reason: 'invalid_token' }, { status: 401 });
+      return NextResponse.json({ isAdmin: false, reason: 'invalid_token', detail: userError?.message }, { status: 401 });
     }
 
     const { data: perfil, error: perfilError } = await supabaseAdmin
@@ -32,6 +41,8 @@ export async function GET(req: Request) {
       .select('rol, nombre')
       .eq('id', user.id)
       .single();
+
+    console.log('[check-rol] perfil:', perfil?.rol, '| perfilError:', perfilError?.message);
 
     if (perfilError || !perfil) {
       console.error('[check-rol] Error al obtener perfil:', perfilError, 'userId:', user.id);

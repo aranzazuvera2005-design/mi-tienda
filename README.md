@@ -67,3 +67,5 @@ Usa `.env.example` como referencia para las variables necesarias.
 Si quieres, puedo automatizar la creación de las variables en Vercel vía su API (necesitaré un token de Vercel) o añadir un pequeño script para comprobar las variables en tiempo de despliegue.
 
 <!-- Force redeploy: 2026-03-03 15:30 -->
+
+<!-- Forzar nuevo despliegue de versión estable f7e7e6e: 2026-03-10 16:30 -->

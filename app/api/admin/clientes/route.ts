@@ -19,7 +19,7 @@ export async function GET() {
 
     const { data: perfiles, error: perfilesError } = await supabaseAdmin
       .from('perfiles')
-      .select('*, direcciones(*)')
+      .select('*, direcciones!direcciones_cliente_id_fkey(*)')
       .order('nombre', { ascending: true });
 
     if (perfilesError) {

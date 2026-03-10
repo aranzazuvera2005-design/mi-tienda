@@ -117,7 +117,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const enviarPedido = async (datos: { nombre: string; telefono: string; direccion: string }) => {
-    if (!supabase || !user) {
+    if (!user) {
       throw new Error('Usuario no autenticado');
     }
 
@@ -131,57 +131,31 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         return acc + (precio * (item.cantidad || 1));
       }, 0);
 
-      const { data: pedidoData, error: pedidoError } = await supabase
-        .from('pedidos')
-        .insert([
-          {
-            cliente_id: user.id,
-            total: totalPedido,
-            estado: 'pagado',
-            articulos: cart,
-            direccion_entrega: datos.direccion,
-          },
-        ])
-        .select('id')
-        .single();
-
-      if (pedidoError) {
-        throw new Error(`Error al crear el pedido: ${pedidoError.message}`);
-      }
-
-      if (!pedidoData?.id) {
-        throw new Error('No se pudo obtener el ID del pedido');
-      }
-
-      const lineasPedido = cart.map((item) => ({
-        pedido_id: pedidoData.id,
-        producto_id: item.id,
-        cantidad: item.cantidad || 1,
-        precio_unitario_historico: Number(item.precio || 0),
-      }));
-
-      const { error: lineasError } = await supabase
-        .from('lineas_pedido')
-        .insert(lineasPedido);
-
-      if (lineasError) {
-        throw new Error(`Error al crear las líneas del pedido: ${lineasError.message}`);
-      }
-
-      const { error: perfilError } = await supabase
-        .from('perfiles')
-        .update({
+      // Usamos la nueva API route para evitar el error 23503 (FK constraint)
+      // Esta API se encarga de crear el perfil si no existe (Upsert)
+      const response = await fetch('/api/perfil/pedidos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          email: user.email,
           nombre: datos.nombre,
           telefono: datos.telefono,
-        })
-        .eq('id', user.id);
+          direccion: datos.direccion,
+          cart: cart,
+          totalPedido: totalPedido
+        }),
+      });
 
-      if (perfilError) {
-        console.warn('Advertencia: No se pudo actualizar el perfil', perfilError);
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Error al procesar el pedido en el servidor');
       }
 
-      return { success: true, pedidoId: pedidoData.id };
+      return { success: true, pedidoId: result.pedidoId };
     } catch (error: any) {
+      console.error('Error enviarPedido:', error);
       throw new Error(error?.message || 'Error desconocido al enviar el pedido');
     }
   };

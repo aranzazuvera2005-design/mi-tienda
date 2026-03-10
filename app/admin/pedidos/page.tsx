@@ -276,62 +276,97 @@ export default function AdminPedidos() {
 
       {error && <div style={{ color: 'red', marginBottom: '12px' }}>{error}</div>}
 
-      <div style={{ display: 'grid', gap: '20px' }}>
+      <div className="grid gap-4">
         {pedidos.map((pedido) => (
-          <div key={pedido.id} style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.06)', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <span style={{ fontSize: '12px', color: '#6b7280', fontWeight: 'bold' }}>PEDIDO #{pedido.id.toString().slice(-5)}</span>
-                <h2 style={{ margin: '5px 0', fontSize: '18px', fontWeight: 900 }}>
-                   {pedido.cliente?.nombre || 'Cliente sin nombre'}
-                </h2>
-                <div style={{ display: 'flex', gap: '15px', fontSize: '14px', color: '#4b5563' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><MapPin size={14}/> {pedido.direccion_entrega}</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><User size={14}/> {pedido.cliente?.telefono}</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#9ca3af', marginTop: '4px' }}>
-                  <Clock size={12}/> {formatFecha(pedido.creado_at)}
+          <div key={pedido.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+
+            {/* Cabecera */}
+            <div className="flex items-start justify-between gap-3 p-4 sm:p-5 border-b border-gray-50">
+              <div className="flex items-start gap-3 min-w-0">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(pedido.id)}
+                  onChange={() => toggleSelect(pedido.id)}
+                  className="mt-1 w-4 h-4 accent-blue-600 flex-shrink-0"
+                />
+                <div className="min-w-0">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">
+                    Pedido #{pedido.id.toString().slice(-5)}
+                  </p>
+                  <h2 className="font-black text-gray-900 text-base sm:text-lg truncate">
+                    {pedido.cliente?.nombre || 'Cliente sin nombre'}
+                  </h2>
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-xs text-gray-500 font-medium">
+                    {pedido.direccion_entrega && (
+                      <span className="flex items-center gap-1">
+                        <MapPin size={11} className="flex-shrink-0 text-blue-500" />
+                        <span className="truncate max-w-[160px] sm:max-w-xs">{pedido.direccion_entrega}</span>
+                      </span>
+                    )}
+                    {pedido.cliente?.telefono && (
+                      <span className="flex items-center gap-1">
+                        <User size={11} className="flex-shrink-0 text-blue-500" />
+                        {pedido.cliente.telefono}
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1 text-gray-400">
+                      <Clock size={11} className="flex-shrink-0" />
+                      {formatFecha(pedido.creado_at)}
+                    </span>
+                  </div>
                 </div>
               </div>
-              
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontWeight: 900, fontSize: '20px', color: '#111827' }}>{Number(pedido.total || 0).toFixed(2)}€</div>
-                <span style={{ 
-                  fontSize: '11px', 
-                  padding: '4px 10px', 
-                  borderRadius: '10px', 
-                  backgroundColor: pedido.estado === 'Pendiente' ? '#fef3c7' : '#dcfce7',
-                  color: pedido.estado === 'Pendiente' ? '#92400e' : '#166534',
-                  fontWeight: 'bold'
-                }}>
-                  {pedido.estado?.toUpperCase()}
+
+              {/* Total + estado */}
+              <div className="flex-shrink-0 text-right">
+                <p className="font-black text-lg sm:text-xl text-gray-900">{Number(pedido.total || 0).toFixed(2)}€</p>
+                <span className={`inline-block mt-1 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${
+                  pedido.estado === 'Pendiente'
+                    ? 'bg-amber-100 text-amber-700'
+                    : pedido.estado === 'Enviado'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-green-100 text-green-700'
+                }`}>
+                  {pedido.estado}
                 </span>
               </div>
             </div>
 
-            <div style={{ backgroundColor: '#f9fafb', padding: '15px', borderRadius: '12px' }}>
-              <p style={{ margin: '0 0 10px 0', fontSize: '12px', fontWeight: 'bold', color: '#9ca3af' }}>ARTÍCULOS</p>
-              {pedido.articulos?.map((art: any, index: number) => (
-                <div key={index} style={{ fontSize: '14px', display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                  <span>{art.nombre} <strong>x{art.cantidad}</strong></span>
-                  <span>{(art.precio * art.cantidad).toFixed(2)}€</span>
+            {/* Artículos */}
+            {pedido.articulos?.length > 0 && (
+              <div className="px-4 sm:px-5 py-3 bg-gray-50">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Artículos</p>
+                <div className="space-y-1">
+                  {pedido.articulos.map((art: any, index: number) => (
+                    <div key={index} className="flex justify-between text-sm text-gray-700">
+                      <span className="truncate mr-4">{art.nombre} <strong>×{art.cantidad}</strong></span>
+                      <span className="flex-shrink-0 font-bold">{(art.precio * art.cantidad).toFixed(2)}€</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
 
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button 
+            {/* Acciones */}
+            <div className="flex gap-2 p-4 sm:p-5">
+              <button
                 onClick={() => cambiarEstado(pedido.id, 'Enviado')}
-                style={{ flex: 1, padding: '12px', borderRadius: '10px', border: 'none', backgroundColor: '#2563eb', color: 'white', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-600 text-white font-black text-sm hover:bg-blue-700 transition-colors active:scale-95"
               >
-                <Truck size={18} /> Marcar como Enviado
+                <Truck size={16} /> <span className="hidden xs:inline sm:inline">Enviado</span>
               </button>
-              <button 
-                onClick={() => cambiarEstado(pedido.id, 'Pendiente')}
-                style={{ padding: '12px', borderRadius: '10px', border: '1px solid #e5e7eb', backgroundColor: 'white', color: '#4b5563', cursor: 'pointer' }}
+              <button
+                onClick={() => cambiarEstado(pedido.id, 'Entregado')}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-600 text-white font-black text-sm hover:bg-green-700 transition-colors active:scale-95"
               >
-                <Clock size={18} />
+                <CheckCircle size={16} /> <span className="hidden xs:inline sm:inline">Entregado</span>
+              </button>
+              <button
+                onClick={() => cambiarEstado(pedido.id, 'Pendiente')}
+                className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 transition-colors active:scale-95"
+                title="Marcar como Pendiente"
+              >
+                <Clock size={16} />
               </button>
             </div>
           </div>
@@ -339,10 +374,24 @@ export default function AdminPedidos() {
       </div>
 
       {/* Paginación */}
-      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '18px', gap: '12px', alignItems: 'center' }}>
-        <button onClick={() => { setPage((p) => Math.max(1, p - 1)); }} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #e5e7eb', background: page <= 1 ? '#f3f4f6' : 'white', cursor: page <= 1 ? 'not-allowed' : 'pointer' }} disabled={page <= 1}>Anterior</button>
-        <div style={{ alignSelf: 'center' }}>Página {page} / {Math.max(1, Math.ceil(totalCount / pageSize))}</div>
-        <button onClick={() => { if (hasMore) setPage((p) => p + 1); }} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #e5e7eb', background: hasMore ? 'white' : '#f3f4f6', cursor: hasMore ? 'pointer' : 'not-allowed' }} disabled={!hasMore}>Siguiente</button>
+      <div className="flex justify-center items-center gap-3 mt-6">
+        <button
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={page <= 1}
+          className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+        >
+          Anterior
+        </button>
+        <span className="text-sm font-bold text-gray-600">
+          Página {page} / {Math.max(1, Math.ceil(totalCount / pageSize))}
+        </span>
+        <button
+          onClick={() => { if (hasMore) setPage((p) => p + 1); }}
+          disabled={!hasMore}
+          className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+        >
+          Siguiente
+        </button>
       </div>
     </div>
   );

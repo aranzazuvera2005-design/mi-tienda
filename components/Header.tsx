@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { useCartDrawer } from "@/context/CartDrawerContext";
 import { useCart } from "@/context/CartContext";
 import CartDrawer from './CartDrawer';
+import { Menu, X } from 'lucide-react';
 
 export default function Header() {
   const [mounted, setMounted] = useState(false);
+  const [menuAbierto, setMenuAbierto] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -40,7 +42,8 @@ export default function Header() {
   }
 
   return (
-    <header className="bg-white/90 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-50 h-24 flex items-center px-6 sm:px-16 justify-between transition-all duration-300">
+    <header className="bg-white/90 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-50 transition-all duration-300">
+      <div className="h-24 flex items-center px-6 sm:px-16 justify-between">
       <div className="flex items-center gap-12">
         <Link href="/" className="group flex flex-col">
           <span className="text-2xl font-black text-slate-900 tracking-[0.2em] group-hover:text-blue-600 transition-colors">
@@ -81,6 +84,14 @@ export default function Header() {
           />
         )}
 
+        {/* Botón hamburguesa - solo móvil */}
+        <button
+          onClick={() => setMenuAbierto(!menuAbierto)}
+          className="md:hidden p-2.5 text-slate-700 hover:text-blue-600 transition-colors"
+        >
+          {menuAbierto ? <X size={24} /> : <Menu size={24} />}
+        </button>
+
         {user ? (
           <div className="flex items-center gap-4 pl-6 border-l border-slate-100">
             <div className="hidden sm:flex flex-col items-end">
@@ -114,6 +125,49 @@ export default function Header() {
           </Link>
         )}
       </div>
+      </div>
+
+      {/* Menú móvil desplegable */}
+      {menuAbierto && (
+        <div className="md:hidden border-t border-slate-100 bg-white px-6 py-4 flex flex-col gap-1">
+          <Link
+            href="/"
+            onClick={() => setMenuAbierto(false)}
+            className="py-3 px-4 font-black text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-2xl transition-all uppercase tracking-widest"
+          >
+            Inicio
+          </Link>
+          <Link
+            href="/perfil"
+            onClick={() => setMenuAbierto(false)}
+            className="py-3 px-4 font-black text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-2xl transition-all uppercase tracking-widest"
+          >
+            Mi Perfil
+          </Link>
+          <Link
+            href="/perfil/mis-pedidos"
+            onClick={() => setMenuAbierto(false)}
+            className="py-3 px-4 font-black text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-2xl transition-all uppercase tracking-widest"
+          >
+            Mis Pedidos
+          </Link>
+          <Link
+            href="/perfil/mis-devoluciones"
+            onClick={() => setMenuAbierto(false)}
+            className="py-3 px-4 font-black text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-2xl transition-all uppercase tracking-widest"
+          >
+            Devoluciones
+          </Link>
+          {user && (
+            <button
+              onClick={() => { logout(); setMenuAbierto(false); }}
+              className="py-3 px-4 font-black text-sm text-red-400 hover:text-red-600 hover:bg-red-50 rounded-2xl transition-all uppercase tracking-widest text-left"
+            >
+              Cerrar Sesión
+            </button>
+          )}
+        </div>
+      )}
     </header>
   );
 }

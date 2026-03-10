@@ -12,14 +12,27 @@ const supabaseAdmin = createClient(SUPABASE_URL!, SERVICE_ROLE!, {
 
 export async function GET() {
   try {
+    if (!SUPABASE_URL || !SERVICE_ROLE) {
+      console.error('[admin/clientes] Faltan variables de entorno: SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY');
+      return NextResponse.json({ error: 'Configuración de servidor incompleta' }, { status: 500 });
+    }
+
     const { data: perfiles, error: perfilesError } = await supabaseAdmin
       .from('perfiles')
       .select('*, direcciones(*)')
       .order('nombre', { ascending: true });
 
-    if (perfilesError) throw perfilesError;
+    if (perfilesError) {
+      console.error('[admin/clientes] Error al consultar perfiles:', perfilesError);
+      throw perfilesError;
+    }
 
-    const { data: authData } = await supabaseAdmin.auth.admin.listUsers();
+    console.log(`[admin/clientes] Perfiles encontrados: ${perfiles?.length ?? 0}`);
+
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.listUsers();
+    if (authError) {
+      console.error('[admin/clientes] Error al listar usuarios auth:', authError);
+    }
     const users = authData?.users || [];
     
     const clientesCompletos = (perfiles || []).map(perfil => {
@@ -33,6 +46,7 @@ export async function GET() {
 
     return NextResponse.json(clientesCompletos);
   } catch (err: any) {
+    console.error('[admin/clientes] Error general:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

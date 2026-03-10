@@ -3,86 +3,63 @@
 import Link from 'next/link';
 import { Package, ClipboardList, Users, Bell, ArrowLeft, RotateCcw } from 'lucide-react';
 
-// --- ESTILOS COMPARTIDOS ---
-const cardS = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '20px',
-  backgroundColor: 'white',
-  padding: '25px',
-  borderRadius: '24px',
-  textDecoration: 'none',
-  color: '#1f2937',
-  border: '1px solid #e5e7eb',
-  transition: 'all 0.2s ease',
-  boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
-};
-
-const iconBoxS = {
-  padding: '15px',
-  borderRadius: '18px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center'
-};
-
 export default function AdminPanel() {
   return (
-    <div style={{ backgroundColor: '#f9fafb', minHeight: '100vh', padding: '40px 20px', fontFamily: 'sans-serif' }}>
-      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+    <div className="bg-gray-50 min-h-screen p-4 md:p-8 font-sans">
+      <div className="max-w-5xl mx-auto">
         
-        <header style={{ marginBottom: '40px' }}>
-          <Link href="/" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+        <header className="mb-8 md:mb-12">
+          <Link href="/" className="text-gray-500 hover:text-gray-700 text-sm flex items-center gap-2 mb-4 transition-colors">
             <ArrowLeft size={16} /> Volver a la Tienda
           </Link>
-          <h1 style={{ fontSize: '36px', fontWeight: 900, marginTop: '10px', color: '#111827' }}>Panel de Control</h1>
-          <p style={{ color: '#6b7280' }}>Gestiona tu negocio en tiempo real</p>
+          <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-2">Panel de Control</h1>
+          <p className="text-gray-600">Gestiona tu negocio en tiempo real</p>
         </header>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           
           {/* 1. MONITOR EN TIEMPO REAL */}
-          <Link href="/admin/monitor" style={{...cardS, border: '2px solid #2563eb'}}>
-            <div style={{...iconBoxS, backgroundColor: '#eff6ff'}}><Bell size={32} color="#2563eb" /></div>
+          <Link href="/admin/monitor" className="flex flex-col items-start gap-4 bg-white p-6 rounded-xl border-2 border-blue-500 text-gray-900 hover:shadow-lg transition-shadow">
+            <div className="p-3 rounded-lg bg-blue-50"><Bell size={32} className="text-blue-600" /></div>
             <div>
-              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 900 }}>Monitor de Ventas</h2>
-              <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>Pantalla de control con alertas sonoras para nuevos pedidos.</p>
+              <h2 className="text-lg md:text-xl font-black">Monitor de Ventas</h2>
+              <p className="text-gray-600 text-sm">Pantalla de control con alertas sonoras para nuevos pedidos.</p>
             </div>
           </Link>
 
           {/* 2. GESTIÓN DE INVENTARIO */}
-          <Link href="/admin/inventario" style={cardS}>
-            <div style={{...iconBoxS, backgroundColor: '#f0fdf4'}}><Package size={32} color="#16a34a" /></div>
+          <Link href="/admin/inventario" className="flex flex-col items-start gap-4 bg-white p-6 rounded-xl border border-gray-200 text-gray-900 hover:shadow-lg transition-shadow">
+            <div className="p-3 rounded-lg bg-green-50"><Package size={32} className="text-green-600" /></div>
             <div>
-              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 900 }}>Inventario de Productos</h2>
-              <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>Añadir nuevos productos, editar precios y stock.</p>
+              <h2 className="text-lg md:text-xl font-black">Inventario de Productos</h2>
+              <p className="text-gray-600 text-sm">Añadir nuevos productos, editar precios y stock.</p>
             </div>
           </Link>
 
           {/* 3. HISTORIAL DE PEDIDOS */}
-          <Link href="/admin/pedidos" style={cardS}>
-            <div style={{...iconBoxS, backgroundColor: '#fff7ed'}}><ClipboardList size={32} color="#ea580c" /></div>
+          <Link href="/admin/pedidos" className="flex flex-col items-start gap-4 bg-white p-6 rounded-xl border border-gray-200 text-gray-900 hover:shadow-lg transition-shadow">
+            <div className="p-3 rounded-lg bg-orange-50"><ClipboardList size={32} className="text-orange-600" /></div>
             <div>
-              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 900 }}>Gestión de Pedidos</h2>
-              <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>Ver historial completo y marcar envíos como completados.</p>
+              <h2 className="text-lg md:text-xl font-black">Gestión de Pedidos</h2>
+              <p className="text-gray-600 text-sm">Ver historial completo y marcar envíos como completados.</p>
             </div>
           </Link>
 
           {/* 4. GESTIÓN DE CLIENTES */}
-          <Link href="/admin/clientes" style={cardS}>
-            <div style={{...iconBoxS, backgroundColor: '#f5f3ff'}}><Users size={32} color="#7c3aed" /></div>
+          <Link href="/admin/clientes" className="flex flex-col items-start gap-4 bg-white p-6 rounded-xl border border-gray-200 text-gray-900 hover:shadow-lg transition-shadow">
+            <div className="p-3 rounded-lg bg-purple-50"><Users size={32} className="text-purple-600" /></div>
             <div>
-              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 900 }}>Base de Datos de Clientes</h2>
-              <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>Ver perfiles, teléfonos y direcciones de tus compradores.</p>
+              <h2 className="text-lg md:text-xl font-black">Base de Datos de Clientes</h2>
+              <p className="text-gray-600 text-sm">Ver perfiles, teléfonos y direcciones de tus compradores.</p>
             </div>
           </Link>
 
           {/* 5. GESTIÓN DE DEVOLUCIONES */}
-          <Link href="/admin/devoluciones" style={cardS}>
-            <div style={{...iconBoxS, backgroundColor: '#fff1f2'}}><RotateCcw size={32} color="#e11d48" /></div>
+          <Link href="/admin/devoluciones" className="flex flex-col items-start gap-4 bg-white p-6 rounded-xl border border-gray-200 text-gray-900 hover:shadow-lg transition-shadow">
+            <div className="p-3 rounded-lg bg-red-50"><RotateCcw size={32} className="text-red-600" /></div>
             <div>
-              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 900 }}>Gestión de Devoluciones</h2>
-              <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>Aprobar, rechazar y gestionar solicitudes de devolución.</p>
+              <h2 className="text-lg md:text-xl font-black">Gestión de Devoluciones</h2>
+              <p className="text-gray-600 text-sm">Aprobar, rechazar y gestionar solicitudes de devolución.</p>
             </div>
           </Link>
 

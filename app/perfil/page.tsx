@@ -42,26 +42,41 @@ export default function MisDirecciones() {
   };
 
   const guardarDireccion = async () => {
-    if (!supabase || !user) return alert('Debes iniciar sesión');
+    if (!user) return alert('Debes iniciar sesión');
     if (!nuevaDir.calle || !nuevaDir.ciudad || !nuevaDir.cp) {
       return alert('Por favor completa todos los campos');
     }
 
     setGuardando(true);
     try {
-      const { error } = await supabase.from('direcciones').insert([
-        { ...nuevaDir, cliente_id: user.id, es_principal: direcciones.length === 0 }
-      ]);
+      // Usamos la nueva API route para evitar el error 23503 (FK constraint)
+      // Esta API se encarga de crear el perfil si no existe (Upsert)
+      const response = await fetch('/api/perfil/direcciones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          email: user.email,
+          nombre: user.user_metadata?.full_name || user.user_metadata?.nombre,
+          calle: nuevaDir.calle,
+          ciudad: nuevaDir.ciudad,
+          cp: nuevaDir.cp,
+          esPrincipal: direcciones.length === 0
+        }),
+      });
 
-      if (!error) {
+      const result = await response.json();
+
+      if (response.ok && result.success) {
         setNuevaDir({ calle: '', ciudad: '', cp: '' });
         await cargarDirecciones();
       } else {
-        alert('Error al guardar la dirección');
+        console.error('Error API direcciones:', result);
+        alert(result.error || 'Error al guardar la dirección');
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('Error:', e);
-      alert('Error al guardar la dirección');
+      alert('Error al conectar con el servidor para guardar la dirección');
     } finally {
       setGuardando(false);
     }

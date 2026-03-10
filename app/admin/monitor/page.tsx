@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { Bell, TrendingUp, ShoppingBag, Euro, Package, ArrowLeft, RefreshCw, Activity } from 'lucide-react';
+import { Bell, TrendingUp, ShoppingBag, Euro, Package, ArrowLeft, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 
 // --- ESTILOS ---
@@ -17,31 +17,16 @@ const cardS = {
   gap: '10px'
 };
 
-const statCardS = {
-  ...cardS,
-  flex: 1,
-  minWidth: '200px',
-  borderLeft: '4px solid #2563eb'
-};
-
-const iconBoxS = { 
-  padding: '10px', 
-  borderRadius: '12px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: 'fit-content'
-};
-
 export default function MonitorVentas() {
   const [stats, setStats] = useState<any>(null);
   const [pedidosRecientes, setPedidosRecientes] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+  
+  // Inicialización segura de Supabase
   const supabase = (SUPABASE_URL && SUPABASE_ANON) ? createBrowserClient(SUPABASE_URL, SUPABASE_ANON) : null;
 
   const fetchStats = async () => {
@@ -73,17 +58,14 @@ export default function MonitorVentas() {
     };
     init();
 
-    // Suscripción en tiempo real para nuevos pedidos
     if (supabase) {
       const channel = supabase
         .channel('pedidos-reales')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pedidos' }, (payload) => {
           console.log('¡Nuevo pedido!', payload);
-          // Reproducir sonido de alerta
           if (audioRef.current) {
             audioRef.current.play().catch(e => console.log('Error audio:', e));
           }
-          // Actualizar datos
           fetchStats();
           fetchPedidos();
         })
@@ -117,7 +99,7 @@ export default function MonitorVentas() {
             <p className="text-gray-600 mt-1">Métricas en tiempo real y alertas de pedidos</p>
           </div>
           <div className="flex items-center gap-2 bg-green-50 px-4 py-2 rounded-lg border border-green-200">
-            <div className="w-2.5 h-2.5 bg-green-600 rounded-full animate-pulse"></div>
+            <div className="w-2.5 h-2.5 bg-green-600 rounded-full animate-pulse-slow"></div>
             <span className="text-green-700 font-bold text-sm">SISTEMA ACTIVO</span>
           </div>
         </header>
@@ -126,26 +108,32 @@ export default function MonitorVentas() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="bg-white p-6 rounded-xl border-l-4 border-blue-500 shadow-sm">
             <div className="p-2.5 rounded-lg bg-blue-50 w-fit mb-3"><Euro size={20} className="text-blue-600" /></div>
-            <span className="text-xs text-gray-600 font-bold">VENTAS TOTALES</span>
-            <span className="text-2xl font-black block">{stats?.totalVentasEuros?.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+            <span className="text-xs text-gray-600 font-bold uppercase">Ventas Totales</span>
+            <span className="text-2xl font-black block">
+              {stats?.totalVentasEuros?.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }) || '0,00 €'}
+            </span>
           </div>
           
           <div className="bg-white p-6 rounded-xl border-l-4 border-green-500 shadow-sm">
             <div className="p-2.5 rounded-lg bg-green-50 w-fit mb-3"><ShoppingBag size={20} className="text-green-600" /></div>
-            <span className="text-xs text-gray-600 font-bold">PEDIDOS HOY</span>
+            <span className="text-xs text-gray-600 font-bold uppercase">Pedidos Hoy</span>
             <span className="text-2xl font-black block">{stats?.pedidosHoy || 0}</span>
-            <span className="text-xs text-green-600 font-bold">+{stats?.ventasHoy?.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })} hoy</span>
+            <span className="text-xs text-green-600 font-bold">
+              +{stats?.ventasHoy?.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }) || '0,00 €'} hoy
+            </span>
           </div>
 
           <div className="bg-white p-6 rounded-xl border-l-4 border-amber-500 shadow-sm">
             <div className="p-2.5 rounded-lg bg-amber-50 w-fit mb-3"><TrendingUp size={20} className="text-amber-600" /></div>
-            <span className="text-xs text-gray-600 font-bold">TICKET MEDIO</span>
-            <span className="text-2xl font-black block">{stats?.ticketMedio?.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+            <span className="text-xs text-gray-600 font-bold uppercase">Ticket Medio</span>
+            <span className="text-2xl font-black block">
+              {stats?.ticketMedio?.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }) || '0,00 €'}
+            </span>
           </div>
 
           <div className="bg-white p-6 rounded-xl border-l-4 border-purple-500 shadow-sm">
             <div className="p-2.5 rounded-lg bg-purple-50 w-fit mb-3"><Package size={20} className="text-purple-600" /></div>
-            <span className="text-xs text-gray-600 font-bold">TOTAL PEDIDOS</span>
+            <span className="text-xs text-gray-600 font-bold uppercase">Total Pedidos</span>
             <span className="text-2xl font-black block">{stats?.totalPedidos || 0}</span>
           </div>
         </div>
@@ -164,12 +152,16 @@ export default function MonitorVentas() {
                     <div style={{ fontWeight: 'bold', fontSize: '14px' }}>{p.cliente?.nombre || 'Cliente Invitado'}</div>
                     <div style={{ fontSize: '12px', color: '#9ca3af' }}>{new Date(p.creado_at).toLocaleTimeString()}</div>
                   </div>
-                  <div style={{ fontWeight: 900, color: '#111827' }}>{Number(p.total).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</div>
+                  <div style={{ fontWeight: 900, color: '#111827' }}>
+                    {Number(p.total).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
+                  </div>
                 </div>
               ))}
               {pedidosRecientes.length === 0 && <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: '14px' }}>No hay pedidos recientes</p>}
             </div>
-            <Link href="/admin/pedidos" style={{ textAlign: 'center', fontSize: '14px', color: '#2563eb', textDecoration: 'none', fontWeight: 'bold', marginTop: '15px' }}>Ver todos los pedidos →</Link>
+            <Link href="/admin/pedidos" style={{ textAlign: 'center', fontSize: '14px', color: '#2563eb', textDecoration: 'none', fontWeight: 'bold', marginTop: '15px' }}>
+              Ver todos los pedidos →
+            </Link>
           </div>
 
           {/* TOP PRODUCTOS */}
@@ -193,7 +185,9 @@ export default function MonitorVentas() {
                         <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#111827' }}>{prod.nombre}</div>
                         <div style={{ fontSize: '12px', color: '#9ca3af' }}>{prod.cantidad} unidades vendidas</div>
                       </div>
-                      <div style={{ backgroundColor: '#f0fdf4', color: '#10b981', padding: '4px 10px', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold' }}>{prod.cantidad} uds</div>
+                      <div style={{ backgroundColor: '#f0fdf4', color: '#10b981', padding: '4px 10px', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold' }}>
+                        {prod.cantidad} uds
+                      </div>
                     </div>
                   );
                 })
@@ -201,16 +195,21 @@ export default function MonitorVentas() {
                 <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: '14px', padding: '20px' }}>Sin datos de ventas</p>
               )}
             </div>
-            <Link href="/admin/inventario" style={{ textAlign: 'center', fontSize: '14px', color: '#10b981', textDecoration: 'none', fontWeight: 'bold', marginTop: '15px' }}>Ver inventario completo →</Link>
-           </div>
+            <Link href="/admin/inventario" style={{ textAlign: 'center', fontSize: '14px', color: '#10b981', textDecoration: 'none', fontWeight: 'bold', marginTop: '15px' }}>
+              Ver inventario completo →
+            </Link>
+          </div>
+        </div>
       </div>
-    </div>
-  );
-}    <style jsx global>{`
+
+      <style jsx global>{`
         @keyframes pulse {
           0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
           70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
           100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        .animate-pulse-slow {
+          animation: pulse 2s infinite;
         }
       `}</style>
     </div>

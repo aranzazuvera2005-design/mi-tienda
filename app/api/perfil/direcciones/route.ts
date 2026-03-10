@@ -1,88 +1,58 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { createBrowserClient } from '@supabase/ssr';
-import { MapPin, Plus, Trash2, CheckCircle, AlertCircle, ArrowLeft, Home } from 'lucide-react';
-import Card from '@/components/Card';
-import Link from 'next/link';
-import { useCart } from '@/context/CartContext';
+import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
-export default function MisDirecciones() {
-  const [nuevaDir, setNuevaDir] = useState({ calle: '', ciudad: '', cp: '' });
-  const [direcciones, setDirecciones] = useState<any[]>([]);
-  const [cargando, setCargando] = useState(true);
-  const [guardando, setGuardando] = useState(false);
-  const { user } = useCart();
+export const dynamic = 'force-dynamic';
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  useEffect(() => {
-    if (user) cargarDirecciones();
-    else setCargando(false);
-  }, [user]);
-
-  const cargarDirecciones = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('direcciones')
-        .select('*')
-        .eq('cliente_id', user?.id)
-        .order('es_principal', { ascending: false });
-      
-      if (error) throw error;
-      setDirecciones(data || []);
-    } catch (e) {
-      console.error('Error:', e);
-    } finally {
-      setCargando(false);
+export async function POST(req: Request) {
+  try {
+    if (!SUPABASE_URL || !SERVICE_ROLE) {
+      return NextResponse.json({ 
+        error: 'Error de configuración: Faltan variables SERVICE_ROLE' 
+      }, { status: 500 });
     }
-  };
 
-  const guardarDireccion = async () => {
-    if (!user) return alert('Sesión expirada');
-    if (!nuevaDir.calle || !nuevaDir.ciudad || !nuevaDir.cp) return alert('Completa los campos');
+    const body = await req.json();
+    const { userId, email, nombre, calle, ciudad, cp, esPrincipal } = body;
 
-    setGuardando(true);
-    try {
-      const response = await fetch('/api/perfil/direcciones', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.id,
-          email: user.email,
-          nombre: user.user_metadata?.full_name,
-          ...nuevaDir,
-          esPrincipal: direcciones.length === 0
-        }),
-      });
+    // Cliente con SERVICE_ROLE para asegurar que podemos escribir en 'perfiles'
+    const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
 
-      if (response.ok) {
-        setNuevaDir({ calle: '', ciudad: '', cp: '' });
-        await cargarDirecciones();
-      } else {
-        const errorData = await response.json();
-        alert(errorData.error || 'Error al guardar');
-      }
-    } catch (e) {
-      alert('Error de conexión');
-    } finally {
-      setGuardando(false);
-    }
-  };
+    // 1. UPSERT del Perfil: Si no existe en 'perfiles', lo crea. Si existe, lo ignora.
+    // Esto garantiza que la FK de direcciones siempre tenga un padre.
+    const { error: perfilError } = await supabase
+      .from('perfiles')
+      .upsert({
+        id: userId,
+        email: email,
+        nombre: nombre || email?.split('@')[0],
+        rol: 'usuario',
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' });
 
-  const eliminarDireccion = async (id: string) => {
-    if (!confirm('¿Eliminar dirección?')) return;
-    const { error } = await supabase.from('direcciones').delete().eq('id', id);
-    if (!error) cargarDirecciones();
-  };
+    if (perfilError) throw new Error(`Error Perfil: ${perfilError.message}`);
 
-  const establecerPrincipal = async (id: string) => {
-    await supabase.from('direcciones').update({ es_principal: false }).eq('cliente_id', user?.id);
-    await supabase.from('direcciones').update({ es_principal: true }).eq('id', id);
-    cargarDirecciones();
-  };
+    // 2. Insertar la dirección vinculada a 'perfiles'
+    const { data: nuevaDireccion, error: dirError } = await supabase
+      .from('direcciones')
+      .insert([{
+        cliente_id: userId, // Vincula a perfiles.id
+        calle,
+        ciudad,
+        cp,
+        es_principal: esPrincipal
+      }])
+      .select()
+      .single();
 
-  // ... (Manten tu JSX de retorno igual, ya es correcto estructuralmente)
+    if (dirError) throw new Error(`Error Dirección: ${dirError.message}`);
+
+    return NextResponse.json({ success: true, data: nuevaDireccion });
+
+  } catch (err: any) {
+    console.error('API ERROR:', err.message);
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }

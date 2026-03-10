@@ -1,38 +1,31 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { cookies } from 'next/headers';
-import { createServerClient } from '@supabase/ssr';
 
 export const dynamic = 'force-dynamic';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    // Leer la sesión del usuario desde las cookies del servidor
-    const cookieStore = await cookies();
-    const supabaseAuth = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() { return cookieStore.getAll(); },
-          setAll() {},
-        },
-      }
-    );
+    // Leer token del header Authorization
+    const authHeader = req.headers.get('Authorization');
+    const token = authHeader?.replace('Bearer ', '').trim();
 
-    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser();
-
-    if (userError || !user) {
-      return NextResponse.json({ isAdmin: false, reason: 'no_session' }, { status: 401 });
+    if (!token) {
+      return NextResponse.json({ isAdmin: false, reason: 'no_token' }, { status: 401 });
     }
 
-    // Usar service role para evitar problemas de RLS
+    // Verificar el token con service role
     const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE, {
       auth: { persistSession: false }
     });
+
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
+
+    if (userError || !user) {
+      return NextResponse.json({ isAdmin: false, reason: 'invalid_token' }, { status: 401 });
+    }
 
     const { data: perfil, error: perfilError } = await supabaseAdmin
       .from('perfiles')

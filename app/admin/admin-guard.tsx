@@ -32,7 +32,13 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
         }
 
         // Usar API del servidor (con service role) para evitar problemas de RLS
-        const res = await fetch('/api/admin/check-rol', { cache: 'no-store' });
+        // Pasamos el token en el header para que el servidor pueda verificar la sesión
+        const res = await fetch('/api/admin/check-rol', {
+          cache: 'no-store',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        });
         const data = await res.json();
 
         if (!res.ok || !data.isAdmin) {

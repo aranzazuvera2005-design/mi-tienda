@@ -1,3 +1,13 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
 model Perfil {
   id          String    @id @db.Uuid
   nombre      String?
@@ -24,4 +34,82 @@ model Direccion {
   pedidos     Pedido[]
 
   @@map("direcciones")
+}
+
+model Producto {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  nombre      String
+  descripcion String?
+  precio      Decimal  @db.Decimal
+  imagenUrl   String?  @map("imagen_url")
+  stock       Int      @default(0)
+  categoria   String?
+  activo      Boolean  @default(true)
+  creadoEn    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  familiaId   Int?     @map("familia_id")
+  familiaRel  Familia? @relation(fields: [familiaId], references: [id])
+  
+  lineasPedido LineasPedido[]
+  devoluciones Devolucion[]
+
+  @@map("productos")
+}
+
+model Familia {
+  id          Int        @id @default(autoincrement())
+  nombre      String     @unique
+  descripcion String?
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  productos   Producto[]
+
+  @@map("familias")
+}
+
+model Pedido {
+  id                String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  clienteId         String?  @map("cliente_id") @db.Uuid
+  direccionId       String?  @map("direccion_id") @db.Uuid
+  total             Decimal  @db.Decimal
+  estado            String   @default("pagado")
+  stripeSessionId   String?  @unique @map("stripe_session_id")
+  creadoEn          DateTime @default(now()) @map("creado_at") @db.Timestamptz(6)
+  articulos         Json     @default("[]")
+  direccionEntrega  String?  @map("direccion_entrega")
+  
+  direccion     Direccion?     @relation(fields: [direccionId], references: [id])
+  cliente       Perfil?        @relation(fields: [clienteId], references: [id])
+  lineasPedido  LineasPedido[]
+  devoluciones  Devolucion[]
+
+  @@map("pedidos")
+}
+
+model LineasPedido {
+  id                      String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  pedidoId                String?  @map("pedido_id") @db.Uuid
+  productoId              String?  @map("producto_id") @db.Uuid
+  cantidad                Int
+  precioUnitarioHistorico Decimal  @map("precio_unitario_historico") @db.Decimal
+  
+  pedido   Pedido?   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  producto Producto? @relation(fields: [productoId], references: [id])
+
+  @@map("lineas_pedido")
+}
+
+model Devolucion {
+  id                 String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  pedidoId           String   @map("pedido_id") @db.Uuid
+  productoId         String   @map("producto_id") @db.Uuid
+  cantidad           Int
+  motivo             String?
+  estado             String   @default("Pendiente")
+  fechaSolicitud     DateTime @default(now()) @map("fecha_solicitud") @db.Timestamptz(6)
+  fechaLimite        DateTime @map("fecha_limite") @db.Timestamptz(6)
+  observacionesAdmin String?  @map("observaciones_admin")
+  
+  pedido   Pedido   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  producto Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
+
+  @@map("devoluciones")
 }

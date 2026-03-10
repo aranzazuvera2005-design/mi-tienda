@@ -39,16 +39,19 @@ export function useCartDrawer() {
   try {
     context = useContext(CartDrawerContext);
   } catch (e) {
-    console.error("Error accediendo a CartDrawerContext:", e);
+    console.error("DEBUG: Error accediendo a CartDrawerContext:", e);
   }
   
   // Si el contexto no existe o falla, devolvemos un objeto funcional "dummy" 
   // para que la app NO se rompa bajo ninguna circunstancia.
   if (!context) {
+    if (typeof window !== 'undefined') {
+      console.warn("DEBUG: useCartDrawer llamado fuera de CartDrawerProvider. Devolviendo fallback seguro.");
+    }
     return {
       isOpen: false,
       openDrawer: () => {
-        console.warn("CartDrawerProvider no encontrado o inaccesible.");
+        console.warn("DEBUG: Intento de abrir drawer sin Provider.");
       },
       closeDrawer: () => {},
       toggleDrawer: () => {}

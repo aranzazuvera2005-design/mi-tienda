@@ -1,18 +1,23 @@
-// components/Providers.tsx
 'use client';
 
-import React, { createContext } from 'react';
+import React from 'react';
+import { ToastProvider } from "@/context/ToastContext";
 import { CartProvider } from "@/context/CartContext";
+import { CartDrawerProvider } from "@/context/CartDrawerContext";
 
-// Creamos el contexto aquí donde 'use client' está permitido
-export const ToastContext = createContext({ toast: () => {} });
-
+/**
+ * Unificamos todos los proveedores en un solo componente de cliente.
+ * Esto asegura que la jerarquía de contextos sea consistente y evita
+ * errores de hidratación o contextos "perdidos" entre el servidor y el cliente.
+ */
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ToastContext.Provider value={{ toast: () => {} }}>
+    <ToastProvider>
       <CartProvider>
-        {children}
+        <CartDrawerProvider>
+          {children}
+        </CartDrawerProvider>
       </CartProvider>
-    </ToastContext.Provider>
+    </ToastProvider>
   );
 }

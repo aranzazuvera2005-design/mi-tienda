@@ -1,3 +1,21 @@
+# Dependencias
 node_modules
+
+# Build
 .next
+
+# Variables de entorno — NUNCA subir al repo
 .env
+.env.local
+.env.development
+.env.production
+.env.staging
+
+# .env.example SÍ se sube (es la plantilla sin valores reales)
+!.env.example
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo

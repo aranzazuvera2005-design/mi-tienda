@@ -13,7 +13,6 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const checkAdmin = async () => {
       try {
-        // Verificar sesión activa en el cliente
         const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
         const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
 
@@ -24,31 +23,62 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
         }
 
         const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
-        const { data: { session } } = await supabase.auth.getSession();
 
-        if (!session?.user) {
+        // getUser() refresca el token automáticamente si está caducado
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+        if (userError || !user) {
           router.push('/login');
           return;
         }
 
-        // Usar API del servidor (con service role) para evitar problemas de RLS
-        // Pasamos el token en el header para que el servidor pueda verificar la sesión
-        const res = await fetch('/api/admin/check-rol', {
-          cache: 'no-store',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`
-          }
-        });
-        const data = await res.json();
+        // Intentar verificar con la API del servidor (con service role)
+        try {
+          const session = await supabase.auth.getSession();
+          const token = session.data.session?.access_token;
 
-        if (!res.ok || !data.isAdmin) {
-          console.warn('[AdminGuard] Acceso denegado:', data);
-          setErrorMsg(`Acceso denegado. Rol actual: "${data.rol || 'desconocido'}"`);
+          if (token) {
+            const res = await fetch('/api/admin/check-rol', {
+              cache: 'no-store',
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+
+            if (res.ok && data.isAdmin) {
+              setIsAdmin(true);
+              return;
+            }
+
+            // Si la API devuelve rol conocido pero no es admin
+            if (res.ok && data.rol) {
+              setErrorMsg(`Acceso denegado. Rol actual: "${data.rol}"`);
+              setIsAdmin(false);
+              return;
+            }
+          }
+        } catch (apiErr) {
+          console.warn('[AdminGuard] API check-rol falló, intentando verificación directa:', apiErr);
+        }
+
+        // Fallback: consultar el perfil directamente desde el cliente
+        const { data: perfil, error: perfilError } = await supabase
+          .from('perfiles')
+          .select('rol')
+          .eq('id', user.id)
+          .single();
+
+        if (perfilError || !perfil) {
+          setErrorMsg('No se encontró perfil de usuario');
           setIsAdmin(false);
           return;
         }
 
-        setIsAdmin(true);
+        const esAdmin = perfil.rol === 'admin' || perfil.rol === 'administrador';
+        if (!esAdmin) {
+          setErrorMsg(`Acceso denegado. Rol actual: "${perfil.rol || 'usuario'}"`);
+        }
+        setIsAdmin(esAdmin);
+
       } catch (e: any) {
         console.error('[AdminGuard] Error:', e);
         setErrorMsg('Error al verificar permisos: ' + e.message);

@@ -4,48 +4,32 @@ import { createClient } from '@supabase/supabase-js';
 export const dynamic = 'force-dynamic';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export async function GET() {
   try {
     if (!SUPABASE_URL || !SERVICE_ROLE) {
-      return NextResponse.json({ 
-        error: "Faltan variables de entorno en Vercel",
-        details: "Revisa SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY"
-      }, { status: 500 });
+      return NextResponse.json({ error: "Faltan variables de entorno SERVICE_ROLE" }, { status: 500 });
     }
 
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE, {
       auth: { persistSession: false }
     });
 
-    // 1. Obtener perfiles
-    let { data: perfiles, error: perfilesError } = await supabase
+    // 1. Obtener perfiles incluyendo la relación con direcciones
+    // Importante: direcciones(*) usa la FK definida en el schema
+    const { data: perfiles, error: perfilesError } = await supabase
       .from('perfiles')
       .select('*, direcciones(*)')
       .order('nombre', { ascending: true });
 
-    // Reintento si falla la relación
-    if (perfilesError && perfilesError.message.includes('relationship')) {
-      const { data: soloPerfiles, error: soloPerfilesError } = await supabase
-        .from('perfiles')
-        .select('*')
-        .order('nombre', { ascending: true });
-      
-      if (soloPerfilesError) throw soloPerfilesError;
-      perfiles = soloPerfiles;
-    } else if (perfilesError) {
-      throw perfilesError;
-    }
+    if (perfilesError) throw perfilesError;
 
-    // 2. Obtener usuarios de Auth
+    // 2. Obtener usuarios de Auth para sincronizar emails y metadatos
     const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
     const users = authData?.users || [];
     
-    if (authError) console.warn('Error fetching auth users:', authError);
-
-    // 3. Combinación segura
-    // Priorizamos el email de la tabla perfiles, pero si no existe, usamos el de auth
+    // 3. Combinación de datos
     const clientesCompletos = (perfiles || []).map(perfil => {
       const authUser = users.find(u => u.id === perfil.id);
       return {
@@ -58,7 +42,8 @@ export async function GET() {
 
     return NextResponse.json(clientesCompletos);
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message || String(err) }, { status: 500 });
+    console.error('API GET Error:', err.message);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
 
@@ -66,63 +51,44 @@ export async function DELETE(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
+    if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
 
-    if (!id || !SUPABASE_URL || !SERVICE_ROLE) {
-      return NextResponse.json({ error: 'ID faltante o error de configuración' }, { status: 400 });
-    }
+    const supabase = createClient(SUPABASE_URL!, SERVICE_ROLE!, { auth: { persistSession: false } });
 
-    const supabase = createClient(SUPABASE_URL, SERVICE_ROLE, {
-      auth: { persistSession: false }
-    });
-
-    const { error: authError } = await supabase.auth.admin.deleteUser(id);
-    if (authError) throw authError;
-
+    // Eliminar en cascada manual (Auth -> Perfil -> Direcciones)
+    await supabase.auth.admin.deleteUser(id);
     await supabase.from('perfiles').delete().eq('id', id);
     await supabase.from('direcciones').delete().eq('cliente_id', id);
 
-    return NextResponse.json({ message: 'Cliente eliminado correctamente' });
+    return NextResponse.json({ message: 'Eliminado correctamente' });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message || String(err) }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
 
 export async function PUT(req: Request) {
   try {
     const body = await req.json();
-    const { id, nombre, email, telefono, direccion, rol } = body || {};
+    const { id, nombre, email, telefono, rol } = body;
 
-    if (!id || !SUPABASE_URL || !SERVICE_ROLE) {
-      return NextResponse.json({ error: 'ID faltante o error de configuración' }, { status: 400 });
-    }
+    const supabase = createClient(SUPABASE_URL!, SERVICE_ROLE!, { auth: { persistSession: false } });
 
-    const supabase = createClient(SUPABASE_URL, SERVICE_ROLE, {
-      auth: { persistSession: false }
-    });
-
-    if (email) {
-      const { error: authError } = await supabase.auth.admin.updateUserById(id, { email });
-      if (authError) throw authError;
-    }
-
-    const updateData: any = {
-      updated_at: new Date().toISOString()
-    };
-    if (nombre !== undefined) updateData.nombre = nombre;
-    if (email !== undefined) updateData.email = email;
-    if (telefono !== undefined) updateData.telefono = telefono;
-    if (direccion !== undefined) updateData.direccion = direccion;
-    if (rol !== undefined) updateData.rol = rol;
+    if (email) await supabase.auth.admin.updateUserById(id, { email });
 
     const { error: profileError } = await supabase
       .from('perfiles')
-      .update(updateData)
+      .update({
+        nombre,
+        email,
+        telefono,
+        rol,
+        updated_at: new Date().toISOString()
+      })
       .eq('id', id);
 
     if (profileError) throw profileError;
-
-    return NextResponse.json({ message: 'Cliente actualizado correctamente' });
+    return NextResponse.json({ message: 'Actualizado' });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message || String(err) }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

@@ -1,92 +1,88 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+'use client';
+import { useState, useEffect } from 'react';
+import { createBrowserClient } from '@supabase/ssr';
+import { MapPin, Plus, Trash2, CheckCircle, AlertCircle, ArrowLeft, Home } from 'lucide-react';
+import Card from '@/components/Card';
+import Link from 'next/link';
+import { useCart } from '@/context/CartContext';
 
-export const dynamic = 'force-dynamic';
+export default function MisDirecciones() {
+  const [nuevaDir, setNuevaDir] = useState({ calle: '', ciudad: '', cp: '' });
+  const [direcciones, setDirecciones] = useState<any[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [guardando, setGuardando] = useState(false);
+  const { user } = useCart();
 
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
-export async function POST(req: Request) {
-  try {
-    if (!SUPABASE_URL || !SERVICE_ROLE) {
-      return NextResponse.json({ 
-        error: 'Error de configuración en el servidor', 
-        details: 'Faltan variables de entorno críticas.' 
-      }, { status: 500 });
-    }
+  useEffect(() => {
+    if (user) cargarDirecciones();
+    else setCargando(false);
+  }, [user]);
 
-    const body = await req.json();
-    const { userId, email, nombre, calle, ciudad, cp, esPrincipal } = body || {};
-
-    if (!userId || !calle) {
-      return NextResponse.json({ error: 'ID de usuario y calle son obligatorios' }, { status: 400 });
-    }
-
-    // Cliente con Service Role para saltar RLS y asegurar la creación del perfil
-    const supabase = createClient(SUPABASE_URL, SERVICE_ROLE, {
-      auth: { persistSession: false }
-    });
-
-    // 1. Verificar si el perfil existe en la tabla 'perfiles'
-    const { data: perfilExistente, error: errorPerfil } = await supabase
-      .from('perfiles')
-      .select('id')
-      .eq('id', userId)
-      .single();
-
-    // 2. Si el perfil no existe, lo creamos automáticamente (Upsert/Creación Automática)
-    if (errorPerfil || !perfilExistente) {
-      console.log(`Perfil no encontrado para ${userId}, creando automáticamente...`);
+  const cargarDirecciones = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('direcciones')
+        .select('*')
+        .eq('cliente_id', user?.id)
+        .order('es_principal', { ascending: false });
       
-      const { error: createProfileError } = await supabase
-        .from('perfiles')
-        .insert([{
-          id: userId,
-          email: email || null,
-          nombre: nombre || email?.split('@')[0] || 'Usuario',
-          rol: 'usuario',
-          updated_at: new Date().toISOString()
-        }]);
+      if (error) throw error;
+      setDirecciones(data || []);
+    } catch (e) {
+      console.error('Error:', e);
+    } finally {
+      setCargando(false);
+    }
+  };
 
-      if (createProfileError) {
-        console.error('Error al crear perfil automático:', createProfileError);
-        return NextResponse.json({ 
-          error: 'No se pudo crear el perfil de usuario necesario.',
-          details: createProfileError.message 
-        }, { status: 500 });
+  const guardarDireccion = async () => {
+    if (!user) return alert('Sesión expirada');
+    if (!nuevaDir.calle || !nuevaDir.ciudad || !nuevaDir.cp) return alert('Completa los campos');
+
+    setGuardando(true);
+    try {
+      const response = await fetch('/api/perfil/direcciones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          email: user.email,
+          nombre: user.user_metadata?.full_name,
+          ...nuevaDir,
+          esPrincipal: direcciones.length === 0
+        }),
+      });
+
+      if (response.ok) {
+        setNuevaDir({ calle: '', ciudad: '', cp: '' });
+        await cargarDirecciones();
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || 'Error al guardar');
       }
+    } catch (e) {
+      alert('Error de conexión');
+    } finally {
+      setGuardando(false);
     }
+  };
 
-    // 3. Insertar la dirección en la tabla 'direcciones'
-    // El error 23503 ya no debería ocurrir porque el perfil ya existe
-    const { data: nuevaDireccion, error: dirError } = await supabase
-      .from('direcciones')
-      .insert([{
-        cliente_id: userId,
-        calle,
-        ciudad: ciudad || null,
-        cp: cp || null,
-        es_principal: esPrincipal || false
-      }])
-      .select()
-      .single();
+  const eliminarDireccion = async (id: string) => {
+    if (!confirm('¿Eliminar dirección?')) return;
+    const { error } = await supabase.from('direcciones').delete().eq('id', id);
+    if (!error) cargarDirecciones();
+  };
 
-    if (dirError) {
-      console.error('Error al insertar dirección:', dirError);
-      return NextResponse.json({ 
-        error: 'Error al guardar la dirección en la base de datos.',
-        details: dirError.message 
-      }, { status: 500 });
-    }
+  const establecerPrincipal = async (id: string) => {
+    await supabase.from('direcciones').update({ es_principal: false }).eq('cliente_id', user?.id);
+    await supabase.from('direcciones').update({ es_principal: true }).eq('id', id);
+    cargarDirecciones();
+  };
 
-    return NextResponse.json({ 
-      success: true,
-      direccion: nuevaDireccion,
-      message: 'Dirección guardada correctamente.'
-    });
-
-  } catch (err: any) {
-    console.error('UNEXPECTED API ERROR (direcciones):', err);
-    return NextResponse.json({ error: 'Error interno del servidor', details: err.message }, { status: 500 });
-  }
+  // ... (Manten tu JSX de retorno igual, ya es correcto estructuralmente)
 }

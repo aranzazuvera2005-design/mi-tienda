@@ -21,6 +21,7 @@ export default function Header() {
   const user = mounted ? cartContext?.user : null;
   const perfil = mounted ? cartContext?.perfil : null;
   const logout = mounted ? (cartContext?.logout || (() => {})) : (() => {});
+  const totalItems = mounted ? (cartContext?.totalItems || 0) : 0;
   const isOpen = mounted ? (drawerContext?.isOpen || false) : false;
   const openDrawer = mounted ? (drawerContext?.openDrawer || (() => {})) : (() => {});
   const closeDrawer = mounted ? (drawerContext?.closeDrawer || (() => {})) : (() => {});
@@ -52,6 +53,7 @@ export default function Header() {
 
         <nav className="hidden md:flex items-center gap-8">
           <Link href="/" className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest">Inicio</Link>
+          <Link href="/perfil" className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest">Mi Perfil</Link>
           <Link href="/perfil/mis-pedidos" className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest">Mis Pedidos</Link>
         </nav>
       </div>
@@ -65,6 +67,11 @@ export default function Header() {
           <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
           </svg>
+          {totalItems > 0 && (
+            <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-[10px] font-black rounded-full w-5 h-5 flex items-center justify-center shadow-lg shadow-blue-200 animate-in zoom-in duration-200">
+              {totalItems > 99 ? '99+' : totalItems}
+            </span>
+          )}
         </button>
 
         {mounted && (
@@ -78,12 +85,12 @@ export default function Header() {
           <div className="flex items-center gap-4 pl-6 border-l border-slate-100">
             <div className="hidden sm:flex flex-col items-end">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bienvenido</span>
-              <span className="text-sm font-bold text-slate-900">{perfil?.nombre || user.user_metadata?.nombre || user.email?.split('@')[0]}</span>
+              <span className="text-sm font-bold text-slate-900">{perfil?.nombre || user.user_metadata?.nombre || user.user_metadata?.full_name || 'Mi cuenta'}</span>
             </div>
             <div className="flex items-center gap-3">
               <Link href="/perfil" className="group relative">
                 <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center font-bold shadow-xl shadow-slate-200 group-hover:bg-blue-600 group-hover:rotate-3 transition-all duration-500">
-                  {user.email?.charAt(0).toUpperCase()}
+                  {(perfil?.nombre || user.user_metadata?.nombre || user.email || '?').charAt(0).toUpperCase()}
                 </div>
                 <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
               </Link>

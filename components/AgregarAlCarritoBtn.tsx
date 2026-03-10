@@ -1,12 +1,12 @@
 "use client";
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
-import { useCartDrawer } from "@/context/CartDrawerContext";
+import { useToast } from "@/context/ToastContext";
 import { ShoppingCart, Check, Loader2 } from "lucide-react";
 
 export default function AgregarAlCarritoBtn({ producto }: { producto: any }) {
   const { addToCart } = useCart();
-  const { openDrawer } = useCartDrawer();
+  const { addToast } = useToast();
   const [isAdding, setIsAdding] = useState(false);
   const [isAdded, setIsAdded] = useState(false);
 
@@ -17,10 +17,8 @@ export default function AgregarAlCarritoBtn({ producto }: { producto: any }) {
       await new Promise(resolve => setTimeout(resolve, 400));
       addToCart(producto);
       setIsAdded(true);
-      setTimeout(() => {
-        openDrawer();
-        setIsAdded(false);
-      }, 600);
+      addToast({ message: `"${producto.nombre}" añadido al carrito`, type: 'success' });
+      setTimeout(() => setIsAdded(false), 1500);
     } catch (e) {
       console.error('Error adding to cart', e);
     } finally {
@@ -29,7 +27,7 @@ export default function AgregarAlCarritoBtn({ producto }: { producto: any }) {
   };
 
   return (
-    <button 
+    <button
       onClick={handleAddToCart}
       disabled={isAdding}
       className={`rounded-2xl w-full py-4 font-black transition-all duration-500 active:scale-95 flex items-center justify-center gap-3 uppercase tracking-widest text-[10px] ${
@@ -45,7 +43,7 @@ export default function AgregarAlCarritoBtn({ producto }: { producto: any }) {
       ) : (
         <ShoppingCart size={16} />
       )}
-      <span>{isAdding ? 'Procesando' : isAdded ? 'En el Carrito' : 'Adquirir'}</span>
+      <span>{isAdding ? 'Procesando' : isAdded ? '¡Añadido!' : 'Adquirir'}</span>
     </button>
   );
 }

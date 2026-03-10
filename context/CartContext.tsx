@@ -161,6 +161,8 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // Memoizar el valor para evitar re-renders innecesarios
+  const totalItems = cart.reduce((acc, item) => acc + (item.cantidad || 1), 0);
+
   const value = useMemo(() => ({
     cart,
     user,
@@ -170,6 +172,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     clearCart,
     enviarPedido,
     total,
+    totalItems,
     isAuthLoading,
     logout: async () => {
       if (supabase) {
@@ -195,7 +198,8 @@ export const useCart = () => {
     // Retornar un objeto seguro por defecto
     return { 
       cart: [], 
-      total: 0, 
+      total: 0,
+      totalItems: 0,
       user: null, 
       perfil: null,
       isAuthLoading: true,

@@ -44,8 +44,6 @@ export default function CarritoPage() {
           setDirecciones(dirs);
           const principal = dirs.find(d => d.es_principal) || dirs[0];
           setDireccion(principal.calle);
-        } else {
-          setMostrarNuevaDir(true);
         }
       } catch (e) {
         console.error('Error cargando datos:', e);

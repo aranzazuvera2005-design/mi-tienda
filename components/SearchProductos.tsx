@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import AgregarAlCarritoBtn from './AgregarAlCarritoBtn';
 import { Search, X, ChevronDown, Tag } from 'lucide-react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
@@ -23,16 +23,26 @@ export default function SearchProductos({
   const searchParams = useSearchParams();
 
   const [q, setQ] = useState(initialQuery || '');
-  const [results, setResults] = useState<any[] | null>(initialProducts || null);
+  const [sort, setSort] = useState(initialSort || 'newest');
+  const [categoria, setCategoria] = useState(initialCategoria || '');
+
+  // Sincronizar estados locales con las props iniciales (que vienen de la URL)
+  useEffect(() => {
+    setQ(initialQuery || '');
+  }, [initialQuery]);
 
   useEffect(() => {
-    setResults(initialProducts);
-  }, [initialProducts]);
+    setSort(initialSort || 'newest');
+  }, [initialSort]);
+
+  useEffect(() => {
+    setCategoria(initialCategoria || '');
+  }, [initialCategoria]);
 
   const updateSearchParams = (newParams: Record<string, string | null>) => {
     const params = new URLSearchParams(searchParams.toString());
     Object.entries(newParams).forEach(([key, value]) => {
-      if (value === null) {
+      if (value === null || value === '') {
         params.delete(key);
       } else {
         params.set(key, value);
@@ -41,19 +51,63 @@ export default function SearchProductos({
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
+  // Debounce para la búsqueda
   useEffect(() => {
     const t = setTimeout(() => {
-      if (q !== initialQuery) {
+      if (q !== (searchParams.get('q') || '')) {
         updateSearchParams({ q: q || null });
       }
     }, 500);
     return () => clearTimeout(t);
-  }, [q, initialQuery]);
+  }, [q]);
 
   const clear = () => {
     setQ('');
     updateSearchParams({ q: null });
   };
+
+  // Lógica de filtrado y ordenación en el cliente para respuesta inmediata
+  const filteredAndSortedProducts = useMemo(() => {
+    let result = [...initialProducts];
+
+    // 1. Filtrar por búsqueda (nombre o descripción)
+    if (q.trim()) {
+      const query = q.toLowerCase();
+      result = result.filter(p => 
+        p.nombre?.toLowerCase().includes(query) || 
+        p.descripcion?.toLowerCase().includes(query)
+      );
+    }
+
+    // 2. Filtrar por categoría
+    if (categoria) {
+      result = result.filter(p => 
+        String(p.familia_id) === String(categoria) || 
+        String(p.id_familia) === String(categoria) ||
+        String(p.categoria_id) === String(categoria)
+      );
+    }
+
+    // 3. Ordenar
+    result.sort((a, b) => {
+      switch (sort) {
+        case 'price_asc':
+          return Number(a.precio || 0) - Number(b.precio || 0);
+        case 'price_desc':
+          return Number(b.precio || 0) - Number(a.precio || 0);
+        case 'name_asc':
+          return (a.nombre || '').localeCompare(b.nombre || '');
+        case 'name_desc':
+          return (b.nombre || '').localeCompare(a.nombre || '');
+        case 'newest':
+        default:
+          // Asumiendo que tienen un campo created_at o id incremental
+          return (b.id || 0) - (a.id || 0);
+      }
+    });
+
+    return result;
+  }, [initialProducts, q, categoria, sort]);
 
   return (
     <section className="mb-12">
@@ -78,8 +132,12 @@ export default function SearchProductos({
         <div className="flex flex-wrap gap-3">
           <div className="relative">
             <select
-              value={initialCategoria || ''}
-              onChange={(e) => updateSearchParams({ categoria: e.target.value || null })}
+              value={categoria}
+              onChange={(e) => {
+                const val = e.target.value;
+                setCategoria(val);
+                updateSearchParams({ categoria: val || null });
+              }}
               className="appearance-none bg-white border border-slate-100 shadow-lg shadow-slate-200/50 rounded-full px-6 py-4 pr-12 text-slate-600 font-bold cursor-pointer focus:ring-4 focus:ring-blue-500/10 transition-all"
             >
               <option value="">Todas las categorías</option>
@@ -92,8 +150,12 @@ export default function SearchProductos({
 
           <div className="relative">
             <select
-              value={initialSort}
-              onChange={(e) => updateSearchParams({ sort: e.target.value })}
+              value={sort}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSort(val);
+                updateSearchParams({ sort: val });
+              }}
               className="appearance-none bg-white border border-slate-100 shadow-lg shadow-slate-200/50 rounded-full px-6 py-4 pr-12 text-slate-600 font-bold cursor-pointer focus:ring-4 focus:ring-blue-500/10 transition-all"
             >
               <option value="newest">Más nuevos</option>
@@ -109,58 +171,64 @@ export default function SearchProductos({
 
       {/* GRID DE PRODUCTOS BOUTIQUE */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
-        {results && results.map((producto) => (
-          <div 
-            key={producto.id} 
-            className="bg-white rounded-[2.5rem] p-5 shadow-2xl shadow-slate-200/30 border border-slate-50 hover:shadow-blue-200/40 hover:-translate-y-3 transition-all duration-700 flex flex-col group"
-          >
-            {/* Imagen del producto con efecto premium */}
-            <div className="relative w-full h-80 overflow-hidden bg-slate-50 rounded-[2rem] mb-8 shadow-inner">
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"></div>
-              <img
-                src={producto.imagen_url || producto.imagenUrl || '/globe.svg'}
-                alt={producto.nombre || 'Producto'}
-                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = '/globe.svg';
-                }}
-              />
-              {/* Etiqueta de categoría flotante */}
-              {(producto.familias?.nombre || producto.categoria) && (
-                <span className="absolute left-5 top-5 bg-slate-900/80 backdrop-blur-md text-white text-[9px] uppercase tracking-[0.2em] px-5 py-2.5 rounded-full font-black shadow-2xl z-20 border border-white/10 flex items-center gap-2">
-                  <Tag size={10} className="text-blue-400" />
-                  {producto.familias?.nombre || producto.categoria}
-                </span>
-              )}
-            </div>
-
-            {/* Contenido Elegante */}
-            <div className="flex flex-col flex-1 px-2">
-              <div className="mb-4">
-                <h2 className="text-2xl font-black text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1 tracking-tight">
-                  {producto.nombre}
-                </h2>
-                <div className="h-1 w-12 bg-blue-600/20 rounded-full mt-2 group-hover:w-24 transition-all duration-500"></div>
-              </div>
-              
-              <p className="text-sm text-slate-400 line-clamp-2 mb-10 leading-relaxed font-bold uppercase tracking-wider">
-                {producto.descripcion || 'Exclusividad en cada detalle'}
-              </p>
-              
-              <div className="mt-auto flex items-center justify-between gap-6 pt-6 border-t border-slate-50">
-                <div className="flex flex-col">
-                  <span className="text-[9px] uppercase font-black text-slate-300 tracking-[0.2em] mb-1">Inversión</span>
-                  <span className="text-3xl font-black text-slate-900 leading-none group-hover:text-blue-600 transition-colors">
-                    {Number(producto.precio || 0).toFixed(2)}<span className="text-lg ml-0.5">€</span>
+        {filteredAndSortedProducts.length > 0 ? (
+          filteredAndSortedProducts.map((producto) => (
+            <div 
+              key={producto.id} 
+              className="bg-white rounded-[2.5rem] p-5 shadow-2xl shadow-slate-200/30 border border-slate-50 hover:shadow-blue-200/40 hover:-translate-y-3 transition-all duration-700 flex flex-col group"
+            >
+              {/* Imagen del producto con efecto premium */}
+              <div className="relative w-full h-80 overflow-hidden bg-slate-50 rounded-[2rem] mb-8 shadow-inner">
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"></div>
+                <img
+                  src={producto.imagen_url || producto.imagenUrl || '/globe.svg'}
+                  alt={producto.nombre || 'Producto'}
+                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/globe.svg';
+                  }}
+                />
+                {/* Etiqueta de categoría flotante */}
+                {(producto.familias?.nombre || producto.categoria) && (
+                  <span className="absolute left-5 top-5 bg-slate-900/80 backdrop-blur-md text-white text-[9px] uppercase tracking-[0.2em] px-5 py-2.5 rounded-full font-black shadow-2xl z-20 border border-white/10 flex items-center gap-2">
+                    <Tag size={10} className="text-blue-400" />
+                    {producto.familias?.nombre || producto.categoria}
                   </span>
+                )}
+              </div>
+
+              {/* Contenido Elegante */}
+              <div className="flex flex-col flex-1 px-2">
+                <div className="mb-4">
+                  <h2 className="text-2xl font-black text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1 tracking-tight">
+                    {producto.nombre}
+                  </h2>
+                  <div className="h-1 w-12 bg-blue-600/20 rounded-full mt-2 group-hover:w-24 transition-all duration-500"></div>
                 </div>
-                <div className="flex-1">
-                  <AgregarAlCarritoBtn producto={producto} />
+                
+                <p className="text-sm text-slate-400 line-clamp-2 mb-10 leading-relaxed font-bold uppercase tracking-wider">
+                  {producto.descripcion || 'Exclusividad en cada detalle'}
+                </p>
+                
+                <div className="mt-auto flex items-center justify-between gap-6 pt-6 border-t border-slate-50">
+                  <div className="flex flex-col">
+                    <span className="text-[9px] uppercase font-black text-slate-300 tracking-[0.2em] mb-1">Inversión</span>
+                    <span className="text-3xl font-black text-slate-900 leading-none group-hover:text-blue-600 transition-colors">
+                      {Number(producto.precio || 0).toFixed(2)}<span className="text-lg ml-0.5">€</span>
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <AgregarAlCarritoBtn producto={producto} />
+                  </div>
                 </div>
               </div>
             </div>
+          ))
+        ) : (
+          <div className="col-span-full text-center py-20 bg-white rounded-[2rem] border border-slate-100 shadow-sm">
+            <p className="text-slate-400 font-semibold">No se encontraron productos que coincidan con tu búsqueda.</p>
           </div>
-        ))}
+        )}
       </div>
     </section>
   );

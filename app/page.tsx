@@ -9,6 +9,11 @@ export default async function HomePage({ searchParams }: { searchParams: any }) 
   const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+  // Extraer parámetros de búsqueda
+  const q = params.q || '';
+  const sort = params.sort || 'newest';
+  const categoria = params.categoria || null;
+
   // Añadimos : any[] para que Vercel no dé error de tipo
   let productos: any[] = [];
   let categorias: any[] = [];
@@ -40,7 +45,13 @@ export default async function HomePage({ searchParams }: { searchParams: any }) 
 
       {/* Componente de búsqueda y productos */}
       <div id="productos">
-        <SearchProductos initialProducts={productos} categorias={categorias} />
+        <SearchProductos 
+          initialProducts={productos} 
+          categorias={categorias} 
+          initialQuery={q}
+          initialSort={sort}
+          initialCategoria={categoria}
+        />
       </div>
       
       {productos.length === 0 && (

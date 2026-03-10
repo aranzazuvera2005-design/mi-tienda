@@ -15,6 +15,7 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const q = url.searchParams.get('q') || '';
+    const clienteId = url.searchParams.get('cliente_id') || null;
     const from = url.searchParams.get('from') || null;
     const to = url.searchParams.get('to') || null;
     const page = parseInt(url.searchParams.get('page') || '1', 10) || 1;
@@ -25,7 +26,9 @@ export async function GET(req: Request) {
       .select('*, cliente:perfiles(nombre, telefono)', { count: 'exact' })
       .order('creado_at', { ascending: false });
 
-    if (q) {
+    if (clienteId) {
+      builder = builder.eq('cliente_id', clienteId);
+    } else if (q) {
       // intentar buscar en varios campos (id, perfil nombre, telefono, productos.nombre)
       const escaped = q.replace(/[%_]/g, '\\$&');
       const parts = [

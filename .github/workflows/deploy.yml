@@ -1,0 +1,79 @@
+# ============================================================
+#  DEPLOY AUTOMÁTICO A VERCEL
+#  Se ejecuta en cada push a main o develop
+#
+#  GitHub Secrets necesarios por cliente:
+#  - VERCEL_TOKEN            → token de Vercel (Account Settings > Tokens)
+#  - VERCEL_ORG_ID           → orgId de .vercel/project.json
+#  - VERCEL_PROJECT_ID       → projectId de .vercel/project.json
+#  - NEXT_PUBLIC_SUPABASE_URL
+#  - NEXT_PUBLIC_SUPABASE_ANON_KEY
+#  - SUPABASE_SERVICE_ROLE_KEY
+#  - NEXT_PUBLIC_SITE_URL
+#  - DATABASE_URL
+#  - DIRECT_URL
+# ============================================================
+
+name: Deploy to Vercel
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'production' || 'preview' }}
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Instalar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # Construir el .env con los secrets del repositorio
+      # Este archivo NUNCA se sube al repo (está en .gitignore)
+      - name: Construir .env desde GitHub Secrets
+        run: |
+          cat > .env << ENVEOF
+          NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }}
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          DIRECT_URL=${{ secrets.DIRECT_URL }}
+          ENVEOF
+          echo ".env construido correctamente"
+
+      - name: Instalar Vercel CLI
+        run: npm install -g vercel@latest
+
+      # Deploy a preview (rama develop) o producción (rama main)
+      - name: Deploy a Vercel
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            vercel --token=${{ secrets.VERCEL_TOKEN }} \
+                   --yes \
+                   --prod \
+                   --env NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }} \
+                   --env NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }} \
+                   --env SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }} \
+                   --env NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }} \
+                   --env DATABASE_URL=${{ secrets.DATABASE_URL }} \
+                   --env DIRECT_URL=${{ secrets.DIRECT_URL }}
+          else
+            vercel --token=${{ secrets.VERCEL_TOKEN }} \
+                   --yes \
+                   --env NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }} \
+                   --env NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }} \
+                   --env SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }} \
+                   --env NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }} \
+                   --env DATABASE_URL=${{ secrets.DATABASE_URL }} \
+                   --env DIRECT_URL=${{ secrets.DIRECT_URL }}
+          fi

@@ -11,22 +11,24 @@ const CartDrawer = dynamic(() => import('./CartDrawer'), { ssr: false });
 
 export default function HeaderClient() {
   const [mounted, setMounted] = useState(false);
-  const cartContext = useCart();
-  const drawerContext = useCartDrawer();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Extraemos datos con seguridad
-  const user = cartContext?.user || null;
-  const perfil = cartContext?.perfil || null;
-  const logout = cartContext?.logout || (() => {});
-  const isOpen = drawerContext?.isOpen || false;
-  const openDrawer = drawerContext?.openDrawer || (() => {});
-  const closeDrawer = drawerContext?.closeDrawer || (() => {});
+  // Obtenemos los contextos de forma segura
+  const cartContext = useCart();
+  const drawerContext = useCartDrawer();
 
-  // Si no está montado, mostramos un header minimalista
+  // Extraemos datos con seguridad
+  const user = mounted ? cartContext?.user : null;
+  const perfil = mounted ? cartContext?.perfil : null;
+  const logout = mounted ? (cartContext?.logout || (() => {})) : (() => {});
+  const isOpen = mounted ? (drawerContext?.isOpen || false) : false;
+  const openDrawer = mounted ? (drawerContext?.openDrawer || (() => {})) : (() => {});
+  const closeDrawer = mounted ? (drawerContext?.closeDrawer || (() => {})) : (() => {});
+
+  // Mientras se monta, mostramos un header minimalista
   if (!mounted) {
     return (
       <header className="bg-white/90 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-50 h-24 flex items-center px-6 sm:px-16 justify-between">
@@ -34,6 +36,7 @@ export default function HeaderClient() {
           <span className="text-2xl font-black text-slate-900 tracking-[0.2em]">BOUTIQUE</span>
           <span className="text-[10px] font-bold text-slate-400 tracking-[0.4em] uppercase -mt-1">v2026</span>
         </div>
+        <div className="w-12 h-12 bg-slate-200 rounded-2xl animate-pulse"></div>
       </header>
     );
   }
@@ -57,7 +60,7 @@ export default function HeaderClient() {
       </div>
 
       <div className="flex items-center gap-6 sm:gap-10">
-        {/* Carrito con contador visual */}
+        {/* Carrito */}
         <button 
           onClick={openDrawer}
           className="relative p-2.5 text-slate-700 hover:text-blue-600 transition-all hover:scale-110 active:scale-95"

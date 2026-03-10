@@ -1,4 +1,5 @@
 'use client';
+
 import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useToast } from './ToastContext';
@@ -12,7 +13,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
-  // 1. Evitar ejecución en servidor para Supabase y Toasts
+  // Marcar que el componente está montado en el cliente
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -20,16 +21,22 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
 
-  // Memoizamos el cliente de supabase para que no se recree
+  // Crear cliente de Supabase solo en el cliente
   const supabase = useMemo(() => {
     if (typeof window !== 'undefined' && SUPABASE_URL && SUPABASE_ANON) {
-      return createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
+      try {
+        return createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
+      } catch (e) {
+        console.error('Error creating Supabase client:', e);
+        return null;
+      }
     }
     return null;
   }, [SUPABASE_URL, SUPABASE_ANON]);
 
   const toastContext = useToast();
 
+  // Inicializar autenticación solo cuando está montado
   useEffect(() => {
     if (!supabase || !mounted) {
       if (mounted) setIsAuthLoading(false);
@@ -119,13 +126,11 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     try {
-      // 1. Calcular el total del pedido
       const totalPedido = cart.reduce((acc, item) => {
         const precio = Number(item.precio || 0);
         return acc + (precio * (item.cantidad || 1));
       }, 0);
 
-      // 2. Crear el pedido en la tabla 'pedidos'
       const { data: pedidoData, error: pedidoError } = await supabase
         .from('pedidos')
         .insert([
@@ -148,7 +153,6 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         throw new Error('No se pudo obtener el ID del pedido');
       }
 
-      // 3. Crear las líneas de pedido
       const lineasPedido = cart.map((item) => ({
         pedido_id: pedidoData.id,
         producto_id: item.id,
@@ -164,7 +168,6 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         throw new Error(`Error al crear las líneas del pedido: ${lineasError.message}`);
       }
 
-      // 4. Actualizar el perfil del cliente con los datos de envío
       const { error: perfilError } = await supabase
         .from('perfiles')
         .update({
@@ -175,7 +178,6 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (perfilError) {
         console.warn('Advertencia: No se pudo actualizar el perfil', perfilError);
-        // No lanzamos error aquí porque el pedido ya se creó exitosamente
       }
 
       return { success: true, pedidoId: pedidoData.id };
@@ -184,7 +186,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Objeto de valor memoizado para evitar re-renders masivos
+  // Memoizar el valor para evitar re-renders innecesarios
   const value = useMemo(() => ({
     cart,
     user,
@@ -211,11 +213,12 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     </CartContext.Provider>
   );
 };
+
 export const useCart = () => {
   const context = useContext(CartContext);
-  // Devolvemos un objeto seguro por defecto para evitar que la app se rompa
-  // si se llama fuera del Provider o durante la hidratación inicial.
+  
   if (!context) {
+    // Retornar un objeto seguro por defecto
     return { 
       cart: [], 
       total: 0, 
@@ -229,5 +232,6 @@ export const useCart = () => {
       logout: async () => {}
     };
   }
+  
   return context;
 };

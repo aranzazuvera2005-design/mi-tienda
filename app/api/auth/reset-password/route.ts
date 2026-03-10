@@ -28,8 +28,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true });
     }
 
-    // Determinar la URL base
+    // Determinar la URL base — prioridad:
+    // 1. Variable explícita NEXT_PUBLIC_SITE_URL (configurar en Vercel)
+    // 2. VERCEL_PROJECT_PRODUCTION_URL (URL canónica de producción, sin preview)
+    // 3. VERCEL_URL (URL del deploy actual, puede ser preview)
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+      || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null)
       || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
 
     // Enviar email de reset con enlace seguro de Supabase Auth

@@ -318,6 +318,37 @@ export default function CarritoPage() {
           </Card>
         </div>
       </div>
+
+      {/* Barra fija inferior - solo móvil */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-100 shadow-2xl shadow-slate-900/10 px-4 py-3">
+        <div className="flex items-center gap-3">
+          <div className="flex-1">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total</p>
+            <p className="text-2xl font-black text-blue-600">{total.toFixed(2)}€</p>
+          </div>
+          <button
+            onClick={handleConfirmar}
+            disabled={isSubmitting || !user}
+            className={`flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-black text-base transition-all shadow-xl active:scale-95 ${
+              isSubmitting || !user
+                ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200'
+            }`}
+          >
+            {isSubmitting ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+            ) : (
+              <>
+                Confirmar Pedido
+                <ArrowRight size={18} />
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Espaciado para que la barra fija no tape contenido - solo móvil */}
+      <div className="lg:hidden h-24" />
     </div>
   );
 }

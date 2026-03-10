@@ -84,12 +84,12 @@ export default function Header() {
           <div className="flex items-center gap-4 pl-6 border-l border-slate-100">
             <div className="hidden sm:flex flex-col items-end">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bienvenido</span>
-              <span className="text-sm font-bold text-slate-900">{perfil?.nombre || user.user_metadata?.nombre || user.email?.split('@')[0]}</span>
+              <span className="text-sm font-bold text-slate-900">{perfil?.nombre || user.user_metadata?.nombre || user.user_metadata?.full_name || 'Mi cuenta'}</span>
             </div>
             <div className="flex items-center gap-3">
               <Link href="/perfil" className="group relative">
                 <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center font-bold shadow-xl shadow-slate-200 group-hover:bg-blue-600 group-hover:rotate-3 transition-all duration-500">
-                  {user.email?.charAt(0).toUpperCase()}
+                  {(perfil?.nombre || user.user_metadata?.nombre || user.email || '?').charAt(0).toUpperCase()}
                 </div>
                 <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
               </Link>

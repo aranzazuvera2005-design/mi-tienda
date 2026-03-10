@@ -188,58 +188,58 @@ export default function GestionClientes() {
   });
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', padding: '40px 20px' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+      <div className="max-w-6xl mx-auto">
         
-        <Link href="/admin" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#6b7280', textDecoration: 'none', marginBottom: '20px', fontWeight: 'bold' }}>
-          <ArrowLeft size={18} /> Volver al Menú Admin
+        <Link href="/admin" className="flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm mb-6 font-bold transition-colors">
+          <ArrowLeft size={18} /> Volver al Panel
         </Link>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+        <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-8">
           <div>
-            <h1 style={{ fontSize: '32px', fontWeight: 900, margin: 0 }}>Panel de Clientes v2.0</h1>
-            <p style={{ color: '#6b7280', margin: '5px 0 0 0' }}>Gestión completa de usuarios y perfiles</p>
+            <h1 className="text-3xl md:text-4xl font-black text-gray-900">Panel de Clientes</h1>
+            <p className="text-gray-600 mt-2">Gestión completa de usuarios y perfiles</p>
           </div>
-          <button onClick={fetchClientes} style={{ ...btnIconS, backgroundColor: '#fff', border: '1px solid #e5e7eb', padding: '10px' }}>
+          <button onClick={fetchClientes} className="p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
             <RefreshCw size={20} className={cargando ? 'animate-spin' : ''} />
           </button>
         </div>
 
-        <div style={{ position: 'relative', marginBottom: '30px' }}>
-          <Search style={{ position: 'absolute', left: '15px', top: '12px', color: '#9ca3af' }} size={20} />
+        <div className="relative mb-8">
+          <Search className="absolute left-4 top-3 text-gray-400" size={20} />
           <input 
-            style={{ width: '100%', padding: '12px 12px 12px 45px', borderRadius: '15px', border: '2px solid #000', fontSize: '16px', outline: 'none' }} 
+            className="w-full px-4 py-3 pl-12 rounded-lg border-2 border-gray-900 text-base outline-none focus:ring-2 focus:ring-blue-500" 
             placeholder="Buscar por nombre, email o teléfono..." 
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
           />
         </div>
 
-        <div style={{ ...cardS, marginBottom: '40px', border: '2px dashed #2563eb', backgroundColor: '#f0f7ff' }}>
-          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#1e40af' }}>Registrar Nuevo Cliente</h3>
-          <form onSubmit={crearCliente} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
-            <input placeholder="Nombre Completo *" value={nuevoNombre} onChange={(e) => setNuevoNombre(e.target.value)} style={inputS} required />
-            <input placeholder="Email *" type="email" value={nuevoEmail} onChange={(e) => setNuevoEmail(e.target.value)} style={inputS} required />
-            <input placeholder="Password *" type="text" value={nuevoPassword} onChange={(e) => setNuevoPassword(e.target.value)} style={inputS} required />
-            <input placeholder="Teléfono" value={nuevoTelefono} onChange={(e) => setNuevoTelefono(e.target.value)} style={inputS} />
-            <input placeholder="Dirección Inicial" value={nuevaDireccion} onChange={(e) => setNuevaDireccion(e.target.value)} style={{ ...inputS, gridColumn: 'span 2' }} />
-            <button type="submit" disabled={creating} style={{ ...btnPrimaryS, gridColumn: 'span 2', backgroundColor: '#2563eb' }}>
+        <div className="bg-blue-50 p-6 rounded-xl border-2 border-dashed border-blue-500 mb-8">
+          <h3 className="text-lg font-bold text-blue-900 mb-4">Registrar Nuevo Cliente</h3>
+          <form onSubmit={crearCliente} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <input placeholder="Nombre Completo *" value={nuevoNombre} onChange={(e) => setNuevoNombre(e.target.value)} className="px-4 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+            <input placeholder="Email *" type="email" value={nuevoEmail} onChange={(e) => setNuevoEmail(e.target.value)} className="px-4 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+            <input placeholder="Password *" type="text" value={nuevoPassword} onChange={(e) => setNuevoPassword(e.target.value)} className="px-4 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+            <input placeholder="Teléfono" value={nuevoTelefono} onChange={(e) => setNuevoTelefono(e.target.value)} className="px-4 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <input placeholder="Dirección Inicial" value={nuevaDireccion} onChange={(e) => setNuevaDireccion(e.target.value)} className="px-4 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 md:col-span-2" />
+            <button type="submit" disabled={creating} className="md:col-span-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors disabled:opacity-50">
               {creating ? 'Registrando...' : 'Crear Cliente'}
             </button>
           </form>
         </div>
 
         {cargando ? (
-          <div style={{ textAlign: 'center', padding: '50px' }}>
-            <RefreshCw size={40} className="animate-spin" style={{ margin: '0 auto', color: '#2563eb' }} />
-            <p>Cargando base de datos...</p>
+          <div className="text-center py-16">
+            <RefreshCw size={40} className="animate-spin mx-auto text-blue-600 mb-4" />
+            <p className="text-gray-600">Cargando base de datos...</p>
           </div>
         ) : (
           <>
-            <div style={{ marginBottom: '15px', fontWeight: 'bold', color: '#4b5563' }}>
+            <div className="mb-4 font-bold text-gray-700">
               {clientesFiltrados.length === 0 ? 'No se encontraron clientes' : `Mostrando ${clientesFiltrados.length} clientes`}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '20px' }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {clientesFiltrados.map((cliente) => (
                 <div key={cliente.id} style={cardS}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

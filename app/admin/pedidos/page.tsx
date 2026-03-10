@@ -3,7 +3,8 @@
 
 import { createBrowserClient } from '@supabase/ssr';
 import { useEffect, useState, useRef } from 'react';
-import { CheckCircle, Clock, Truck, User, MapPin, Package, RefreshCw } from 'lucide-react';
+import { CheckCircle, Clock, Truck, User, MapPin, Package, RefreshCw, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
 import { useToast } from '@/context/ToastContext'
 
@@ -227,34 +228,42 @@ export default function AdminPedidos() {
   // En esta versión usamos búsqueda server-side; `pedidos` ya viene filtrado y paginado desde la API.
 
   return (
-    <div style={{ padding: '30px', backgroundColor: '#f3f4f6', minHeight: '100vh', fontFamily: 'sans-serif' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-        <h1 style={{ fontWeight: 900, fontSize: '28px' }}>Gestión de Pedidos</h1>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={() => fetchTodosLosPedidos({ page: 1 })} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', borderRadius: '8px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer' }}>
+    <div className="p-4 md:p-8 bg-gray-100 min-h-screen font-sans">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
+        <div>
+          <Link href="/admin" className="text-gray-500 hover:text-gray-700 flex items-center gap-2 text-sm mb-2 transition-colors">
+            <ArrowLeft size={16} /> Volver al Panel
+          </Link>
+          <h1 className="font-black text-2xl md:text-3xl text-gray-900">Gestión de Pedidos</h1>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => fetchTodosLosPedidos({ page: 1 })} className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors cursor-pointer text-sm font-medium">
             <RefreshCw size={16} /> Refrescar
           </button>
         </div>
       </div>
 
       {/* Buscador, filtros y controles */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', gap: '10px', flex: 1 }}>
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar por pedido, producto o usuario..." style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid #e5e7eb' }} />
-          <input value={fromDate} onChange={(e) => setFromDate(e.target.value)} type="date" style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #e5e7eb' }} />
-          <input value={toDate} onChange={(e) => setToDate(e.target.value)} type="date" style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #e5e7eb' }} />
-          <button onClick={() => { setQuery(''); setFromDate(''); setToDate(''); }} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer' }}>Limpiar</button>
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex flex-col md:flex-row gap-2">
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar por pedido, producto o usuario..." className="flex-1 px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <div className="flex gap-2">
+            <input value={fromDate} onChange={(e) => setFromDate(e.target.value)} type="date" className="px-3 py-2 rounded-lg border border-gray-200 text-sm" />
+            <input value={toDate} onChange={(e) => setToDate(e.target.value)} type="date" className="px-3 py-2 rounded-lg border border-gray-200 text-sm" />
+            <button onClick={() => { setQuery(''); setFromDate(''); setToDate(''); }} className="px-4 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors cursor-pointer text-sm">Limpiar</button>
+          </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <div style={{ textAlign: 'right', fontSize: '14px', color: '#374151' }}>
-            <div><strong>{pedidos.length}</strong> en esta página</div>
-            <div className="text-sm" style={{ color: '#6b7280' }}>Total: {totalCount}</div>
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+          <div className="text-sm text-gray-700">
+            <span className="font-bold">{pedidos.length}</span> en esta página <span className="text-gray-400 mx-2">|</span> Total: <span className="font-bold">{totalCount}</span>
           </div>
 
-          <button onClick={selectAllVisible} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer' }}>Seleccionar visibles</button>
-          <button onClick={clearSelection} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #e5e7eb', background: '#fff7ed', cursor: 'pointer' }}>Limpiar selección</button>
-          <button onClick={bulkMarkAsSent} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #e5e7eb', background: '#dcfce7', cursor: 'pointer' }}>Marcar seleccionados Enviado</button>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={selectAllVisible} className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors cursor-pointer text-xs font-medium">Seleccionar visibles</button>
+            <button onClick={clearSelection} className="px-3 py-1.5 rounded-lg border border-gray-200 bg-orange-50 hover:bg-orange-100 text-orange-700 transition-colors cursor-pointer text-xs font-medium">Limpiar selección</button>
+            <button onClick={bulkMarkAsSent} className="px-3 py-1.5 rounded-lg border border-gray-200 bg-green-50 hover:bg-green-100 text-green-700 transition-colors cursor-pointer text-xs font-medium">Marcar seleccionados Enviado</button>
+          </div>
         </div>
       </div>
 

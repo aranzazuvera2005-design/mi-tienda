@@ -2,7 +2,8 @@
 
 import { createBrowserClient } from '@supabase/ssr';
 import { useEffect, useState, useRef } from 'react';
-import { RotateCcw, CheckCircle, XCircle, Clock, RefreshCw, AlertCircle } from 'lucide-react';
+import { RotateCcw, CheckCircle, XCircle, Clock, RefreshCw, AlertCircle, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
 import { useToast } from '@/context/ToastContext';
 
@@ -191,34 +192,39 @@ export default function AdminDevoluciones() {
     });
   };
 
-  if (cargando) return <div style={{ padding: '50px', textAlign: 'center' }}>Cargando panel de devoluciones...</div>;
+  if (cargando) return <div className="p-12 text-center">Cargando panel de devoluciones...</div>;
 
   return (
-    <div style={{ padding: '30px', backgroundColor: '#f3f4f6', minHeight: '100vh', fontFamily: 'sans-serif' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-        <h1 style={{ fontWeight: 900, fontSize: '28px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <RotateCcw size={32} /> Gestión de Devoluciones
-        </h1>
+    <div className="p-4 md:p-8 bg-gray-100 min-h-screen font-sans">
+      <Link href="/admin" className="text-gray-500 hover:text-gray-700 flex items-center gap-2 text-sm mb-4 transition-colors">
+        <ArrowLeft size={16} /> Volver al Panel
+      </Link>
+      
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
+        <div className="flex items-center gap-3">
+          <RotateCcw size={32} className="text-red-600" />
+          <h1 className="font-black text-2xl md:text-3xl text-gray-900">Gestión de Devoluciones</h1>
+        </div>
         <button
           onClick={() => fetchDevoluciones({ page: 1 })}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', borderRadius: '8px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer' }}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors cursor-pointer text-sm font-medium"
         >
           <RefreshCw size={16} /> Refrescar
         </button>
       </div>
 
       {/* Filtros */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', alignItems: 'center' }}>
+      <div className="flex flex-col md:flex-row gap-3 mb-6">
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Buscar por cliente, producto o ID..."
-          style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid #e5e7eb' }}
+          className="flex-1 px-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <select
           value={filtroEstado}
           onChange={(e) => setFiltroEstado(e.target.value)}
-          style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #e5e7eb' }}
+          className="px-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">Todos los estados</option>
           <option value="Pendiente">Pendiente</option>
@@ -228,19 +234,19 @@ export default function AdminDevoluciones() {
         </select>
         <button
           onClick={() => { setQuery(''); setFiltroEstado(''); }}
-          style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer' }}
+          className="px-4 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors cursor-pointer text-sm font-medium"
         >
           Limpiar
         </button>
       </div>
 
-      {error && <div style={{ color: 'red', marginBottom: '12px' }}>{error}</div>}
+      {error && <div className="text-red-600 mb-4 p-4 bg-red-50 rounded-lg">{error}</div>}
 
-      <div style={{ display: 'grid', gap: '20px' }}>
+      <div className="grid gap-4">
         {devoluciones.length === 0 ? (
-          <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '12px', textAlign: 'center' }}>
-            <AlertCircle size={48} style={{ margin: '0 auto 16px', color: '#9ca3af' }} />
-            <p style={{ color: '#6b7280' }}>No hay devoluciones para mostrar</p>
+          <div className="bg-white p-12 rounded-lg text-center">
+            <AlertCircle size={48} className="mx-auto mb-4 text-gray-400" />
+            <p className="text-gray-600">No hay devoluciones para mostrar</p>
           </div>
         ) : (
           devoluciones.map((dev) => (

@@ -97,60 +97,60 @@ export default function MonitorVentas() {
 
   if (cargando) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f9fafb' }}>
+      <div className="flex justify-center items-center h-screen bg-gray-50">
         <RefreshCw className="animate-spin" size={48} color="#2563eb" />
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', padding: '40px 20px', fontFamily: 'sans-serif' }}>
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans">
       <audio ref={audioRef} src="/sounds/new-order.mp3" preload="auto" />
       
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        <header style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+      <div className="max-w-6xl mx-auto">
+        <header className="mb-8 flex flex-col md:flex-row md:justify-between md:items-end gap-4">
           <div>
-            <Link href="/admin" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '10px' }}>
+            <Link href="/admin" className="text-gray-500 hover:text-gray-700 text-sm flex items-center gap-2 mb-3 transition-colors">
               <ArrowLeft size={16} /> Volver al Panel
             </Link>
-            <h1 style={{ fontSize: '32px', fontWeight: 900, margin: 0, color: '#111827' }}>Monitor de Ventas v2</h1>
-            <p style={{ color: '#6b7280', margin: 0 }}>Métricas en tiempo real y alertas de pedidos</p>
+            <h1 className="text-3xl md:text-4xl font-black text-gray-900">Monitor de Ventas</h1>
+            <p className="text-gray-600 mt-1">Métricas en tiempo real y alertas de pedidos</p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#ecfdf5', padding: '8px 15px', borderRadius: '12px', border: '1px solid #d1fae5' }}>
-            <div style={{ width: '10px', height: '10px', backgroundColor: '#10b981', borderRadius: '50%', animation: 'pulse 2s infinite' }}></div>
-            <span style={{ color: '#047857', fontWeight: 'bold', fontSize: '14px' }}>SISTEMA ACTIVO</span>
+          <div className="flex items-center gap-2 bg-green-50 px-4 py-2 rounded-lg border border-green-200">
+            <div className="w-2.5 h-2.5 bg-green-600 rounded-full animate-pulse"></div>
+            <span className="text-green-700 font-bold text-sm">SISTEMA ACTIVO</span>
           </div>
         </header>
 
         {/* DASHBOARD DE MÉTRICAS */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginBottom: '40px' }}>
-          <div style={{ ...statCardS, borderLeftColor: '#2563eb' }}>
-            <div style={{ ...iconBoxS, backgroundColor: '#eff6ff' }}><Euro size={20} color="#2563eb" /></div>
-            <span style={{ fontSize: '14px', color: '#64748b', fontWeight: 'bold' }}>VENTAS TOTALES</span>
-            <span style={{ fontSize: '28px', fontWeight: 900 }}>{stats?.totalVentasEuros?.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white p-6 rounded-xl border-l-4 border-blue-500 shadow-sm">
+            <div className="p-2.5 rounded-lg bg-blue-50 w-fit mb-3"><Euro size={20} className="text-blue-600" /></div>
+            <span className="text-xs text-gray-600 font-bold">VENTAS TOTALES</span>
+            <span className="text-2xl font-black block">{stats?.totalVentasEuros?.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
           </div>
           
-          <div style={{ ...statCardS, borderLeftColor: '#10b981' }}>
-            <div style={{ ...iconBoxS, backgroundColor: '#f0fdf4' }}><ShoppingBag size={20} color="#10b981" /></div>
-            <span style={{ fontSize: '14px', color: '#64748b', fontWeight: 'bold' }}>PEDIDOS HOY</span>
-            <span style={{ fontSize: '28px', fontWeight: 900 }}>{stats?.pedidosHoy || 0}</span>
-            <span style={{ fontSize: '12px', color: '#10b981' }}>+{stats?.ventasHoy?.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })} hoy</span>
+          <div className="bg-white p-6 rounded-xl border-l-4 border-green-500 shadow-sm">
+            <div className="p-2.5 rounded-lg bg-green-50 w-fit mb-3"><ShoppingBag size={20} className="text-green-600" /></div>
+            <span className="text-xs text-gray-600 font-bold">PEDIDOS HOY</span>
+            <span className="text-2xl font-black block">{stats?.pedidosHoy || 0}</span>
+            <span className="text-xs text-green-600 font-bold">+{stats?.ventasHoy?.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })} hoy</span>
           </div>
 
-          <div style={{ ...statCardS, borderLeftColor: '#f59e0b' }}>
-            <div style={{ ...iconBoxS, backgroundColor: '#fffbeb' }}><TrendingUp size={20} color="#f59e0b" /></div>
-            <span style={{ fontSize: '14px', color: '#64748b', fontWeight: 'bold' }}>TICKET MEDIO</span>
-            <span style={{ fontSize: '28px', fontWeight: 900 }}>{stats?.ticketMedio?.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+          <div className="bg-white p-6 rounded-xl border-l-4 border-amber-500 shadow-sm">
+            <div className="p-2.5 rounded-lg bg-amber-50 w-fit mb-3"><TrendingUp size={20} className="text-amber-600" /></div>
+            <span className="text-xs text-gray-600 font-bold">TICKET MEDIO</span>
+            <span className="text-2xl font-black block">{stats?.ticketMedio?.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
           </div>
 
-          <div style={{ ...statCardS, borderLeftColor: '#7c3aed' }}>
-            <div style={{ ...iconBoxS, backgroundColor: '#f5f3ff' }}><Package size={20} color="#7c3aed" /></div>
-            <span style={{ fontSize: '14px', color: '#64748b', fontWeight: 'bold' }}>TOTAL PEDIDOS</span>
-            <span style={{ fontSize: '28px', fontWeight: 900 }}>{stats?.totalPedidos || 0}</span>
+          <div className="bg-white p-6 rounded-xl border-l-4 border-purple-500 shadow-sm">
+            <div className="p-2.5 rounded-lg bg-purple-50 w-fit mb-3"><Package size={20} className="text-purple-600" /></div>
+            <span className="text-xs text-gray-600 font-bold">TOTAL PEDIDOS</span>
+            <span className="text-2xl font-black block">{stats?.totalPedidos || 0}</span>
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
           {/* ÚLTIMOS PEDIDOS */}
           <div style={cardS}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
@@ -202,11 +202,11 @@ export default function MonitorVentas() {
               )}
             </div>
             <Link href="/admin/inventario" style={{ textAlign: 'center', fontSize: '14px', color: '#10b981', textDecoration: 'none', fontWeight: 'bold', marginTop: '15px' }}>Ver inventario completo →</Link>
-          </div>
-        </div>
+           </div>
       </div>
-
-      <style jsx global>{`
+    </div>
+  );
+}    <style jsx global>{`
         @keyframes pulse {
           0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
           70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }

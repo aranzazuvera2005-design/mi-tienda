@@ -76,11 +76,12 @@ export default function MisDevoluciones() {
   };
 
   const formatearFecha = (fecha: string) => {
-    return new Date(fecha).toLocaleDateString('es-ES', {
+    const d = new Date(fecha);
+    return d.toLocaleDateString('es-ES', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
-    });
+    }) + ' · ' + d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
   };
 
   if (!user) {

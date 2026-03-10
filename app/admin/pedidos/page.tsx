@@ -162,6 +162,13 @@ export default function AdminPedidos() {
     setPage((p) => p + 1);
   };
 
+  const formatFecha = (iso: string) => {
+    if (!iso) return '-';
+    const d = new Date(iso);
+    return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
+      + ' · ' + d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+  };
+
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -282,6 +289,9 @@ export default function AdminPedidos() {
                 <div style={{ display: 'flex', gap: '15px', fontSize: '14px', color: '#4b5563' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><MapPin size={14}/> {pedido.direccion_entrega}</span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><User size={14}/> {pedido.cliente?.telefono}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#9ca3af', marginTop: '4px' }}>
+                  <Clock size={12}/> {formatFecha(pedido.creado_at)}
                 </div>
               </div>
               

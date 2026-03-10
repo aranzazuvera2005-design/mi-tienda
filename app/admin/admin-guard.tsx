@@ -7,60 +7,51 @@ import { AlertCircle } from 'lucide-react';
 
 export function AdminGuard({ children }: { children: React.ReactNode }) {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string>('');
   const router = useRouter();
-
-  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
-  const supabase = (SUPABASE_URL && SUPABASE_ANON) ? createBrowserClient(SUPABASE_URL, SUPABASE_ANON) : null;
 
   useEffect(() => {
     const checkAdmin = async () => {
-      if (!supabase) {
-        setIsAdmin(false);
-        return;
-      }
-
       try {
-        // Usamos getSession() que es más rápido y fiable para el lado del cliente
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError || !session?.user) {
-          console.log('No session found, redirecting to login');
+        // Verificar sesión activa en el cliente
+        const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+        const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+
+        if (!SUPABASE_URL || !SUPABASE_ANON) {
+          setErrorMsg('Variables de entorno de Supabase no configuradas');
           setIsAdmin(false);
+          return;
+        }
+
+        const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session?.user) {
           router.push('/login');
           return;
         }
 
-        const user = session.user;
+        // Usar API del servidor (con service role) para evitar problemas de RLS
+        const res = await fetch('/api/admin/check-rol', { cache: 'no-store' });
+        const data = await res.json();
 
-        const { data: perfil, error } = await supabase
-          .from('perfiles')
-          .select('rol')
-          .eq('id', user.id)
-          .single();
-
-        if (error || !perfil) {
-          console.error('Error fetching profile:', error);
+        if (!res.ok || !data.isAdmin) {
+          console.warn('[AdminGuard] Acceso denegado:', data);
+          setErrorMsg(`Acceso denegado. Rol actual: "${data.rol || 'desconocido'}"`);
           setIsAdmin(false);
-          router.push('/');
           return;
         }
 
-        if (perfil.rol === 'admin') {
-          setIsAdmin(true);
-        } else {
-          setIsAdmin(false);
-          router.push('/');
-        }
-      } catch (e) {
-        console.error('Error checking admin status:', e);
+        setIsAdmin(true);
+      } catch (e: any) {
+        console.error('[AdminGuard] Error:', e);
+        setErrorMsg('Error al verificar permisos: ' + e.message);
         setIsAdmin(false);
-        router.push('/');
       }
     };
 
     checkAdmin();
-  }, [supabase, router]);
+  }, [router]);
 
   if (isAdmin === null) {
     return (
@@ -78,7 +69,9 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
           <AlertCircle style={{ color: '#dc2626', flexShrink: 0 }} size={24} />
           <div>
             <h3 style={{ margin: 0, fontWeight: 'bold', color: '#991b1b', marginBottom: '5px' }}>Acceso Denegado</h3>
-            <p style={{ margin: 0, color: '#7f1d1d' }}>No tienes permisos para acceder al panel de administración.</p>
+            <p style={{ margin: 0, color: '#7f1d1d' }}>
+              {errorMsg || 'No tienes permisos para acceder al panel de administración.'}
+            </p>
           </div>
         </div>
       </div>

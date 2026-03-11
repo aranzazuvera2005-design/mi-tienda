@@ -5,7 +5,6 @@ import { useEffect, useState, useRef } from 'react';
 import { Trash2, ArrowLeft, Pencil, X, Check, Search, Plus, Upload, Link as LinkIcon, HardDrive, ChevronLeft, ChevronRight, ImagePlus } from 'lucide-react';
 import Link from 'next/link';
 import VariantesEditor from '@/components/VariantesEditor';
-import GeneradorDescripcionIA from '@/components/GeneradorDescripcionIA';
 
 type ModoImagen = 'url' | 'local' | 'drive';
 
@@ -303,18 +302,12 @@ export default function GestionInventario() {
             <ListaImagenes imagenes={imagenesNuevo} setImagenes={setImagenesNuevo} />
           </div>
 
-          {/* Descripción + IA */}
+          {/* Descripción */}
           <div style={{ marginTop: 15 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
-              <p style={{ fontSize: 13, fontWeight: 600, color: '#374151', margin: 0 }}>Descripción</p>
-              <GeneradorDescripcionIA
-                imagenUrl={imagenesNuevo[0] || null}
-                onDescripcion={desc => setNuevoP(p => ({ ...p, descripcion: desc }))}
-              />
-            </div>
+            <p style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8 }}>Descripción</p>
             <textarea
               style={{ ...inS, minHeight: 70, resize: 'vertical' }}
-              placeholder="Descripción del producto (puedes generarla con IA a partir de la imagen)"
+              placeholder="Descripción del producto"
               value={nuevoP.descripcion}
               onChange={e => setNuevoP({ ...nuevoP, descripcion: e.target.value })}
             />
@@ -373,15 +366,9 @@ export default function GestionInventario() {
                             fileRef={fileInputEditRef} onAñadir={añadirImagenEdit} disabled={subiendoImagen}
                           />
                           <ListaImagenes imagenes={imagenesEdit} setImagenes={setImagenesEdit} />
-                          {/* Descripción + IA en edición */}
+                          {/* Descripción en edición */}
                           <div>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, flexWrap: 'wrap', gap: 6 }}>
-                              <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>Descripción</span>
-                              <GeneradorDescripcionIA
-                                imagenUrl={imagenesEdit[0] || null}
-                                onDescripcion={desc => setDatosEdit((d: any) => ({ ...d, descripcion: desc }))}
-                              />
-                            </div>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Descripción</span>
                             <textarea
                               style={{ ...inS, minHeight: 60, resize: 'vertical' }}
                               placeholder="Descripción del producto"

@@ -12,6 +12,9 @@
 #  - NEXT_PUBLIC_SITE_URL
 #  - DATABASE_URL
 #  - DIRECT_URL
+#  --- IA (al menos una para usar el generador de descripciones) ---
+#  - GEMINI_API_KEY          → aistudio.google.com → Get API Key (gratuito)
+#  - OPENAI_API_KEY          → platform.openai.com → API Keys
 #  - ANTHROPIC_API_KEY       → console.anthropic.com → API Keys
 # ============================================================
 name: Deploy to Vercel
@@ -27,53 +30,13 @@ jobs:
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
-
       - name: Instalar Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-
-      - name: Instalar Vercel CLI
-        run: npm install -g vercel@latest
-
-      # Vincular proyecto para poder usar vercel env
-      - name: Vincular proyecto Vercel
-        run: vercel link --token=${{ secrets.VERCEL_TOKEN }} --yes --project=${{ secrets.VERCEL_PROJECT_ID }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
-      # Sincronizar TODAS las variables de entorno en el proyecto Vercel
-      # Usamos || true para que no falle si ya existen
-      - name: Sincronizar variables de entorno en Vercel
-        run: |
-          sync_var() {
-            local name=$1
-            local value=$2
-            if [ -n "$value" ]; then
-              # Borrar si existe y volver a crear (upsert)
-              echo "$value" | vercel env rm "$name" production --yes --token=${{ secrets.VERCEL_TOKEN }} 2>/dev/null || true
-              echo "$value" | vercel env rm "$name" preview --yes --token=${{ secrets.VERCEL_TOKEN }} 2>/dev/null || true
-              echo "$value" | vercel env rm "$name" development --yes --token=${{ secrets.VERCEL_TOKEN }} 2>/dev/null || true
-              printf '%s' "$value" | vercel env add "$name" production --token=${{ secrets.VERCEL_TOKEN }} 2>/dev/null || true
-              printf '%s' "$value" | vercel env add "$name" preview --token=${{ secrets.VERCEL_TOKEN }} 2>/dev/null || true
-              printf '%s' "$value" | vercel env add "$name" development --token=${{ secrets.VERCEL_TOKEN }} 2>/dev/null || true
-              echo "✓ $name sincronizada"
-            fi
-          }
-          sync_var "NEXT_PUBLIC_SUPABASE_URL" "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}"
-          sync_var "NEXT_PUBLIC_SUPABASE_ANON_KEY" "${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}"
-          sync_var "SUPABASE_SERVICE_ROLE_KEY" "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
-          sync_var "NEXT_PUBLIC_SITE_URL" "${{ secrets.NEXT_PUBLIC_SITE_URL }}"
-          sync_var "DATABASE_URL" "${{ secrets.DATABASE_URL }}"
-          sync_var "DIRECT_URL" "${{ secrets.DIRECT_URL }}"
-          sync_var "ANTHROPIC_API_KEY" "${{ secrets.ANTHROPIC_API_KEY }}"
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
-      # Construir el .env local para el build
+      # Construir el .env con los secrets del repositorio
+      # Este archivo NUNCA se sube al repo (está en .gitignore)
       - name: Construir .env desde GitHub Secrets
         run: |
           cat > .env << ENVEOF
@@ -83,18 +46,39 @@ jobs:
           NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }}
           DATABASE_URL=${{ secrets.DATABASE_URL }}
           DIRECT_URL=${{ secrets.DIRECT_URL }}
+          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
           ENVEOF
           echo ".env construido correctamente"
-
-      # Deploy
+      - name: Instalar Vercel CLI
+        run: npm install -g vercel@latest
+      # Deploy a preview (rama develop) o producción (rama main)
       - name: Deploy a Vercel
         run: |
           if [ "${{ github.ref_name }}" = "main" ]; then
-            vercel --token=${{ secrets.VERCEL_TOKEN }} --yes --prod
+            vercel --token=${{ secrets.VERCEL_TOKEN }} \
+                   --yes \
+                   --prod \
+                   --env NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }} \
+                   --env NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }} \
+                   --env SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }} \
+                   --env NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }} \
+                   --env DATABASE_URL=${{ secrets.DATABASE_URL }} \
+                   --env DIRECT_URL=${{ secrets.DIRECT_URL }} \
+                   --env GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} \
+                   --env OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
+                   --env ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
           else
-            vercel --token=${{ secrets.VERCEL_TOKEN }} --yes
+            vercel --token=${{ secrets.VERCEL_TOKEN }} \
+                   --yes \
+                   --env NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }} \
+                   --env NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }} \
+                   --env SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }} \
+                   --env NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }} \
+                   --env DATABASE_URL=${{ secrets.DATABASE_URL }} \
+                   --env DIRECT_URL=${{ secrets.DIRECT_URL }} \
+                   --env GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} \
+                   --env OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
+                   --env ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
           fi
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}

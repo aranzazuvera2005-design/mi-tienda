@@ -393,9 +393,8 @@ export default function GestionInventario() {
                             productoId={p.id}
                             variantes={variantesPorProducto[p.id] || []}
                             onCambio={fetchProductos}
+                            defaultOpen={true}
                           />
-                        </div>
-                      ) : (
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                           {/* Mini carousel */}
                           <div style={{ position: 'relative', width: 56, height: 56, flexShrink: 0 }}>

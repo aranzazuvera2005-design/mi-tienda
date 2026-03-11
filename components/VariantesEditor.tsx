@@ -12,12 +12,15 @@ const TIPOS = [
 
 const TALLAS_RAPIDAS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '36', '37', '38', '39', '40', '41', '42'];
 
-export default function VariantesEditor({ productoId, variantes, onCambio }: {
+const inS: React.CSSProperties = { width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13, outline: 'none', marginTop: 2 };
+
+export default function VariantesEditor({ productoId, variantes, onCambio, defaultOpen = false }: {
   productoId: string;
   variantes: any[];
   onCambio: () => void;
+  defaultOpen?: boolean;
 }) {
-  const [abierto, setAbierto] = useState(false);
+  const [abierto, setAbierto] = useState(defaultOpen);
   const [tipo, setTipo] = useState<string>('talla');
   const [valor, setValor] = useState('');
   const [precioExtra, setPrecioExtra] = useState('0');
@@ -49,7 +52,6 @@ export default function VariantesEditor({ productoId, variantes, onCambio }: {
 
   const añadirRapida = async (v: string) => {
     if (!SUPABASE_URL || !SUPABASE_ANON) return;
-    // Evitar duplicados
     if (variantes.some(va => va.tipo === 'talla' && va.valor === v)) return;
     const sb = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
     await sb.from('variantes').insert([{ producto_id: productoId, tipo: 'talla', valor: v, precio_extra: 0, stock: 0 }]);
@@ -63,10 +65,10 @@ export default function VariantesEditor({ productoId, variantes, onCambio }: {
     onCambio();
   };
 
-  const actualizarStock = async (id: string, stock: number) => {
+  const actualizarStock = async (id: string, nuevoStock: number) => {
     if (!SUPABASE_URL || !SUPABASE_ANON) return;
     const sb = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
-    await sb.from('variantes').update({ stock }).eq('id', id);
+    await sb.from('variantes').update({ stock: nuevoStock }).eq('id', id);
     onCambio();
   };
 
@@ -89,7 +91,6 @@ export default function VariantesEditor({ productoId, variantes, onCambio }: {
       {abierto && (
         <div style={{ marginTop: 10, border: '1px solid #e5e7eb', borderRadius: 12, padding: 14, backgroundColor: '#f9fafb' }}>
 
-          {/* Variantes existentes */}
           {variantesPorTipo.map(grupo => (
             <div key={grupo.value} style={{ marginBottom: 12 }}>
               <p style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>{grupo.label}</p>
@@ -118,11 +119,9 @@ export default function VariantesEditor({ productoId, variantes, onCambio }: {
             </div>
           ))}
 
-          {/* Formulario nueva variante */}
           <div style={{ borderTop: variantesPorTipo.length > 0 ? '1px solid #e5e7eb' : 'none', paddingTop: variantesPorTipo.length > 0 ? 12 : 0 }}>
             <p style={{ fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 8 }}>AÑADIR VARIANTE</p>
 
-            {/* Selector tipo */}
             <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
               {TIPOS.map(t => (
                 <button key={t.value} onClick={() => setTipo(t.value)}
@@ -132,7 +131,6 @@ export default function VariantesEditor({ productoId, variantes, onCambio }: {
               ))}
             </div>
 
-            {/* Atajos tallas */}
             {tipo === 'talla' && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
                 {TALLAS_RAPIDAS.map(t => {
@@ -171,5 +169,3 @@ export default function VariantesEditor({ productoId, variantes, onCambio }: {
     </div>
   );
 }
-
-const inS: React.CSSProperties = { width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13, outline: 'none', marginTop: 2 };

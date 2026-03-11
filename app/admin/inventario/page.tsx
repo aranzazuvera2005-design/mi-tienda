@@ -102,6 +102,8 @@ export default function GestionInventario() {
       precio: parseFloat(nuevoP.precio),
       imagen_url: imagenFinal
     };
+
+    if (nuevoP.familia_id) {
       payload.familia_id = nuevoP.familia_id;
       // también mantener el nombre en la columna legacy por compatibilidad si existe
       const f = familias.find((x) => String(x.id) === String(nuevoP.familia_id));

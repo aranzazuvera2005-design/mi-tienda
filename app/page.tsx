@@ -21,7 +21,7 @@ export default async function HomePage({ searchParams }: { searchParams: any }) 
   if (URL && KEY) {
     try {
       const [resProd, resCat] = await Promise.all([
-        fetch(`${URL}/rest/v1/productos?select=*,familias(nombre)`, {
+        fetch(`${URL}/rest/v1/productos?select=id,nombre,precio,descripcion,imagen_url,imagenes,familia_id,familias(nombre)`, {
           headers: { apikey: KEY, Authorization: `Bearer ${KEY}` },
           next: { revalidate: 1 }
         }),

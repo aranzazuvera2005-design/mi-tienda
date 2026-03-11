@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useCart } from "@/context/CartContext";
 import { useToast } from "@/context/ToastContext";
 import { ShoppingCart, Check, Loader2 } from "lucide-react";
@@ -14,11 +14,11 @@ export default function AgregarAlCarritoBtn({ producto }: { producto: any }) {
   const [precioFinal, setPrecioFinal] = useState<number>(Number(producto?.precio || 0));
   const [personalizacion, setPersonalizacion] = useState('');
 
-  const handleSeleccion = (variantes: Record<string, any>, precio: number, texto: string) => {
+  const handleSeleccion = useCallback((variantes: Record<string, any>, precio: number, texto: string) => {
     setVariantesSeleccionadas(variantes);
     setPrecioFinal(precio);
     setPersonalizacion(texto);
-  };
+  }, []);
 
   const handleAddToCart = async () => {
     try {

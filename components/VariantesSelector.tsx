@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 
 const TIPO_LABELS: Record<string, string> = {
@@ -17,30 +17,33 @@ export default function VariantesSelector({ productoId, precio, onSeleccion }: {
   const [variantes, setVariantes] = useState<any[]>([]);
   const [seleccion, setSeleccion] = useState<Record<string, any>>({});
   const [personalizacion, setPersonalizacion] = useState('');
+  const [montado, setMontado] = useState(false);
 
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
 
+  useEffect(() => { setMontado(true); }, []);
+
   useEffect(() => {
-    if (!SUPABASE_URL || !SUPABASE_ANON) return;
+    if (!montado || !SUPABASE_URL || !SUPABASE_ANON) return;
     const sb = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
     sb.from('variantes').select('*').eq('producto_id', productoId).then(({ data }) => {
       setVariantes(data || []);
     });
-  }, [productoId]);
+  }, [productoId, montado]);
 
   const tipos = [...new Set(variantes.map(v => v.tipo))];
-
   const variantesPorTipo = (tipo: string) => variantes.filter(v => v.tipo === tipo);
-
   const precioExtra = Object.values(seleccion).reduce((acc: number, v: any) => acc + (v?.precio_extra || 0), 0);
   const precioFinal = precio + precioExtra;
 
+  // Notificar al padre solo cuando cambia selección o personalización — sin incluir onSeleccion en deps
   useEffect(() => {
     onSeleccion(seleccion, precioFinal, personalizacion);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seleccion, personalizacion, precioFinal]);
 
-  if (variantes.length === 0) return null;
+  if (!montado || variantes.length === 0) return null;
 
   return (
     <div className="space-y-4 my-4">

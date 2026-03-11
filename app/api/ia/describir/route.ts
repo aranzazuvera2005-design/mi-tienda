@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
       const base64 = Buffer.from(buffer).toString('base64');
       const mimeType = imgRes.headers.get('content-type') || 'image/jpeg';
 
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

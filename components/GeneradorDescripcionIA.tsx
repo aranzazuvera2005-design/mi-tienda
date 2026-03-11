@@ -28,7 +28,7 @@ export default function GeneradorDescripcionIA({
       const res = await fetch('/api/ia/describir', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imagenUrl, ia: 'gemini' }),
+        body: JSON.stringify({ imagenUrl }),
       });
       const data = await res.json();
       if (!res.ok || data.error) {
@@ -63,7 +63,7 @@ export default function GeneradorDescripcionIA({
           }}
         >
           {generando ? <Loader2 size={13} className="animate-spin" /> : exito ? <Check size={13} /> : <Sparkles size={13} />}
-          {generando ? 'Generando...' : exito ? '¡Listo!' : '✨ Describir con Gemini'}
+          {generando ? 'Generando...' : exito ? '¡Listo!' : '✨ Describir con IA'}
         </button>
 
         {!imagenUrl && (

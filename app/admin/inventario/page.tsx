@@ -1,15 +1,22 @@
 'use client';
 
 import { createBrowserClient } from '@supabase/ssr';
-import { useEffect, useState } from 'react';
-import { Save, Trash2, ArrowLeft, Pencil, X, Check, Search, Plus } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { Save, Trash2, ArrowLeft, Pencil, X, Check, Search, Plus, Upload, Link as LinkIcon, HardDrive } from 'lucide-react';
 import Link from 'next/link';
 
 export default function GestionInventario() {
   const [productos, setProductos] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
   const [nuevoP, setNuevoP] = useState({ nombre: '', precio: '', familia_id: '', imagen_url: '' });
-  
+  const [modoImagen, setModoImagen] = useState<'url' | 'local' | 'drive'>('url');
+  const [subiendoImagen, setSubiendoImagen] = useState(false);
+  const [driveUrl, setDriveUrl] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [modoImagenEdit, setModoImagenEdit] = useState<'url' | 'local' | 'drive'>('url');
+  const [driveUrlEdit, setDriveUrlEdit] = useState('');
+  const fileInputEditRef = useRef<HTMLInputElement>(null);
+
   // ESTADOS PARA BÚSQUEDA Y EDICIÓN
   const [terminoBusqueda, setTerminoBusqueda] = useState('');
   const [editandoId, setEditandoId] = useState<string | null>(null);
@@ -53,8 +60,39 @@ export default function GestionInventario() {
     setCargando(false);
   };
 
+  // Convierte URL de Google Drive a URL directa de imagen
+  const convertirUrlDrive = (url: string): string => {
+    const match = url.match(/[-\w]{25,}/);
+    if (!match) return url;
+    return `https://drive.google.com/uc?export=view&id=${match[0]}`;
+  };
+
+  // Sube un archivo local a Supabase Storage y devuelve la URL pública
+  const subirImagenLocal = async (file: File): Promise<string | null> => {
+    if (!SUPABASE_URL || !SUPABASE_ANON) { alert('Supabase no configurado'); return null; }
+    const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
+    const ext = file.name.split('.').pop();
+    const nombre = `productos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage.from('imagenes').upload(nombre, file, { upsert: true });
+    if (error) { alert('Error subiendo imagen: ' + error.message); return null; }
+    const { data } = supabase.storage.from('imagenes').getPublicUrl(nombre);
+    return data.publicUrl;
+  };
+
   const crearProducto = async () => {
     if (!nuevoP.nombre || !nuevoP.precio) return alert("Nombre y precio son obligatorios");
+
+    let imagenFinal = nuevoP.imagen_url || null;
+
+    // Resolver imagen según el modo
+    if (modoImagen === 'local' && fileInputRef.current?.files?.[0]) {
+      setSubiendoImagen(true);
+      imagenFinal = await subirImagenLocal(fileInputRef.current.files[0]);
+      setSubiendoImagen(false);
+      if (!imagenFinal) return;
+    } else if (modoImagen === 'drive' && driveUrl.trim()) {
+      imagenFinal = convertirUrlDrive(driveUrl.trim());
+    }
 
     if (!SUPABASE_URL || !SUPABASE_ANON) return alert('Supabase no configurado. No se puede crear producto.');
     const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
@@ -62,10 +100,8 @@ export default function GestionInventario() {
     const payload: any = {
       nombre: nuevoP.nombre,
       precio: parseFloat(nuevoP.precio),
-      imagen_url: nuevoP.imagen_url || null
+      imagen_url: imagenFinal
     };
-
-    if (nuevoP.familia_id) {
       payload.familia_id = nuevoP.familia_id;
       // también mantener el nombre en la columna legacy por compatibilidad si existe
       const f = familias.find((x) => String(x.id) === String(nuevoP.familia_id));
@@ -97,6 +133,9 @@ export default function GestionInventario() {
       }
 
       setNuevoP({ nombre: '', precio: '', familia_id: '', imagen_url: '' });
+      setDriveUrl('');
+      setModoImagen('url');
+      if (fileInputRef.current) fileInputRef.current.value = '';
       fetchProductos();
     } catch (e: any) {
       // fallback: si la excepción menciona la columna familia, intentar sin ella
@@ -114,6 +153,19 @@ export default function GestionInventario() {
   };
 
   const guardarEdicion = async (id: string) => {
+    // Resolver imagen si se está subiendo en modo edición
+    if (modoImagenEdit === 'local' && fileInputEditRef.current?.files?.[0]) {
+      setSubiendoImagen(true);
+      const url = await subirImagenLocal(fileInputEditRef.current.files[0]);
+      setSubiendoImagen(false);
+      if (!url) return;
+      setDatosEdit((d: any) => ({ ...d, imagen_url: url }));
+      // usar el valor directamente en el payload
+      datosEdit.imagen_url = url;
+    } else if (modoImagenEdit === 'drive' && driveUrlEdit.trim()) {
+      datosEdit.imagen_url = convertirUrlDrive(driveUrlEdit.trim());
+    }
+
     // preparar payload: si viene familia_id, también actualizar el campo legacy 'familia' con el nombre
     const payload: any = { ...datosEdit };
     if (datosEdit?.familia_id) {
@@ -213,8 +265,30 @@ export default function GestionInventario() {
               ))}
             </select>
 
-            <input style={inS} placeholder="URL Imagen" value={nuevoP.imagen_url} onChange={e => setNuevoP({...nuevoP, imagen_url: e.target.value})} />
-            <button onClick={crearProducto} style={{ backgroundColor: 'black', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer', height: '42px' }}>Guardar</button>
+            {/* SELECTOR DE MODO IMAGEN */}
+            <div style={{ gridColumn: '1 / -1' }}>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                {(['url', 'local', 'drive'] as Array<'url' | 'local' | 'drive'>).map(modo => (
+                  <button key={modo} onClick={() => setModoImagen(modo)} style={{ padding: '6px 14px', borderRadius: 20, border: '1px solid #e5e7eb', background: modoImagen === modo ? 'black' : 'white', color: modoImagen === modo ? 'white' : '#374151', cursor: 'pointer', fontSize: 13, fontWeight: modoImagen === modo ? 'bold' : 'normal', display: 'flex', alignItems: 'center', gap: 5 }}>
+                    {modo === 'url' && <><LinkIcon size={13}/> URL</>}
+                    {modo === 'local' && <><Upload size={13}/> Subir archivo</>}
+                    {modo === 'drive' && <><HardDrive size={13}/> Google Drive</>}
+                  </button>
+                ))}
+              </div>
+              {modoImagen === 'url' && (
+                <input style={inS} placeholder="URL de la imagen" value={nuevoP.imagen_url} onChange={e => setNuevoP({...nuevoP, imagen_url: e.target.value})} />
+              )}
+              {modoImagen === 'local' && (
+                <input ref={fileInputRef} type="file" accept="image/*" style={{ ...inS, padding: '8px' }} />
+              )}
+              {modoImagen === 'drive' && (
+                <input style={inS} placeholder="Pega el enlace de Google Drive" value={driveUrl} onChange={e => setDriveUrl(e.target.value)} />
+              )}
+            </div>
+            <button onClick={crearProducto} disabled={subiendoImagen} style={{ backgroundColor: subiendoImagen ? '#9ca3af' : 'black', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: subiendoImagen ? 'not-allowed' : 'pointer', height: '42px' }}>
+              {subiendoImagen ? 'Subiendo...' : 'Guardar'}
+            </button>
           </div>
 
           <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -262,7 +336,25 @@ export default function GestionInventario() {
                     {editandoId === p.id ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                         <input style={inS} value={datosEdit?.nombre ?? ''} onChange={e => setDatosEdit({...datosEdit, nombre: e.target.value})} />
-                        <input style={inS} placeholder="URL imagen" value={datosEdit?.imagen_url ?? ''} onChange={e => setDatosEdit({...datosEdit, imagen_url: e.target.value})} />
+                        {/* Selector modo imagen edición */}
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                          {(['url', 'local', 'drive'] as Array<'url' | 'local' | 'drive'>).map(modo => (
+                            <button key={modo} onClick={() => setModoImagenEdit(modo)} style={{ padding: '4px 10px', borderRadius: 20, border: '1px solid #e5e7eb', background: modoImagenEdit === modo ? 'black' : 'white', color: modoImagenEdit === modo ? 'white' : '#374151', cursor: 'pointer', fontSize: 12 }}>
+                              {modo === 'url' && 'URL'}
+                              {modo === 'local' && 'Subir'}
+                              {modo === 'drive' && 'Drive'}
+                            </button>
+                          ))}
+                        </div>
+                        {modoImagenEdit === 'url' && (
+                          <input style={inS} placeholder="URL imagen" value={datosEdit?.imagen_url ?? ''} onChange={e => setDatosEdit({...datosEdit, imagen_url: e.target.value})} />
+                        )}
+                        {modoImagenEdit === 'local' && (
+                          <input ref={fileInputEditRef} type="file" accept="image/*" style={{ ...inS, padding: '8px' }} />
+                        )}
+                        {modoImagenEdit === 'drive' && (
+                          <input style={inS} placeholder="Enlace de Google Drive" value={driveUrlEdit} onChange={e => setDriveUrlEdit(e.target.value)} />
+                        )}
                       </div>
                     ) : (
                       <div style={{ display: 'flex', gap: '12px', flexDirection: 'column', alignItems: 'flex-start' }}>
@@ -298,11 +390,11 @@ export default function GestionInventario() {
                       {editandoId === p.id ? (
                         <>
                           <button onClick={() => guardarEdicion(p.id)} style={{ color: '#10b981', border: 'none', background: 'none', cursor: 'pointer' }}><Check size={20}/></button>
-                          <button onClick={() => { setEditandoId(null); setDatosEdit(null); }} style={{ color: '#6b7280', border: 'none', background: 'none', cursor: 'pointer' }}><X size={20}/></button>
+                          <button onClick={() => { setEditandoId(null); setDatosEdit(null); setModoImagenEdit('url'); setDriveUrlEdit(''); if (fileInputEditRef.current) fileInputEditRef.current.value = ''; }} style={{ color: '#6b7280', border: 'none', background: 'none', cursor: 'pointer' }}><X size={20}/></button>
                         </>
                       ) : (
                         <>
-                          <button onClick={() => { const famId = p.familia_id ?? (familias.find(f => f.nombre === p.familia)?.id ?? ''); setEditandoId(p.id); setDatosEdit({ ...p, familia_id: String(famId) }); }} style={{ color: '#2563eb', border: 'none', background: 'none', cursor: 'pointer' }}><Pencil size={18} /></button>
+                          <button onClick={() => { const famId = p.familia_id ?? (familias.find(f => f.nombre === p.familia)?.id ?? ''); setEditandoId(p.id); setDatosEdit({ ...p, familia_id: String(famId) }); setModoImagenEdit('url'); setDriveUrlEdit(''); }} style={{ color: '#2563eb', border: 'none', background: 'none', cursor: 'pointer' }}><Pencil size={18} /></button>
                           <button onClick={() => eliminarProducto(p.id)} style={{ color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer' }}><Trash2 size={18} /></button>
                         </>
                       )}

@@ -83,28 +83,35 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const addToCart = (producto: any) => {
     if (!producto?.id) return;
 
+    // Clave única: id + variantes seleccionadas + personalización
+    const variantesKey = JSON.stringify(producto.variantesSeleccionadas || {});
+    const itemKey = `${producto.id}__${variantesKey}`;
+
     setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === producto.id);
+      const existingItem = prevCart.find((item) => item._itemKey === itemKey);
       if (existingItem) {
         toastContext?.addToast({ message: `${producto.nombre} actualizado`, type: 'info' });
         return prevCart.map((item) =>
-          item.id === producto.id ? { ...item, cantidad: (item.cantidad || 1) + 1 } : item
+          item._itemKey === itemKey ? { ...item, cantidad: (item.cantidad || 1) + 1 } : item
         );
       }
       toastContext?.addToast({ message: `${producto.nombre} añadido`, type: 'success' });
-      return [...prevCart, { ...producto, cantidad: 1 }];
+      return [...prevCart, { ...producto, cantidad: 1, _itemKey: itemKey }];
     });
   };
 
-  const removeFromCart = (productoId: string) => {
+  const removeFromCart = (itemKey: string) => {
     setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === productoId);
-      if (existingItem && (existingItem.cantidad || 1) > 1) {
+      // Compatibilidad: buscar por _itemKey o por id legacy
+      const existingItem = prevCart.find((item) => item._itemKey === itemKey || item.id === itemKey);
+      if (!existingItem) return prevCart;
+      const key = existingItem._itemKey || itemKey;
+      if ((existingItem.cantidad || 1) > 1) {
         return prevCart.map((item) =>
-          item.id === productoId ? { ...item, cantidad: item.cantidad - 1 } : item
+          (item._itemKey === key || item.id === key) ? { ...item, cantidad: item.cantidad - 1 } : item
         );
       }
-      return prevCart.filter((item) => item.id !== productoId);
+      return prevCart.filter((item) => item._itemKey !== key && item.id !== key);
     });
   };
 

@@ -4,6 +4,7 @@ import { createBrowserClient } from '@supabase/ssr';
 import { useEffect, useState, useRef } from 'react';
 import { Trash2, ArrowLeft, Pencil, X, Check, Search, Plus, Upload, Link as LinkIcon, HardDrive, ChevronLeft, ChevronRight, ImagePlus } from 'lucide-react';
 import Link from 'next/link';
+import VariantesEditor from '@/components/VariantesEditor';
 
 type ModoImagen = 'url' | 'local' | 'drive';
 
@@ -31,6 +32,9 @@ export default function GestionInventario() {
   // Carousel por producto (índice activo)
   const [carouselIdx, setCarouselIdx] = useState<Record<string, number>>({});
 
+  // Variantes por producto
+  const [variantesPorProducto, setVariantesPorProducto] = useState<Record<string, any[]>>({});
+
   // Familias
   const [familias, setFamilias] = useState<any[]>([]);
   const [nuevoFamiliaNombre, setNuevoFamiliaNombre] = useState('');
@@ -56,6 +60,19 @@ export default function GestionInventario() {
     const { data } = await supabase.from('productos').select('*, familias(id, nombre)').order('id', { ascending: false });
     setProductos(data || []);
     setCargando(false);
+    // Cargar variantes para todos los productos
+    if (data && data.length > 0) {
+      const ids = data.map((p: any) => p.id);
+      const { data: vars } = await supabase.from('variantes').select('*').in('producto_id', ids);
+      if (vars) {
+        const agrupadas: Record<string, any[]> = {};
+        vars.forEach((v: any) => {
+          if (!agrupadas[v.producto_id]) agrupadas[v.producto_id] = [];
+          agrupadas[v.producto_id].push(v);
+        });
+        setVariantesPorProducto(agrupadas);
+      }
+    }
   };
 
   // Utilidades de imagen
@@ -362,9 +379,14 @@ export default function GestionInventario() {
                               <div style={{ width: 56, height: 56, borderRadius: 8, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: 10 }}>Sin img</div>
                             )}
                           </div>
-                          <div>
+                          <div style={{ flex: 1 }}>
                             <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{p.nombre}</span>
                             {imgs.length > 0 && <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{imgs.length} imagen{imgs.length > 1 ? 'es' : ''}</div>}
+                            <VariantesEditor
+                              productoId={p.id}
+                              variantes={variantesPorProducto[p.id] || []}
+                              onCambio={fetchProductos}
+                            />
                           </div>
                         </div>
                       )}

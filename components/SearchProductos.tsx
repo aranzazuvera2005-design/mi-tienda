@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import AgregarAlCarritoBtn from './AgregarAlCarritoBtn';
-import { Search, X, ChevronDown, Tag } from 'lucide-react';
+import { Search, X, ChevronDown, Tag, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
 export default function SearchProductos({ 
@@ -25,6 +25,7 @@ export default function SearchProductos({
   const [q, setQ] = useState(initialQuery || '');
   const [sort, setSort] = useState(initialSort || 'newest');
   const [categoria, setCategoria] = useState(initialCategoria || '');
+  const [carouselIdx, setCarouselIdx] = useState<Record<string, number>>({});
 
   // Sincronizar estados locales con las props iniciales (que vienen de la URL)
   useEffect(() => {
@@ -177,17 +178,48 @@ export default function SearchProductos({
               key={producto.id} 
               className="bg-white rounded-[2.5rem] p-5 shadow-2xl shadow-slate-200/30 border border-slate-50 hover:shadow-blue-200/40 hover:-translate-y-3 transition-all duration-700 flex flex-col group"
             >
-              {/* Imagen del producto con efecto premium */}
+              {/* Carousel de imágenes */}
               <div className="relative w-full h-80 overflow-hidden bg-slate-50 rounded-[2rem] mb-8 shadow-inner">
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"></div>
-                <img
-                  src={producto.imagen_url || producto.imagenUrl || '/globe.svg'}
-                  alt={producto.nombre || 'Producto'}
-                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/globe.svg';
-                  }}
-                />
+                {(() => {
+                  const imgs: string[] = Array.isArray(producto.imagenes) && producto.imagenes.length > 0
+                    ? producto.imagenes
+                    : producto.imagen_url ? [producto.imagen_url] : [];
+                  const idx = carouselIdx[producto.id] || 0;
+                  return (
+                    <>
+                      <img
+                        src={imgs[idx] || '/globe.svg'}
+                        alt={producto.nombre || 'Producto'}
+                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                        onError={(e) => { (e.target as HTMLImageElement).src = '/globe.svg'; }}
+                      />
+                      {imgs.length > 1 && (
+                        <>
+                          <button
+                            onClick={e => { e.stopPropagation(); setCarouselIdx(c => ({...c, [producto.id]: (idx - 1 + imgs.length) % imgs.length})); }}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-white/80 backdrop-blur-sm rounded-full w-8 h-8 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                          >
+                            <ChevronLeft size={16} className="text-slate-700" />
+                          </button>
+                          <button
+                            onClick={e => { e.stopPropagation(); setCarouselIdx(c => ({...c, [producto.id]: (idx + 1) % imgs.length})); }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-white/80 backdrop-blur-sm rounded-full w-8 h-8 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                          >
+                            <ChevronRight size={16} className="text-slate-700" />
+                          </button>
+                          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
+                            {imgs.map((_, i) => (
+                              <button key={i} onClick={e => { e.stopPropagation(); setCarouselIdx(c => ({...c, [producto.id]: i})); }}
+                                className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${i === idx ? 'bg-white w-4' : 'bg-white/50'}`}
+                              />
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
                 {/* Etiqueta de categoría flotante */}
                 {(producto.familias?.nombre || producto.categoria) && (
                   <span className="absolute left-5 top-5 bg-slate-900/80 backdrop-blur-md text-white text-[9px] uppercase tracking-[0.2em] px-5 py-2.5 rounded-full font-black shadow-2xl z-20 border border-white/10 flex items-center gap-2">

@@ -171,15 +171,15 @@ export default function SearchProductos({
       </div>
 
       {/* GRID DE PRODUCTOS BOUTIQUE */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6 lg:gap-10">
         {filteredAndSortedProducts.length > 0 ? (
           filteredAndSortedProducts.map((producto) => (
             <div 
               key={producto.id} 
-              className="bg-white rounded-[2.5rem] p-5 shadow-2xl shadow-slate-200/30 border border-slate-50 hover:shadow-blue-200/40 hover:-translate-y-3 transition-all duration-700 flex flex-col group"
+              className="bg-white rounded-[1.5rem] sm:rounded-[2.5rem] p-3 sm:p-5 shadow-2xl shadow-slate-200/30 border border-slate-50 hover:shadow-blue-200/40 hover:-translate-y-3 transition-all duration-700 flex flex-col group"
             >
               {/* Carousel de imágenes */}
-              <div className="relative w-full h-80 overflow-hidden bg-slate-50 rounded-[2rem] mb-8 shadow-inner">
+              <div className="relative w-full h-40 sm:h-80 overflow-hidden bg-slate-50 rounded-[1.2rem] sm:rounded-[2rem] mb-3 sm:mb-8 shadow-inner">
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"></div>
                 {(() => {
                   const imgs: string[] = Array.isArray(producto.imagenes) && producto.imagenes.length > 0
@@ -222,31 +222,31 @@ export default function SearchProductos({
                 })()}
                 {/* Etiqueta de categoría flotante */}
                 {(producto.familias?.nombre || producto.categoria) && (
-                  <span className="absolute left-5 top-5 bg-slate-900/80 backdrop-blur-md text-white text-[9px] uppercase tracking-[0.2em] px-5 py-2.5 rounded-full font-black shadow-2xl z-20 border border-white/10 flex items-center gap-2">
-                    <Tag size={10} className="text-blue-400" />
+                  <span className="absolute left-2 sm:left-5 top-2 sm:top-5 bg-slate-900/80 backdrop-blur-md text-white text-[7px] sm:text-[9px] uppercase tracking-[0.1em] sm:tracking-[0.2em] px-2 sm:px-5 py-1 sm:py-2.5 rounded-full font-black shadow-2xl z-20 border border-white/10 flex items-center gap-1 sm:gap-2">
+                    <Tag size={8} className="text-blue-400 hidden sm:block" />
                     {producto.familias?.nombre || producto.categoria}
                   </span>
                 )}
               </div>
 
               {/* Contenido Elegante */}
-              <div className="flex flex-col flex-1 px-2">
-                <div className="mb-4">
-                  <h2 className="text-2xl font-black text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1 tracking-tight">
+              <div className="flex flex-col flex-1 px-1 sm:px-2">
+                <div className="mb-2 sm:mb-4">
+                  <h2 className="text-sm sm:text-2xl font-black text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2 tracking-tight">
                     {producto.nombre}
                   </h2>
-                  <div className="h-1 w-12 bg-blue-600/20 rounded-full mt-2 group-hover:w-24 transition-all duration-500"></div>
+                  <div className="h-0.5 sm:h-1 w-8 sm:w-12 bg-blue-600/20 rounded-full mt-1 sm:mt-2 group-hover:w-16 sm:group-hover:w-24 transition-all duration-500"></div>
                 </div>
                 
-                <p className="text-sm text-slate-400 line-clamp-2 mb-10 leading-relaxed font-bold uppercase tracking-wider">
+                <p className="hidden sm:block text-sm text-slate-400 line-clamp-2 mb-10 leading-relaxed font-bold uppercase tracking-wider">
                   {producto.descripcion || 'Exclusividad en cada detalle'}
                 </p>
                 
-                <div className="mt-auto flex items-center justify-between gap-6 pt-6 border-t border-slate-50">
+                <div className="mt-auto flex items-center justify-between gap-1 sm:gap-6 pt-2 sm:pt-6 border-t border-slate-50">
                   <div className="flex flex-col">
-                    <span className="text-[9px] uppercase font-black text-slate-300 tracking-[0.2em] mb-1">Inversión</span>
-                    <span className="text-3xl font-black text-slate-900 leading-none group-hover:text-blue-600 transition-colors">
-                      {Number(producto.precio || 0).toFixed(2)}<span className="text-lg ml-0.5">€</span>
+                    <span className="hidden sm:block text-[9px] uppercase font-black text-slate-300 tracking-[0.2em] mb-1">Inversión</span>
+                    <span className="text-base sm:text-3xl font-black text-slate-900 leading-none group-hover:text-blue-600 transition-colors">
+                      {Number(producto.precio || 0).toFixed(2)}<span className="text-xs sm:text-lg ml-0.5">€</span>
                     </span>
                   </div>
                   <div className="flex-1">

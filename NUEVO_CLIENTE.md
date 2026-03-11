@@ -31,6 +31,11 @@ Ir al nuevo repo → **Settings → Secrets and variables → Actions → New se
 | `NEXT_PUBLIC_SITE_URL` | URL de Vercel del cliente (ej: `https://tienda-cliente.vercel.app`) |
 | `DATABASE_URL` | Supabase → Project Settings → Database → Connection string (Transaction) |
 | `DIRECT_URL` | Supabase → Project Settings → Database → Connection string (Direct) |
+| `GEMINI_API_KEY` | [aistudio.google.com](https://aistudio.google.com) → Get API Key — **opcional**, free tier |
+| `OPENAI_API_KEY` | [platform.openai.com](https://platform.openai.com/api-keys) — **opcional**, free tier |
+| `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) — **opcional**, free tier |
+
+> ℹ️ Las 3 keys de IA son opcionales. Con añadir **una sola** ya funciona el generador de descripciones por imagen. El admin puede elegir qué IA usar desde el desplegable.
 
 ### 5. Hacer push para desplegar
 ```bash

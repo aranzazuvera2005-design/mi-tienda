@@ -12,31 +12,29 @@
 #  - NEXT_PUBLIC_SITE_URL
 #  - DATABASE_URL
 #  - DIRECT_URL
+#  --- IA (al menos una para usar el generador de descripciones) ---
+#  - GEMINI_API_KEY          → aistudio.google.com → Get API Key (gratuito)
+#  - OPENAI_API_KEY          → platform.openai.com → API Keys
+#  - ANTHROPIC_API_KEY       → console.anthropic.com → API Keys
 # ============================================================
-
 name: Deploy to Vercel
-
 on:
   push:
     branches:
       - main
       - develop
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name == 'main' && 'production' || 'preview' }}
-
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
-
       - name: Instalar Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-
       # Construir el .env con los secrets del repositorio
       # Este archivo NUNCA se sube al repo (está en .gitignore)
       - name: Construir .env desde GitHub Secrets
@@ -48,12 +46,13 @@ jobs:
           NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }}
           DATABASE_URL=${{ secrets.DATABASE_URL }}
           DIRECT_URL=${{ secrets.DIRECT_URL }}
+          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
           ENVEOF
           echo ".env construido correctamente"
-
       - name: Instalar Vercel CLI
         run: npm install -g vercel@latest
-
       # Deploy a preview (rama develop) o producción (rama main)
       - name: Deploy a Vercel
         run: |
@@ -66,7 +65,10 @@ jobs:
                    --env SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }} \
                    --env NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }} \
                    --env DATABASE_URL=${{ secrets.DATABASE_URL }} \
-                   --env DIRECT_URL=${{ secrets.DIRECT_URL }}
+                   --env DIRECT_URL=${{ secrets.DIRECT_URL }} \
+                   --env GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} \
+                   --env OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
+                   --env ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
           else
             vercel --token=${{ secrets.VERCEL_TOKEN }} \
                    --yes \
@@ -75,5 +77,8 @@ jobs:
                    --env SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }} \
                    --env NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }} \
                    --env DATABASE_URL=${{ secrets.DATABASE_URL }} \
-                   --env DIRECT_URL=${{ secrets.DIRECT_URL }}
+                   --env DIRECT_URL=${{ secrets.DIRECT_URL }} \
+                   --env GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} \
+                   --env OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
+                   --env ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
           fi

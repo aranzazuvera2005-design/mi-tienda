@@ -5,13 +5,14 @@ import { useEffect, useState, useRef } from 'react';
 import { Trash2, ArrowLeft, Pencil, X, Check, Search, Plus, Upload, Link as LinkIcon, HardDrive, ChevronLeft, ChevronRight, ImagePlus } from 'lucide-react';
 import Link from 'next/link';
 import VariantesEditor from '@/components/VariantesEditor';
+import GeneradorDescripcionIA from '@/components/GeneradorDescripcionIA';
 
 type ModoImagen = 'url' | 'local' | 'drive';
 
 export default function GestionInventario() {
   const [productos, setProductos] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [nuevoP, setNuevoP] = useState({ nombre: '', precio: '', familia_id: '' });
+  const [nuevoP, setNuevoP] = useState({ nombre: '', precio: '', familia_id: '', descripcion: '' });
   const [subiendoImagen, setSubiendoImagen] = useState(false);
 
   // Imágenes del nuevo producto
@@ -132,6 +133,7 @@ export default function GestionInventario() {
       precio: parseFloat(nuevoP.precio),
       imagen_url: imagenesNuevo[0] || null,
       imagenes: imagenesNuevo,
+      descripcion: nuevoP.descripcion || null,
     };
 
     if (nuevoP.familia_id) {
@@ -156,7 +158,7 @@ export default function GestionInventario() {
         const { error: e2 } = await supabase.from('productos').insert([s2]);
         if (e2) return alert(e2.message);
       }
-      setNuevoP({ nombre: '', precio: '', familia_id: '' });
+      setNuevoP({ nombre: '', precio: '', familia_id: '', descripcion: '' });
       setImagenesNuevo([]);
       setUrlInputNuevo('');
       fetchProductos();
@@ -171,6 +173,7 @@ export default function GestionInventario() {
       ...datosEdit,
       imagen_url: imagenesEdit[0] || datosEdit.imagen_url || null,
       imagenes: imagenesEdit,
+      descripcion: datosEdit.descripcion || null,
     };
 
     if (datosEdit?.familia_id) {
@@ -300,6 +303,23 @@ export default function GestionInventario() {
             <ListaImagenes imagenes={imagenesNuevo} setImagenes={setImagenesNuevo} />
           </div>
 
+          {/* Descripción + IA */}
+          <div style={{ marginTop: 15 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
+              <p style={{ fontSize: 13, fontWeight: 600, color: '#374151', margin: 0 }}>Descripción</p>
+              <GeneradorDescripcionIA
+                imagenUrl={imagenesNuevo[0] || null}
+                onDescripcion={desc => setNuevoP(p => ({ ...p, descripcion: desc }))}
+              />
+            </div>
+            <textarea
+              style={{ ...inS, minHeight: 70, resize: 'vertical' }}
+              placeholder="Descripción del producto (puedes generarla con IA a partir de la imagen)"
+              value={nuevoP.descripcion}
+              onChange={e => setNuevoP({ ...nuevoP, descripcion: e.target.value })}
+            />
+          </div>
+
           <div style={{ marginTop: 15, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
             <button onClick={crearProducto} disabled={subiendoImagen} style={{ backgroundColor: subiendoImagen ? '#9ca3af' : 'black', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: subiendoImagen ? 'not-allowed' : 'pointer', height: '42px', padding: '0 24px' }}>
               {subiendoImagen ? 'Subiendo...' : 'Guardar producto'}
@@ -353,6 +373,22 @@ export default function GestionInventario() {
                             fileRef={fileInputEditRef} onAñadir={añadirImagenEdit} disabled={subiendoImagen}
                           />
                           <ListaImagenes imagenes={imagenesEdit} setImagenes={setImagenesEdit} />
+                          {/* Descripción + IA en edición */}
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, flexWrap: 'wrap', gap: 6 }}>
+                              <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>Descripción</span>
+                              <GeneradorDescripcionIA
+                                imagenUrl={imagenesEdit[0] || null}
+                                onDescripcion={desc => setDatosEdit((d: any) => ({ ...d, descripcion: desc }))}
+                              />
+                            </div>
+                            <textarea
+                              style={{ ...inS, minHeight: 60, resize: 'vertical' }}
+                              placeholder="Descripción del producto"
+                              value={datosEdit?.descripcion ?? ''}
+                              onChange={e => setDatosEdit({ ...datosEdit, descripcion: e.target.value })}
+                            />
+                          </div>
                           <VariantesEditor
                             productoId={p.id}
                             variantes={variantesPorProducto[p.id] || []}

@@ -353,6 +353,11 @@ export default function GestionInventario() {
                             fileRef={fileInputEditRef} onAñadir={añadirImagenEdit} disabled={subiendoImagen}
                           />
                           <ListaImagenes imagenes={imagenesEdit} setImagenes={setImagenesEdit} />
+                          <VariantesEditor
+                            productoId={p.id}
+                            variantes={variantesPorProducto[p.id] || []}
+                            onCambio={fetchProductos}
+                          />
                         </div>
                       ) : (
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>

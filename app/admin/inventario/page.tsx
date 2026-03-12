@@ -22,6 +22,8 @@ export default function GestionInventario() {
 
   // ESTADOS PARA BÚSQUEDA Y EDICIÓN
   const [terminoBusqueda, setTerminoBusqueda] = useState('');
+  const [filtroFamilia, setFiltroFamilia]     = useState('');
+  const [sortAdmin, setSortAdmin]             = useState('newest');
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [datosEdit, setDatosEdit] = useState<any>(null);
   const [imagenesEdit, setImagenesEdit] = useState<string[]>([]);
@@ -222,10 +224,27 @@ export default function GestionInventario() {
     fetchProductos();
   };
 
-  const productosFiltrados = productos.filter(p =>
-    p.nombre.toLowerCase().includes(terminoBusqueda.toLowerCase()) ||
-    ((p.familias?.nombre || p.familia || '').toLowerCase().includes(terminoBusqueda.toLowerCase()))
-  );
+  const productosFiltrados = (() => {
+    let r = productos.filter(p =>
+      p.nombre.toLowerCase().includes(terminoBusqueda.toLowerCase()) ||
+      ((p.familias?.nombre || p.familia || '').toLowerCase().includes(terminoBusqueda.toLowerCase()))
+    );
+    if (filtroFamilia) r = r.filter(p => String(p.familia_id) === filtroFamilia || String(p.familias?.id) === filtroFamilia);
+    r = [...r].sort((a, b) => {
+      switch (sortAdmin) {
+        case 'price_asc':     return Number(a.precio || 0) - Number(b.precio || 0);
+        case 'price_desc':    return Number(b.precio || 0) - Number(a.precio || 0);
+        case 'name_asc':      return (a.nombre || '').localeCompare(b.nombre || '');
+        case 'name_desc':     return (b.nombre || '').localeCompare(a.nombre || '');
+        case 'discount_desc': {
+          const pct = (p: any) => { const pvp = Number(p.precio||0), t = Number(p.precio_tachado||0), d = Number(p.descuento_pct||0); return d > 0 ? d : (t > pvp && pvp > 0 ? Math.round((1-pvp/t)*100) : 0); };
+          return pct(b) - pct(a);
+        }
+        default: return (b.id || 0) - (a.id || 0);
+      }
+    });
+    return r;
+  })();
 
   const getImagenes = (p: any): string[] => {
     if (Array.isArray(p.imagenes) && p.imagenes.length > 0) return p.imagenes;
@@ -358,10 +377,26 @@ export default function GestionInventario() {
           </div>
         </div>
 
-        {/* BUSCADOR */}
-        <div style={{ position: 'relative', marginBottom: '20px' }}>
-          <Search style={{ position: 'absolute', left: '15px', top: '12px', color: '#9ca3af' }} size={20} />
-          <input style={{ ...inS, paddingLeft: '45px', height: '45px', backgroundColor: 'white' }} placeholder="Buscar por nombre o familia..." value={terminoBusqueda} onChange={(e) => setTerminoBusqueda(e.target.value)} />
+        {/* BUSCADOR + FILTROS */}
+        <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', flex: '1 1 200px' }}>
+            <Search style={{ position: 'absolute', left: 15, top: 12, color: '#9ca3af' }} size={20} />
+            <input style={{ ...inS, paddingLeft: '45px', height: '45px', backgroundColor: 'white' }} placeholder="Buscar por nombre o familia..." value={terminoBusqueda} onChange={e => setTerminoBusqueda(e.target.value)} />
+          </div>
+          <select value={filtroFamilia} onChange={e => setFiltroFamilia(e.target.value)}
+            style={{ ...inS, height: 45, minWidth: 150, backgroundColor: 'white', cursor: 'pointer' }}>
+            <option value="">Todas las familias</option>
+            {familias.map(f => <option key={f.id} value={String(f.id)}>{f.nombre}</option>)}
+          </select>
+          <select value={sortAdmin} onChange={e => setSortAdmin(e.target.value)}
+            style={{ ...inS, height: 45, minWidth: 170, backgroundColor: 'white', cursor: 'pointer' }}>
+            <option value="newest">Más nuevos</option>
+            <option value="discount_desc">Mayor descuento</option>
+            <option value="price_asc">Precio: Menor a Mayor</option>
+            <option value="price_desc">Precio: Mayor a Menor</option>
+            <option value="name_asc">Nombre: A-Z</option>
+            <option value="name_desc">Nombre: Z-A</option>
+          </select>
         </div>
 
         {/* TABLA */}

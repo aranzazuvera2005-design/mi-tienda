@@ -240,6 +240,10 @@ export default function GestionInventario() {
           const pct = (p: any) => { const pvp = Number(p.precio||0), t = Number(p.precio_tachado||0), d = Number(p.descuento_pct||0); return d > 0 ? d : (t > pvp && pvp > 0 ? Math.round((1-pvp/t)*100) : 0); };
           return pct(b) - pct(a);
         }
+        case 'discount_asc': {
+          const pct = (p: any) => { const pvp = Number(p.precio||0), t = Number(p.precio_tachado||0), d = Number(p.descuento_pct||0); return d > 0 ? d : (t > pvp && pvp > 0 ? Math.round((1-pvp/t)*100) : 0); };
+          return pct(a) - pct(b);
+        }
         default: return (b.id || 0) - (a.id || 0);
       }
     });
@@ -392,6 +396,7 @@ export default function GestionInventario() {
             style={{ ...inS, height: 45, minWidth: 170, backgroundColor: 'white', cursor: 'pointer' }}>
             <option value="newest">Más nuevos</option>
             <option value="discount_desc">Mayor descuento</option>
+            <option value="discount_asc">Menor descuento</option>
             <option value="price_asc">Precio: Menor a Mayor</option>
             <option value="price_desc">Precio: Mayor a Menor</option>
             <option value="name_asc">Nombre: A-Z</option>

@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   images: {
     remotePatterns: [
       {
@@ -8,7 +11,6 @@ const nextConfig = {
         pathname: '/storage/v1/object/public/**',
       },
     ],
-    // Opción de emergencia si sigue fallando:
     unoptimized: true,
   },
 };

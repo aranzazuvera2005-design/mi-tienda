@@ -278,13 +278,25 @@ export default function GestionVariantes() {
                   <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12 }}>
                     {editandoTipo === tipo.id ? (
                       /* Modo edición */
-                      <div style={{ flex: 1, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                        <input style={{ ...inS, flex: 2, minWidth: 160 }} placeholder="Nombre"
+                      <div style={{ flex: 1, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                        <input style={{ ...inS, flex: 2, minWidth: 150 }} placeholder="Nombre"
                           value={datosEditTipo.nombre ?? tipo.nombre}
                           onChange={e => setDatosEditTipo(p => ({ ...p, nombre: e.target.value }))} />
-                        <input style={{ ...inS, flex: 3, minWidth: 200 }} placeholder="Descripción"
+                        <input style={{ ...inS, flex: 3, minWidth: 180 }} placeholder="Descripción"
                           value={datosEditTipo.descripcion ?? tipo.descripcion ?? ''}
                           onChange={e => setDatosEditTipo(p => ({ ...p, descripcion: e.target.value }))} />
+                        {/* Selector tipo_input */}
+                        <div style={{ display: 'flex', gap: 5 }}>
+                          {(Object.entries(TIPO_INPUT_INFO) as [TipoInput, any][]).map(([key, info]) => {
+                            const actual = (datosEditTipo.tipo_input ?? tipo.tipo_input) as TipoInput;
+                            return (
+                              <button key={key} onClick={() => setDatosEditTipo(p => ({ ...p, tipo_input: key }))}
+                                style={{ padding: '5px 10px', borderRadius: 8, border: `2px solid ${actual === key ? '#1e293b' : '#e5e7eb'}`, background: actual === key ? '#1e293b' : 'white', color: actual === key ? 'white' : '#374151', cursor: 'pointer', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <info.icon size={11}/>{info.label}
+                              </button>
+                            );
+                          })}
+                        </div>
                         <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer' }}>
                           <input type="checkbox" checked={datosEditTipo.es_requerido ?? tipo.es_requerido}
                             onChange={e => setDatosEditTipo(p => ({ ...p, es_requerido: e.target.checked }))} />

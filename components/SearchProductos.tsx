@@ -58,11 +58,20 @@ export default function SearchProductos({
     if (categoria) r = r.filter(p => String(p.familia_id) === String(categoria) || String(p.id_familia) === String(categoria));
     r.sort((a, b) => {
       switch (sort) {
-        case 'price_asc':  return Number(a.precio || 0) - Number(b.precio || 0);
-        case 'price_desc': return Number(b.precio || 0) - Number(a.precio || 0);
-        case 'name_asc':   return (a.nombre || '').localeCompare(b.nombre || '');
-        case 'name_desc':  return (b.nombre || '').localeCompare(a.nombre || '');
-        default:           return (b.id || 0) - (a.id || 0);
+        case 'price_asc':     return Number(a.precio || 0) - Number(b.precio || 0);
+        case 'price_desc':    return Number(b.precio || 0) - Number(a.precio || 0);
+        case 'name_asc':      return (a.nombre || '').localeCompare(b.nombre || '');
+        case 'name_desc':     return (b.nombre || '').localeCompare(a.nombre || '');
+        case 'discount_desc': {
+          const pct = (p: any) => {
+            const pvp = Number(p.precio || 0), tachado = Number(p.precio_tachado || 0), d = Number(p.descuento_pct || 0);
+            if (d > 0) return d;
+            if (tachado > pvp && pvp > 0) return Math.round((1 - pvp / tachado) * 100);
+            return 0;
+          };
+          return pct(b) - pct(a);
+        }
+        default:              return (b.id || 0) - (a.id || 0);
       }
     });
     return r;
@@ -110,6 +119,7 @@ export default function SearchProductos({
             <select value={sort} onChange={e => { setSort(e.target.value); updateSearchParams({ sort: e.target.value }); }}
               className="appearance-none bg-white border border-slate-100 shadow-lg shadow-slate-200/50 rounded-full px-6 py-4 pr-12 text-slate-600 font-bold cursor-pointer focus:ring-4 focus:ring-blue-500/10 transition-all">
               <option value="newest">Más nuevos</option>
+              <option value="discount_desc">Mayor descuento</option>
               <option value="price_asc">Precio: Menor a Mayor</option>
               <option value="price_desc">Precio: Mayor a Menor</option>
               <option value="name_asc">Nombre: A-Z</option>

@@ -25,46 +25,66 @@ export default function VariantesSelector({
     const client = createBrowserClient(SB_URL, SB_ANON);
 
     (async () => {
-      // 1. Cargar variantes del producto (la tabla que siempre existe)
-      const { data: vars } = await client
-        .from('variantes')
-        .select('*')
-        .eq('producto_id', productoId)
-        .order('created_at');
-
-      if (!vars || vars.length === 0) { setGrupos([]); return; }
-
-      // 2. Intentar cargar tipos_variante para etiquetas/config — opcional
-      let tiposMap: Record<string, any> = {};
+      // ── Sistema nuevo: producto_variantes + tipos_variante + valores_variante ──
       try {
-        const tipoIds = [...new Set(vars.map((v: any) => v.tipo))].filter(t =>
-          // solo si parece un UUID (36 chars con guiones)
-          typeof t === 'string' && t.length === 36 && t.includes('-')
-        );
-        if (tipoIds.length > 0) {
-          const { data: ts } = await client
-            .from('tipos_variante')
-            .select('id, nombre, descripcion, tipo_input, es_requerido')
-            .in('id', tipoIds);
-          (ts || []).forEach((t: any) => { tiposMap[t.id] = t; });
+        const { data: asig, error } = await client
+          .from('producto_variantes')
+          .select('tipo_id, tipos_variante(id, nombre, descripcion, tipo_input, es_requerido)')
+          .eq('producto_id', productoId);
+
+        if (!error && asig && asig.length > 0) {
+          // Extraer tipos asignados
+          const tipos: any[] = asig
+            .map((r: any) => r.tipos_variante)
+            .filter(Boolean);
+
+          if (tipos.length > 0) {
+            // Cargar valores de esos tipos
+            const tipoIds = tipos.map((t: any) => t.id);
+            const { data: vals } = await client
+              .from('valores_variante')
+              .select('*')
+              .in('tipo_id', tipoIds)
+              .eq('activo', true)
+              .order('orden')
+              .order('created_at');
+
+            const grupos = tipos.map((t: any) => ({
+              tipo_id:      t.id,
+              label:        t.nombre,
+              descripcion:  t.descripcion,
+              tipo_input:   t.tipo_input || 'selector',
+              es_requerido: t.es_requerido || false,
+              items:        (vals || []).filter((v: any) => v.tipo_id === t.id),
+            }));
+
+            setGrupos(grupos);
+            return; // éxito con sistema nuevo
+          }
         }
-      } catch { /* tipos_variante puede no existir aún */ }
+      } catch { /* tabla no existe aún, fallback */ }
 
-      // 3. Agrupar por tipo
-      const tipoIds = [...new Set(vars.map((v: any) => v.tipo))];
-      const grupos = tipoIds.map(tid => {
-        const tipo = tiposMap[tid];
-        return {
+      // ── Fallback: tabla variantes antigua ──
+      try {
+        const { data: vars } = await client
+          .from('variantes')
+          .select('*')
+          .eq('producto_id', productoId)
+          .order('created_at');
+
+        if (!vars || vars.length === 0) { setGrupos([]); return; }
+
+        const tipoIds = [...new Set(vars.map((v: any) => v.tipo))];
+        const grupos = tipoIds.map(tid => ({
           tipo_id:      String(tid),
-          label:        tipo?.nombre || String(tid),
-          descripcion:  tipo?.descripcion || null,
-          tipo_input:   tipo?.tipo_input || 'selector',
-          es_requerido: tipo?.es_requerido || false,
+          label:        String(tid),
+          descripcion:  null,
+          tipo_input:   'selector',
+          es_requerido: false,
           items:        vars.filter((v: any) => v.tipo === tid),
-        };
-      });
-
-      setGrupos(grupos);
+        }));
+        setGrupos(grupos);
+      } catch { setGrupos([]); }
     })();
   }, [productoId, montado, SB_URL, SB_ANON]);
 
@@ -107,13 +127,13 @@ export default function VariantesSelector({
               <div>
                 <input
                   className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:border-slate-900 outline-none transition-colors"
-                  placeholder={grupo.items[0]?.valor || `Escribe ${grupo.label.toLowerCase()}…`}
+                  placeholder={grupo.descripcion || `Escribe ${grupo.label.toLowerCase()}…`}
                   value={textos[grupo.tipo_id] || ''}
                   onChange={e => {
                     const val = e.target.value;
                     setTextos(t => ({ ...t, [grupo.tipo_id]: val }));
                     if (val.trim()) {
-                      setSeleccion(s => ({ ...s, [grupo.tipo_id]: { ...grupo.items[0], valor_usuario: val } }));
+                      setSeleccion(s => ({ ...s, [grupo.tipo_id]: { tipo_id: grupo.tipo_id, valor_usuario: val, precio_extra: 0 } }));
                     } else {
                       setSeleccion(s => { const ns = { ...s }; delete ns[grupo.tipo_id]; return ns; });
                     }
@@ -125,7 +145,9 @@ export default function VariantesSelector({
             ) : (
               /* Selector / Foto */
               <div className="flex flex-wrap gap-2">
-                {grupo.items.map((v: any) => {
+                {grupo.items.length === 0 ? (
+                  <p className="text-xs text-slate-400 italic">Sin opciones disponibles</p>
+                ) : grupo.items.map((v: any) => {
                   const esSel    = sel?.id === v.id;
                   const sinStock = v.stock === 0;
                   const tieneFoto = !!v.imagen_url;
@@ -141,12 +163,10 @@ export default function VariantesSelector({
                             ? 'border-slate-900 bg-slate-900 text-white shadow-lg scale-105'
                             : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400 hover:scale-105'}`}
                     >
-                      {/* Foto de tela/diseño */}
                       {tieneFoto && (
                         <img src={v.imagen_url} alt={v.valor}
                           className={`w-14 h-14 rounded-lg object-cover ${esSel ? 'ring-2 ring-white' : ''}`} />
                       )}
-                      {/* Etiqueta letra */}
                       {v.etiqueta && (
                         <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${esSel ? 'bg-white/20' : 'bg-slate-100 text-slate-700'}`}>
                           {v.etiqueta}
@@ -168,7 +188,6 @@ export default function VariantesSelector({
         );
       })}
 
-      {/* Precio final con extras */}
       {precioExtra > 0 && (
         <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
           <span className="text-xs text-slate-400 line-through">{precio.toFixed(2)}€</span>

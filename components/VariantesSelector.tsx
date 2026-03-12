@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 
 export default function VariantesSelector({
-  productoId, precio, onSeleccion
+  productoId, precio, onSeleccion, onGruposChange
 }: {
   productoId: string;
   precio: number;
   onSeleccion: (sel: Record<string, any>, precioFinal: number, texto: string) => void;
+  onGruposChange?: (grupos: any[]) => void;
 }) {
   const [grupos,    setGrupos]    = useState<any[]>([]);
   const [seleccion, setSeleccion] = useState<Record<string, any>>({});
@@ -59,6 +60,7 @@ export default function VariantesSelector({
             }));
 
             setGrupos(grupos);
+            onGruposChange?.(grupos);
             return; // éxito con sistema nuevo
           }
         }
@@ -84,7 +86,8 @@ export default function VariantesSelector({
           items:        vars.filter((v: any) => v.tipo === tid),
         }));
         setGrupos(grupos);
-      } catch { setGrupos([]); }
+        onGruposChange?.(grupos);
+      } catch { setGrupos([]); onGruposChange?.([]); }
     })();
   }, [productoId, montado, SB_URL, SB_ANON]);
 

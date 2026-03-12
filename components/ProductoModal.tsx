@@ -120,7 +120,7 @@ export default function ProductoModal({ producto, onClose }: { producto: any; on
 
             {/* Variantes + botón carrito */}
             <div className="mt-auto">
-              <AgregarAlCarritoBtn producto={producto} />
+              <AgregarAlCarritoBtn producto={producto} onClose={onClose} />
             </div>
           </div>
         </div>

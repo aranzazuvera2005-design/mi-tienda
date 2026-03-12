@@ -5,7 +5,7 @@ import { useToast } from "@/context/ToastContext";
 import { ShoppingCart, Check, Loader2 } from "lucide-react";
 import VariantesSelector from "./VariantesSelector";
 
-export default function AgregarAlCarritoBtn({ producto }: { producto: any }) {
+export default function AgregarAlCarritoBtn({ producto, onClose }: { producto: any; onClose?: () => void }) {
   const { addToCart } = useCart();
   const { addToast } = useToast();
   const [isAdding, setIsAdding] = useState(false);
@@ -36,7 +36,7 @@ export default function AgregarAlCarritoBtn({ producto }: { producto: any }) {
       addToCart(productoConVariantes);
       setIsAdded(true);
       addToast({ message: `"${producto.nombre}" añadido al carrito`, type: 'success' });
-      setTimeout(() => setIsAdded(false), 1500);
+      setTimeout(() => { setIsAdded(false); onClose?.(); }, 900);
     } catch (e) {
       console.error('Error adding to cart', e);
     } finally {

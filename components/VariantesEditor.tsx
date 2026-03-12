@@ -1,111 +1,176 @@
 'use client';
 
-import { useState } from 'react';
-import { Plus, Trash2, ChevronDown, ChevronUp, Upload } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, Trash2, ChevronDown, ChevronUp, Upload, ExternalLink } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
+import Link from 'next/link';
 
-// ── Tipos de variante disponibles (máx 5 por producto) ──────────────────────
-export const TIPOS_VARIANTE = [
-  { value: 'talla',           label: 'Talla',           placeholder: 'XS, S, M, L, XL…', tieneColor: false, tieneFoto: false },
-  { value: 'color',           label: 'Color',           placeholder: 'Rojo, Azul, Verde…', tieneColor: true,  tieneFoto: false },
-  { value: 'diseno_tela',     label: 'Diseño de tela',  placeholder: 'Descripción del diseño', tieneColor: false, tieneFoto: true  },
-  { value: 'accesorio',       label: 'Accesorio',       placeholder: 'Bolso, Cinturón, Bufanda…', tieneColor: false, tieneFoto: false },
-  { value: 'personalizacion', label: 'Personalización', placeholder: 'Nombre bordado, Texto…',     tieneColor: false, tieneFoto: false },
-];
+/* ─── Tipos ──────────────────────────────────────────────────────────────── */
+interface TipoVariante {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  tipo_input: 'selector' | 'texto_libre' | 'foto';
+  es_requerido: boolean;
+  activo: boolean;
+}
 
-const TALLAS_RAPIDAS = ['XS','S','M','L','XL','XXL','36','37','38','39','40','41','42','43','44'];
-const LETRAS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-const inS: React.CSSProperties = { width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13, outline: 'none', marginTop: 2 };
+interface ValorVariante {
+  id: string;
+  tipo_id: string;
+  valor: string;
+  etiqueta: string;
+  imagen_url: string;
+  precio_extra: number;
+}
 
+interface VarianteProducto {
+  id: string;
+  producto_id: string;
+  tipo: string;           // tipo_id del tipo custom
+  valor: string;          // valor_id o texto libre
+  precio_extra: number;
+  stock: number;
+  etiqueta?: string;
+  imagen_url?: string;
+  valor_id?: string;
+}
+
+const inS: React.CSSProperties = {
+  width: '100%', padding: '8px 10px', borderRadius: 8,
+  border: '1px solid #e5e7eb', fontSize: 13, outline: 'none', marginTop: 2,
+};
+
+/* ─── Componente ─────────────────────────────────────────────────────────── */
 export default function VariantesEditor({ productoId, variantes, onCambio, defaultOpen = false }: {
   productoId: string;
-  variantes: any[];
+  variantes: VarianteProducto[];
   onCambio: () => void;
   defaultOpen?: boolean;
 }) {
-  const [abierto, setAbierto] = useState(defaultOpen);
-  const [tipo, setTipo] = useState('talla');
-  const [valor, setValor] = useState('');
-  const [etiqueta, setEtiqueta] = useState('');
-  const [precioExtra, setPrecioExtra] = useState('0');
-  const [stock, setStock] = useState('0');
-  const [imagenUrl, setImagenUrl] = useState('');
-  const [subiendoFoto, setSubiendoFoto] = useState(false);
+  const [abierto, setAbierto]           = useState(defaultOpen);
+  const [tiposDisp, setTiposDisp]       = useState<TipoVariante[]>([]);
+  const [valoresDisp, setValoresDisp]   = useState<Record<string, ValorVariante[]>>({});
+  const [tiposAsign, setTiposAsign]     = useState<string[]>([]); // tipo_ids ya asignados al producto
+  const [cargando, setCargando]         = useState(false);
+
+  // Formulario añadir variante
+  const [tipoSel, setTipoSel]   = useState('');
+  const [valorSel, setValorSel] = useState('');
+  const [stock, setStock]       = useState('0');
   const [guardando, setGuardando] = useState(false);
 
-  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const SUPABASE_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
 
-  const tiposUsados = [...new Set(variantes.map(v => v.tipo))];
-  const puedeAñadirTipo = (t: string) => tiposUsados.includes(t) || tiposUsados.length < 5;
-  const tipoInfo = TIPOS_VARIANTE.find(t => t.value === tipo);
+  const sb = () => createBrowserClient(SUPABASE_URL!, SUPABASE_ANON!);
 
-  const subirFotoTela = async (file: File): Promise<string | null> => {
-    if (!SUPABASE_URL || !SUPABASE_ANON) return null;
-    const sb = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
-    const ext = file.name.split('.').pop();
-    const nombre = `telas/${productoId}-${Date.now()}.${ext}`;
-    const { error } = await sb.storage.from('imagenes').upload(nombre, file, { upsert: true });
-    if (error) { alert('Error subiendo foto: ' + error.message); return null; }
-    return sb.storage.from('imagenes').getPublicUrl(nombre).data.publicUrl;
+  /* Cargar tipos y valores custom cuando se abre */
+  useEffect(() => {
+    if (!abierto || !SUPABASE_URL || !SUPABASE_ANON) return;
+    cargarTipos();
+  }, [abierto]);
+
+  /* Tipos ya asignados = los que tienen al menos una variante en este producto */
+  useEffect(() => {
+    const usados = [...new Set(variantes.map(v => v.tipo))];
+    setTiposAsign(usados);
+    if (!tipoSel && usados.length > 0) setTipoSel(usados[0]);
+  }, [variantes]);
+
+  const cargarTipos = async () => {
+    setCargando(true);
+    try {
+      const client = sb();
+      const { data: ts } = await client.from('tipos_variante').select('*').eq('activo', true).order('orden');
+      const { data: vs } = await client.from('valores_variante').select('*').order('orden');
+      const tipos = ts || [];
+      setTiposDisp(tipos);
+      const agr: Record<string, ValorVariante[]> = {};
+      (vs || []).forEach(v => { if (!agr[v.tipo_id]) agr[v.tipo_id] = []; agr[v.tipo_id].push(v); });
+      setValoresDisp(agr);
+      if (!tipoSel && tipos.length > 0) setTipoSel(tipos[0].id);
+    } finally { setCargando(false); }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setSubiendoFoto(true);
-    const url = await subirFotoTela(file);
-    setSubiendoFoto(false);
-    if (url) setImagenUrl(url);
-  };
-
+  /* Añadir variante al producto */
   const añadir = async () => {
-    if (!valor.trim()) return alert('Escribe un valor');
+    const tipo = tiposDisp.find(t => t.id === tipoSel);
+    if (!tipo) return alert('Selecciona un tipo');
+    if (!valorSel.trim()) return alert('Introduce o elige un valor');
     if (!SUPABASE_URL || !SUPABASE_ANON) return;
-    if (!tiposUsados.includes(tipo) && tiposUsados.length >= 5)
-      return alert('Máximo 5 tipos de variante por producto.');
-    setGuardando(true);
-    const sb = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
-    const payload: any = { producto_id: productoId, tipo, valor: valor.trim(), precio_extra: parseFloat(precioExtra) || 0, stock: parseInt(stock) || 0 };
-    if (tipo === 'diseno_tela') {
-      if (imagenUrl) payload.imagen_url = imagenUrl;
-      if (etiqueta)  payload.etiqueta  = etiqueta.toUpperCase();
-    }
-    const { error } = await sb.from('variantes').insert([payload]);
-    setGuardando(false);
-    if (error) return alert(error.message);
-    setValor(''); setPrecioExtra('0'); setStock('0'); setImagenUrl(''); setEtiqueta('');
-    onCambio();
-  };
 
-  const añadirTallaRapida = async (v: string) => {
-    if (!SUPABASE_URL || !SUPABASE_ANON) return;
-    if (variantes.some(va => va.tipo === 'talla' && va.valor === v)) return;
-    if (!tiposUsados.includes('talla') && tiposUsados.length >= 5) return alert('Máximo 5 tipos de variante.');
-    const sb = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
-    await sb.from('variantes').insert([{ producto_id: productoId, tipo: 'talla', valor: v, precio_extra: 0, stock: 0 }]);
-    onCambio();
+    // Máx 5 tipos distintos
+    const tiposUsados = [...new Set(variantes.map(v => v.tipo))];
+    if (!tiposUsados.includes(tipoSel) && tiposUsados.length >= 5) {
+      return alert('Máximo 5 tipos de variante por producto.');
+    }
+
+    setGuardando(true);
+    try {
+      const client = sb();
+
+      // Si selector/foto: buscar si el valor corresponde a un valor_id
+      let valorFinal = valorSel;
+      let etiquetaFinal: string | undefined;
+      let imgFinal: string | undefined;
+      let precioExtra = 0;
+      let valorId: string | undefined;
+
+      if (tipo.tipo_input !== 'texto_libre') {
+        const valObj = (valoresDisp[tipoSel] || []).find(v => v.id === valorSel);
+        if (valObj) {
+          valorFinal    = valObj.valor;
+          etiquetaFinal = valObj.etiqueta;
+          imgFinal      = valObj.imagen_url;
+          precioExtra   = valObj.precio_extra || 0;
+          valorId       = valObj.id;
+        }
+      }
+
+      const payload: any = {
+        producto_id:  productoId,
+        tipo:         tipoSel,
+        valor:        valorFinal.trim(),
+        precio_extra: precioExtra,
+        stock:        parseInt(stock) || 0,
+      };
+      if (etiquetaFinal) payload.etiqueta  = etiquetaFinal;
+      if (imgFinal)      payload.imagen_url = imgFinal;
+      if (valorId)       payload.valor_id   = valorId;
+
+      const { error } = await client.from('variantes').insert([payload]);
+      if (error) return alert(error.message);
+      setValorSel('');
+      setStock('0');
+      onCambio();
+    } finally { setGuardando(false); }
   };
 
   const eliminar = async (id: string) => {
     if (!SUPABASE_URL || !SUPABASE_ANON) return;
-    await createBrowserClient(SUPABASE_URL, SUPABASE_ANON).from('variantes').delete().eq('id', id);
+    await sb().from('variantes').delete().eq('id', id);
     onCambio();
   };
 
   const actualizarStock = async (id: string, nuevoStock: number) => {
     if (!SUPABASE_URL || !SUPABASE_ANON) return;
-    await createBrowserClient(SUPABASE_URL, SUPABASE_ANON).from('variantes').update({ stock: nuevoStock }).eq('id', id);
+    await sb().from('variantes').update({ stock: nuevoStock }).eq('id', id);
     onCambio();
   };
 
-  const variantesPorTipo = tiposUsados.map(t => ({
-    tipo: t,
-    label: TIPOS_VARIANTE.find(x => x.value === t)?.label || t,
-    items: variantes.filter(v => v.tipo === t),
-    tieneColor: TIPOS_VARIANTE.find(x => x.value === t)?.tieneColor || false,
-    tieneFoto:  TIPOS_VARIANTE.find(x => x.value === t)?.tieneFoto  || false,
-  }));
+  /* Agrupar variantes del producto por tipo */
+  const varPorTipo = tiposAsign.map(tid => {
+    const tipoInfo = tiposDisp.find(t => t.id === tid);
+    return {
+      tipo_id: tid,
+      label:   tipoInfo?.nombre || tid,
+      items:   variantes.filter(v => v.tipo === tid),
+    };
+  });
+
+  const tipoSelInfo = tiposDisp.find(t => t.id === tipoSel);
+  const valoresDelTipo = valoresDisp[tipoSel] || [];
 
   return (
     <div style={{ marginTop: 8 }}>
@@ -113,103 +178,117 @@ export default function VariantesEditor({ productoId, variantes, onCambio, defau
         style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#2563eb', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
         {abierto ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
         Variantes ({variantes.length})
-        {tiposUsados.length > 0 && <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 400 }}>· {tiposUsados.length}/5 tipos</span>}
+        {tiposAsign.length > 0 && <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 400 }}>· {tiposAsign.length}/5 tipos</span>}
       </button>
 
       {abierto && (
         <div style={{ marginTop: 10, border: '1px solid #e5e7eb', borderRadius: 12, padding: 14, backgroundColor: '#f9fafb' }}>
 
-          {variantesPorTipo.map(grupo => (
-            <div key={grupo.tipo} style={{ marginBottom: 14 }}>
+          {/* Sin tipos definidos */}
+          {!cargando && tiposDisp.length === 0 && (
+            <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: 12, marginBottom: 12, fontSize: 13, color: '#92400e', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span>No hay tipos de variante definidos.</span>
+              <Link href="/admin/variantes" target="_blank" style={{ color: '#2563eb', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+                Crear tipos <ExternalLink size={12}/>
+              </Link>
+            </div>
+          )}
+
+          {/* Variantes existentes agrupadas */}
+          {varPorTipo.map(grupo => (
+            <div key={grupo.tipo_id} style={{ marginBottom: 14 }}>
               <p style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>{grupo.label}</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {grupo.items.map(v => (
                   <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'white', border: '1px solid #e5e7eb', borderRadius: 8, padding: '4px 8px', fontSize: 12 }}>
-                    {grupo.tieneColor && <div style={{ width: 12, height: 12, borderRadius: '50%', background: v.valor.toLowerCase(), border: '1px solid #e5e7eb', flexShrink: 0 }} />}
-                    {grupo.tieneFoto && v.imagen_url && <img src={v.imagen_url} style={{ width: 20, height: 20, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }} />}
-                    {v.etiqueta && <span style={{ background: '#1e293b', color: 'white', borderRadius: 4, fontSize: 10, fontWeight: 900, padding: '1px 5px' }}>{v.etiqueta}</span>}
+                    {v.imagen_url && <img src={v.imagen_url} style={{ width: 20, height: 20, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }} />}
+                    {v.etiqueta   && <span style={{ background: '#1e293b', color: 'white', borderRadius: 4, fontSize: 10, fontWeight: 900, padding: '1px 5px' }}>{v.etiqueta}</span>}
                     <span style={{ fontWeight: 600 }}>{v.valor}</span>
                     {v.precio_extra > 0 && <span style={{ color: '#10b981', fontSize: 11 }}>+{v.precio_extra}€</span>}
-                    <span style={{ color: '#9ca3af', fontSize: 11 }}>·</span>
+                    <span style={{ color: '#d1d5db' }}>·</span>
                     <input type="number" min="0" value={v.stock}
                       onChange={e => actualizarStock(v.id, parseInt(e.target.value) || 0)}
                       style={{ width: 36, border: '1px solid #e5e7eb', borderRadius: 4, padding: '1px 4px', fontSize: 11, textAlign: 'center' }} />
                     <span style={{ color: '#9ca3af', fontSize: 10 }}>uds</span>
-                    <button onClick={() => eliminar(v.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}><Trash2 size={11}/></button>
+                    <button onClick={() => eliminar(v.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}>
+                      <Trash2 size={11}/>
+                    </button>
                   </div>
                 ))}
               </div>
             </div>
           ))}
 
-          <div style={{ borderTop: variantesPorTipo.length > 0 ? '1px solid #e5e7eb' : 'none', paddingTop: variantesPorTipo.length > 0 ? 12 : 0 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: '#374151', margin: 0 }}>AÑADIR VARIANTE</p>
-              <span style={{ fontSize: 10, color: tiposUsados.length >= 5 ? '#ef4444' : '#9ca3af' }}>{5 - tiposUsados.length} tipos libres</span>
-            </div>
+          {/* Formulario añadir */}
+          {!cargando && tiposDisp.length > 0 && (
+            <div style={{ borderTop: varPorTipo.length > 0 ? '1px solid #e5e7eb' : 'none', paddingTop: varPorTipo.length > 0 ? 12 : 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: '#374151', margin: 0 }}>AÑADIR VARIANTE</p>
+                <span style={{ fontSize: 10, color: tiposAsign.length >= 5 ? '#ef4444' : '#9ca3af' }}>{5 - tiposAsign.length} tipos libres</span>
+              </div>
 
-            <div style={{ display: 'flex', gap: 5, marginBottom: 10, flexWrap: 'wrap' }}>
-              {TIPOS_VARIANTE.map(t => {
-                const ok = puedeAñadirTipo(t.value);
-                return (
-                  <button key={t.value} onClick={() => ok && setTipo(t.value)} disabled={!ok}
-                    style={{ padding: '4px 10px', borderRadius: 16, border: '1px solid #e5e7eb', fontSize: 12, cursor: ok ? 'pointer' : 'not-allowed', background: tipo === t.value ? 'black' : ok ? 'white' : '#f3f4f6', color: tipo === t.value ? 'white' : ok ? '#374151' : '#9ca3af', fontWeight: tipo === t.value ? 700 : 400, opacity: ok ? 1 : 0.5 }}>
-                    {t.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            {tipo === 'talla' && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
-                {TALLAS_RAPIDAS.map(t => {
-                  const ya = variantes.some(v => v.tipo === 'talla' && v.valor === t);
-                  return <button key={t} onClick={() => añadirTallaRapida(t)} disabled={ya}
-                    style={{ padding: '3px 8px', borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 11, cursor: ya ? 'default' : 'pointer', background: ya ? '#f3f4f6' : 'white', color: ya ? '#9ca3af' : '#374151', textDecoration: ya ? 'line-through' : 'none' }}>{t}</button>;
+              {/* Selector de tipo */}
+              <div style={{ display: 'flex', gap: 5, marginBottom: 10, flexWrap: 'wrap' }}>
+                {tiposDisp.map(t => {
+                  const yaUsado   = tiposAsign.includes(t.id);
+                  const disponible = yaUsado || tiposAsign.length < 5;
+                  return (
+                    <button key={t.id} onClick={() => disponible && setTipoSel(t.id)} disabled={!disponible}
+                      style={{ padding: '4px 12px', borderRadius: 16, border: '1px solid #e5e7eb', fontSize: 12, cursor: disponible ? 'pointer' : 'not-allowed', background: tipoSel === t.id ? '#1e293b' : disponible ? 'white' : '#f3f4f6', color: tipoSel === t.id ? 'white' : disponible ? '#374151' : '#9ca3af', fontWeight: tipoSel === t.id ? 700 : 400, opacity: disponible ? 1 : 0.5 }}>
+                      {t.nombre}
+                    </button>
+                  );
                 })}
               </div>
-            )}
 
-            {tipo === 'diseno_tela' && (
-              <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 10, padding: 10, marginBottom: 10 }}>
-                <p style={{ fontSize: 11, color: '#6b7280', fontWeight: 600, margin: '0 0 8px' }}>Sube la foto de la tela y asígnale una letra (A, B, C…)</p>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, border: '1px solid #e5e7eb', cursor: 'pointer', background: '#f9fafb', fontSize: 12 }}>
-                    <Upload size={13} />
-                    {subiendoFoto ? 'Subiendo…' : imagenUrl ? '✓ Foto lista' : 'Subir foto'}
-                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} disabled={subiendoFoto} />
-                  </label>
-                  {imagenUrl && <img src={imagenUrl} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 6, border: '1px solid #e5e7eb' }} />}
-                  <div>
-                    <label style={{ fontSize: 10, color: '#6b7280', fontWeight: 600 }}>ETIQUETA</label>
-                    <select value={etiqueta} onChange={e => setEtiqueta(e.target.value)} style={{ ...inS, width: 70, marginTop: 2 }}>
-                      <option value="">—</option>
-                      {LETRAS.filter(l => !variantes.some(v => v.tipo === 'diseno_tela' && v.etiqueta === l)).map(l => <option key={l} value={l}>{l}</option>)}
-                    </select>
+              {/* Selector de valor */}
+              {tipoSelInfo && (
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                  <div style={{ flex: 2, minWidth: 160 }}>
+                    <label style={{ fontSize: 10, color: '#6b7280', fontWeight: 700 }}>
+                      {tipoSelInfo.tipo_input === 'texto_libre' ? 'PLACEHOLDER' : 'VALOR'}
+                    </label>
+                    {tipoSelInfo.tipo_input === 'texto_libre' ? (
+                      /* Texto libre: input directo */
+                      <input style={inS}
+                        placeholder={tipoSelInfo.descripcion || 'Texto de ayuda para el cliente…'}
+                        value={valorSel}
+                        onChange={e => setValorSel(e.target.value)} />
+                    ) : valoresDelTipo.length > 0 ? (
+                      /* Selector con valores definidos */
+                      <select style={inS} value={valorSel} onChange={e => setValorSel(e.target.value)}>
+                        <option value="">— Elige un valor —</option>
+                        {valoresDelTipo.map(v => (
+                          <option key={v.id} value={v.id}>
+                            {v.etiqueta ? `[${v.etiqueta}] ` : ''}{v.valor}{v.precio_extra > 0 ? ` (+${v.precio_extra}€)` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div style={{ ...inS, color: '#9ca3af', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
+                        <span>Sin valores definidos</span>
+                        <Link href="/admin/variantes" target="_blank" style={{ color: '#2563eb', fontSize: 11, display: 'flex', alignItems: 'center', gap: 3 }}>
+                          Añadir <ExternalLink size={10}/>
+                        </Link>
+                      </div>
+                    )}
                   </div>
-                </div>
-              </div>
-            )}
 
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-              <div style={{ flex: 2, minWidth: 120 }}>
-                <label style={{ fontSize: 10, color: '#6b7280', fontWeight: 600 }}>{tipo === 'diseno_tela' ? 'DESCRIPCIÓN' : 'VALOR'}</label>
-                <input style={inS} placeholder={tipoInfo?.placeholder || 'Valor'} value={valor} onChange={e => setValor(e.target.value)} />
-              </div>
-              <div style={{ flex: 1, minWidth: 80 }}>
-                <label style={{ fontSize: 10, color: '#6b7280', fontWeight: 600 }}>PRECIO EXTRA (€)</label>
-                <input style={inS} type="number" step="0.01" min="0" placeholder="0" value={precioExtra} onChange={e => setPrecioExtra(e.target.value)} />
-              </div>
-              <div style={{ flex: 1, minWidth: 80 }}>
-                <label style={{ fontSize: 10, color: '#6b7280', fontWeight: 600 }}>STOCK</label>
-                <input style={inS} type="number" min="0" placeholder="0" value={stock} onChange={e => setStock(e.target.value)} />
-              </div>
-              <button onClick={añadir} disabled={guardando || subiendoFoto}
-                style={{ padding: '9px 14px', borderRadius: 10, background: (guardando || subiendoFoto) ? '#9ca3af' : '#2563eb', color: 'white', border: 'none', cursor: (guardando || subiendoFoto) ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap', height: 40 }}>
-                <Plus size={13}/> {guardando ? '…' : 'Añadir'}
-              </button>
+                  <div style={{ minWidth: 80 }}>
+                    <label style={{ fontSize: 10, color: '#6b7280', fontWeight: 700 }}>STOCK</label>
+                    <input style={inS} type="number" min="0" placeholder="0" value={stock} onChange={e => setStock(e.target.value)} />
+                  </div>
+
+                  <button onClick={añadir} disabled={guardando || (!valorSel.trim())}
+                    style={{ padding: '9px 14px', borderRadius: 10, background: (guardando || !valorSel.trim()) ? '#9ca3af' : '#1e293b', color: 'white', border: 'none', cursor: (guardando || !valorSel.trim()) ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4, height: 40, whiteSpace: 'nowrap' }}>
+                    <Plus size={13}/> {guardando ? '…' : 'Añadir'}
+                  </button>
+                </div>
+              )}
             </div>
-          </div>
+          )}
+
+          {cargando && <div style={{ fontSize: 12, color: '#9ca3af', textAlign: 'center', padding: 12 }}>Cargando tipos…</div>}
         </div>
       )}
     </div>

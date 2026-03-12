@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Package, ClipboardList, Users, Bell, ArrowLeft, RotateCcw, TrendingUp, ScrollText } from 'lucide-react';
+import { Package, ClipboardList, Users, Bell, ArrowLeft, RotateCcw, TrendingUp, ScrollText, Sliders } from 'lucide-react';
 
 export default function AdminPanel() {
   return (
@@ -78,6 +78,15 @@ export default function AdminPanel() {
             <div>
               <h2 className="text-lg md:text-xl font-black">Política de la Tienda</h2>
               <p className="text-gray-600 text-sm">Envíos, devoluciones, medios de pago y aviso legal.</p>
+            </div>
+          </Link>
+
+          {/* 8. TIPOS DE VARIANTE */}
+          <Link href="/admin/variantes" className="flex flex-col items-start gap-4 bg-white p-6 rounded-xl border border-gray-200 text-gray-900 hover:shadow-lg transition-shadow">
+            <div className="p-3 rounded-lg bg-teal-50"><Sliders size={32} className="text-teal-600" /></div>
+            <div>
+              <h2 className="text-lg md:text-xl font-black">Tipos de Variante</h2>
+              <p className="text-gray-600 text-sm">Crea y gestiona los tipos de variante de tu tienda (Talla, Color, Tela, Acabado…) y sus valores.</p>
             </div>
           </Link>
 

@@ -338,8 +338,24 @@ export default function AdminPedidos() {
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Artículos</p>
                 <div className="space-y-1">
                   {pedido.articulos.map((art: any, index: number) => (
-                    <div key={index} className="flex justify-between text-sm text-gray-700">
-                      <span className="truncate mr-4">{art.nombre} <strong>×{art.cantidad}</strong></span>
+                    <div key={index} className="flex justify-between text-sm text-gray-700 gap-2">
+                      <div className="min-w-0">
+                        <span className="font-medium">{art.nombre}</span>
+                        <strong className="ml-1">×{art.cantidad}</strong>
+                        {/* Variantes del sistema nuevo */}
+                        {art.variantesSeleccionadas && Object.values(art.variantesSeleccionadas).filter(Boolean).length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-0.5">
+                            {(Object.values(art.variantesSeleccionadas) as any[]).filter(Boolean).map((v: any, i: number) => (
+                              <span key={i} className="text-[9px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-bold">
+                                {v.valor_usuario ? `${v.tipo_nombre ? v.tipo_nombre + ': ' : ''}${v.valor_usuario}` : v.etiqueta ? `[${v.etiqueta}] ${v.valor}` : v.valor}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {art.personalizacion && (
+                          <div className="text-[9px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded mt-0.5 inline-block">✏️ {art.personalizacion}</div>
+                        )}
+                      </div>
                       <span className="flex-shrink-0 font-bold">{(art.precio * art.cantidad).toFixed(2)}€</span>
                     </div>
                   ))}

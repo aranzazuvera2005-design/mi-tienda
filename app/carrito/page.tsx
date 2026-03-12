@@ -1,6 +1,7 @@
 'use client';
 
 import { useCart } from '@/context/CartContext';
+import VariantesBadges from '@/components/VariantesBadges';
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { createBrowserClient } from '@supabase/ssr';
@@ -154,6 +155,7 @@ export default function CarritoPage() {
 
                   <div className="flex-1 text-center sm:text-left">
                     <h3 className="text-xl font-black text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">{item.nombre}</h3>
+                    <VariantesBadges item={item} />
                     <p className="text-blue-600 font-black text-lg">{Number(item.precio || 0).toFixed(2)}€</p>
                   </div>
 

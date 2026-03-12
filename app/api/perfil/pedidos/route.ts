@@ -80,6 +80,8 @@ export async function POST(req: Request) {
       producto_id: item.id,
       cantidad: item.cantidad || 1,
       precio_unitario_historico: Number(item.precio || 0),
+      variantes_seleccionadas: item.variantesSeleccionadas || null,
+      personalizacion: item.personalizacion || null,
     }));
 
     const { error: lineasError } = await supabase

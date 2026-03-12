@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCart } from '@/context/CartContext';
+import VariantesBadges from './VariantesBadges';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -104,6 +105,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   </div>
                   <div className="flex-1">
                     <h3 className="font-bold text-slate-800">{item.nombre}</h3>
+                    <VariantesBadges item={item} size="xs" />
                     <p className="text-blue-600 font-black">{(Number(item.precio) * (item.cantidad || 1)).toFixed(2)}€</p>
                     {/* Controles de cantidad */}
                     <div className="flex items-center gap-2 mt-2">

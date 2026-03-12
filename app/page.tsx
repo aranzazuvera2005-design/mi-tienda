@@ -36,7 +36,7 @@ export default async function HomePage({ searchParams }: { searchParams: any }) 
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto px-6 sm:px-16 py-12 space-y-16">
+    <div className="max-w-[1600px] mx-auto px-4 sm:px-16 py-4 sm:py-12 space-y-6 sm:space-y-16">
       <HeroSection />
       <div id="productos">
         <SearchProductos

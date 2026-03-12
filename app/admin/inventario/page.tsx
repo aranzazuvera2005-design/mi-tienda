@@ -11,7 +11,7 @@ type ModoImagen = 'url' | 'local' | 'drive';
 export default function GestionInventario() {
   const [productos, setProductos] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [nuevoP, setNuevoP] = useState({ nombre: '', precio: '', familia_id: '', descripcion: '' });
+  const [nuevoP, setNuevoP] = useState({ nombre: '', precio: '', precio_tachado: '', descuento_pct: '', familia_id: '', descripcion: '', descripcion_larga: '' });
   const [subiendoImagen, setSubiendoImagen] = useState(false);
 
   // Imágenes del nuevo producto
@@ -130,9 +130,12 @@ export default function GestionInventario() {
     const payload: any = {
       nombre: nuevoP.nombre,
       precio: parseFloat(nuevoP.precio),
+      precio_tachado: nuevoP.precio_tachado ? parseFloat(nuevoP.precio_tachado) : null,
+      descuento_pct:  nuevoP.descuento_pct  ? parseFloat(nuevoP.descuento_pct)  : null,
       imagen_url: imagenesNuevo[0] || null,
       imagenes: imagenesNuevo,
       descripcion: nuevoP.descripcion || null,
+      descripcion_larga: nuevoP.descripcion_larga || null,
     };
 
     if (nuevoP.familia_id) {
@@ -157,7 +160,7 @@ export default function GestionInventario() {
         const { error: e2 } = await supabase.from('productos').insert([s2]);
         if (e2) return alert(e2.message);
       }
-      setNuevoP({ nombre: '', precio: '', familia_id: '', descripcion: '' });
+      setNuevoP({ nombre: '', precio: '', precio_tachado: '', descuento_pct: '', familia_id: '', descripcion: '', descripcion_larga: '' });
       setImagenesNuevo([]);
       setUrlInputNuevo('');
       fetchProductos();
@@ -173,6 +176,9 @@ export default function GestionInventario() {
       imagen_url: imagenesEdit[0] || datosEdit.imagen_url || null,
       imagenes: imagenesEdit,
       descripcion: datosEdit.descripcion || null,
+      descripcion_larga: datosEdit.descripcion_larga || null,
+      precio_tachado: datosEdit.precio_tachado ? parseFloat(datosEdit.precio_tachado) : null,
+      descuento_pct:  datosEdit.descuento_pct  ? parseFloat(datosEdit.descuento_pct)  : null,
     };
 
     if (datosEdit?.familia_id) {
@@ -284,7 +290,18 @@ export default function GestionInventario() {
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '15px' }}>
             <input style={inS} placeholder="Nombre" value={nuevoP.nombre} onChange={e => setNuevoP({...nuevoP, nombre: e.target.value})} />
-            <input style={inS} placeholder="Precio (€)" type="number" value={nuevoP.precio} onChange={e => setNuevoP({...nuevoP, precio: e.target.value})} />
+            <div>
+              <label style={{ fontSize: 11, color: '#6b7280', fontWeight: 700, display: 'block', marginBottom: 4 }}>PVP (€)</label>
+              <input style={inS} placeholder="Precio de venta" type="number" value={nuevoP.precio} onChange={e => setNuevoP({...nuevoP, precio: e.target.value})} />
+            </div>
+            <div>
+              <label style={{ fontSize: 11, color: '#9ca3af', fontWeight: 700, display: 'block', marginBottom: 4 }}>Precio tachado (€) <span style={{ fontWeight: 400 }}>opcional</span></label>
+              <input style={inS} placeholder="Precio original" type="number" value={nuevoP.precio_tachado} onChange={e => setNuevoP({...nuevoP, precio_tachado: e.target.value})} />
+            </div>
+            <div>
+              <label style={{ fontSize: 11, color: '#9ca3af', fontWeight: 700, display: 'block', marginBottom: 4 }}>Descuento % <span style={{ fontWeight: 400 }}>opcional</span></label>
+              <input style={inS} placeholder="Ej: 20" type="number" min="0" max="99" value={nuevoP.descuento_pct} onChange={e => setNuevoP({...nuevoP, descuento_pct: e.target.value})} />
+            </div>
             <select style={inS} value={nuevoP.familia_id} onChange={(e) => setNuevoP({...nuevoP, familia_id: e.target.value})}>
               <option value="">-- Familia (opcional) --</option>
               {familias.map((f) => <option key={f.id} value={String(f.id)}>{f.nombre}</option>)}
@@ -304,12 +321,21 @@ export default function GestionInventario() {
 
           {/* Descripción */}
           <div style={{ marginTop: 15 }}>
-            <p style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8 }}>Descripción</p>
+            <p style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8 }}>Descripción corta <span style={{ color: '#9ca3af', fontWeight: 400 }}>(aparece en la tarjeta)</span></p>
             <textarea
-              style={{ ...inS, minHeight: 70, resize: 'vertical' }}
-              placeholder="Descripción del producto"
+              style={{ ...inS, minHeight: 50, resize: 'vertical' }}
+              placeholder="Resumen corto del producto"
               value={nuevoP.descripcion}
               onChange={e => setNuevoP({ ...nuevoP, descripcion: e.target.value })}
+            />
+          </div>
+          <div style={{ marginTop: 15 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8 }}>Descripción larga <span style={{ color: '#9ca3af', fontWeight: 400 }}>(aparece en el detalle del producto)</span></p>
+            <textarea
+              style={{ ...inS, minHeight: 80, resize: 'vertical' }}
+              placeholder="Descripción detallada: materiales, cuidados, tallas disponibles…"
+              value={nuevoP.descripcion_larga}
+              onChange={e => setNuevoP({ ...nuevoP, descripcion_larga: e.target.value })}
             />
           </div>
 
@@ -368,13 +394,32 @@ export default function GestionInventario() {
                           <ListaImagenes imagenes={imagenesEdit} setImagenes={setImagenesEdit} />
                           {/* Descripción en edición */}
                           <div>
-                            <span style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Descripción</span>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Descripción corta <span style={{ color: '#9ca3af', fontWeight: 400 }}>(tarjeta)</span></span>
                             <textarea
-                              style={{ ...inS, minHeight: 60, resize: 'vertical' }}
-                              placeholder="Descripción del producto"
+                              style={{ ...inS, minHeight: 50, resize: 'vertical' }}
+                              placeholder="Descripción corta"
                               value={datosEdit?.descripcion ?? ''}
                               onChange={e => setDatosEdit({ ...datosEdit, descripcion: e.target.value })}
                             />
+                          </div>
+                          <div>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Descripción larga <span style={{ color: '#9ca3af', fontWeight: 400 }}>(detalle)</span></span>
+                            <textarea
+                              style={{ ...inS, minHeight: 70, resize: 'vertical' }}
+                              placeholder="Descripción detallada del producto"
+                              value={datosEdit?.descripcion_larga ?? ''}
+                              onChange={e => setDatosEdit({ ...datosEdit, descripcion_larga: e.target.value })}
+                            />
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                            <div>
+                              <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 700, display: 'block', marginBottom: 4 }}>Precio tachado (€)</span>
+                              <input style={inS} type="number" placeholder="0.00" value={datosEdit?.precio_tachado ?? ''} onChange={e => setDatosEdit({ ...datosEdit, precio_tachado: e.target.value })} />
+                            </div>
+                            <div>
+                              <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 700, display: 'block', marginBottom: 4 }}>Descuento %</span>
+                              <input style={inS} type="number" min="0" max="99" placeholder="0" value={datosEdit?.descuento_pct ?? ''} onChange={e => setDatosEdit({ ...datosEdit, descuento_pct: e.target.value })} />
+                            </div>
                           </div>
                           <VariantesEditor
                             productoId={p.id}
@@ -434,7 +479,17 @@ export default function GestionInventario() {
                       {editandoId === p.id ? (
                         <input style={inS} type="number" value={datosEdit?.precio ?? ''} onChange={e => setDatosEdit({...datosEdit, precio: e.target.value === '' ? '' : parseFloat(e.target.value)})} />
                       ) : (
-                        <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{p.precio}€</span>
+                        <div>
+                          <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{p.precio}€</span>
+                          {p.precio_tachado && Number(p.precio_tachado) > Number(p.precio) && (
+                            <div style={{ fontSize: 11, color: '#9ca3af', textDecoration: 'line-through' }}>{p.precio_tachado}€</div>
+                          )}
+                          {(p.descuento_pct > 0 || (p.precio_tachado > p.precio)) && (
+                            <span style={{ fontSize: 10, background: '#fee2e2', color: '#ef4444', borderRadius: 4, padding: '1px 5px', fontWeight: 700 }}>
+                              -{p.descuento_pct > 0 ? p.descuento_pct : Math.round((1 - p.precio/p.precio_tachado)*100)}%
+                            </span>
+                          )}
+                        </div>
                       )}
                     </td>
                     <td style={{ textAlign: 'center' }}>

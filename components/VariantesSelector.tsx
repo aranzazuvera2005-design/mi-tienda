@@ -15,6 +15,7 @@ interface TipoVar {
   descripcion: string | null;
   tipo_input: 'selector' | 'texto_libre' | 'foto';
   es_requerido: boolean;
+  activo?: boolean;
 }
 
 interface ValorVar {

@@ -22,14 +22,24 @@ export async function GET(req: Request) {
   }
 
   try {
-    // Comprobar si ha comprado el producto
-    const { data: compra } = await supabase
-      .from('lineas_pedido')
-      .select('id, pedido:pedidos!inner(cliente_id)')
-      .eq('producto_id', productoId)
-      .eq('pedido.cliente_id', clienteId)
-      .limit(1)
-      .maybeSingle();
+    // Paso 1: obtener IDs de pedidos del cliente
+    const { data: pedidos } = await supabase
+      .from('pedidos')
+      .select('id')
+      .eq('cliente_id', clienteId);
+
+    const pedidoIds = (pedidos || []).map((p: any) => p.id);
+
+    // Paso 2: comprobar si alguna línea de esos pedidos contiene el producto
+    const { data: compra } = pedidoIds.length > 0
+      ? await supabase
+          .from('lineas_pedido')
+          .select('id')
+          .eq('producto_id', productoId)
+          .in('pedido_id', pedidoIds)
+          .limit(1)
+          .maybeSingle()
+      : { data: null };
 
     // Comprobar si ya existe reseña
     const { data: resena } = await supabase

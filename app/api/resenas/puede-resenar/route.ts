@@ -6,7 +6,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABAS
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
 
 // GET /api/resenas/puede-resenar?productoId=...&clienteId=...
-// → { haPurchased: boolean, yaReseno: boolean }
+// → { haPurchased: boolean, yaReseno: boolean, miResena: { id, valoracion, comentario, foto_url } | null }
 export async function GET(req: Request) {
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
     return new Response(JSON.stringify({ error: 'Missing Supabase configuration' }), { status: 500 });
@@ -41,10 +41,10 @@ export async function GET(req: Request) {
           .maybeSingle()
       : { data: null };
 
-    // Comprobar si ya existe reseña
+    // Comprobar si ya existe reseña y obtener sus datos
     const { data: resena } = await supabase
       .from('resenas')
-      .select('id')
+      .select('id, valoracion, comentario, foto_url')
       .eq('producto_id', productoId)
       .eq('cliente_id', clienteId)
       .maybeSingle();
@@ -52,6 +52,7 @@ export async function GET(req: Request) {
     return new Response(JSON.stringify({
       haPurchased: !!compra,
       yaReseno: !!resena,
+      miResena: resena ?? null,
     }), { status: 200 });
   } catch (e: any) {
     return new Response(JSON.stringify({ error: e?.message || String(e) }), { status: 500 });

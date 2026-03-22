@@ -20,7 +20,7 @@ export async function PATCH(req: Request) {
     if (!id) return new Response(JSON.stringify({ error: 'id requerido' }), { status: 400 });
 
     // Limpiar campos no válidos
-    const permitidos = ['nombre', 'precio', 'precio_tachado', 'descuento_pct', 'familia_id', 'familia', 'descripcion', 'descripcion_larga', 'imagen_url', 'imagenes'];
+    const permitidos = ['nombre', 'precio', 'precio_tachado', 'descuento_pct', 'familia_id', 'familia', 'descripcion', 'descripcion_larga', 'imagen_url', 'imagenes', 'oculto', 'oculto_desde'];
     const payload: any = {};
     for (const key of permitidos) {
       if (key in campos) payload[key] = campos[key];

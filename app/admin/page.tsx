@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Package, ClipboardList, Users, Bell, ArrowLeft, RotateCcw, TrendingUp, ScrollText, Sliders, Star } from 'lucide-react';
+import { Package, ClipboardList, Users, Bell, ArrowLeft, RotateCcw, TrendingUp, ScrollText, Sliders, Star, RefreshCw } from 'lucide-react';
 
 export default function AdminPanel() {
   return (
@@ -96,6 +96,15 @@ export default function AdminPanel() {
             <div>
               <h2 className="text-lg md:text-xl font-black">Reseñas de Productos</h2>
               <p className="text-gray-600 text-sm">Analiza las valoraciones de tus clientes y modera las reseñas publicadas.</p>
+            </div>
+          </Link>
+
+          {/* 10. SINCRONIZAR ETSY */}
+          <Link href="/admin/sync-etsy" className="flex flex-col items-start gap-4 bg-white p-6 rounded-xl border border-gray-200 text-gray-900 hover:shadow-lg transition-shadow">
+            <div className="p-3 rounded-lg bg-orange-50"><RefreshCw size={32} className="text-orange-500" /></div>
+            <div>
+              <h2 className="text-lg md:text-xl font-black">Sincronizar con Etsy</h2>
+              <p className="text-gray-600 text-sm">Importa tus productos activos de Etsy automáticamente.</p>
             </div>
           </Link>
 

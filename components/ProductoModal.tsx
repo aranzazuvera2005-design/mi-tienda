@@ -1,11 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, ChevronLeft, ChevronRight, Tag, Percent } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Tag, Percent, MessageSquare } from 'lucide-react';
 import AgregarAlCarritoBtn from './AgregarAlCarritoBtn';
+import ListaResenas from './ListaResenas';
+import { useCart } from '@/context/CartContext';
 
 export default function ProductoModal({ producto, onClose }: { producto: any; onClose: () => void }) {
   const [idx, setIdx] = useState(0);
+  const [mostrarResenas, setMostrarResenas] = useState(false);
+  const { user } = useCart();
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -122,8 +126,27 @@ export default function ProductoModal({ producto, onClose }: { producto: any; on
             <div className="mt-auto">
               <AgregarAlCarritoBtn producto={producto} onClose={onClose} />
             </div>
+
+            {/* Botón toggle reseñas */}
+            <button
+              onClick={() => setMostrarResenas(v => !v)}
+              className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors"
+            >
+              <MessageSquare size={15} />
+              {mostrarResenas ? 'Ocultar reseñas' : 'Ver reseñas'}
+            </button>
           </div>
         </div>
+
+        {/* ─── Sección de reseñas ─── */}
+        {mostrarResenas && (
+          <div className="px-6 md:px-8 pb-8 pt-2 border-t border-slate-100 mt-0">
+            <ListaResenas
+              productoId={producto.id}
+              clienteId={user?.id ?? null}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

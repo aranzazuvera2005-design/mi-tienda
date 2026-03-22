@@ -24,13 +24,21 @@ export async function GET(req: Request) {
       .from('resenas')
       .select(`
         id, valoracion, comentario, foto_url, creado_at,
-        perfil:perfiles(nombre)
+        perfil:perfiles!cliente_id(nombre)
       `)
       .eq('producto_id', productoId)
       .order('creado_at', { ascending: false });
 
     if (error) {
-      return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      // Si el join falla por FK, intentar sin join
+      const { data: dataPlain, error: e2 } = await supabase
+        .from('resenas')
+        .select('id, valoracion, comentario, foto_url, creado_at')
+        .eq('producto_id', productoId)
+        .order('creado_at', { ascending: false });
+
+      if (e2) return new Response(JSON.stringify({ error: e2.message }), { status: 500 });
+      return new Response(JSON.stringify({ data: dataPlain || [] }), { status: 200 });
     }
 
     return new Response(JSON.stringify({ data: data || [] }), { status: 200 });

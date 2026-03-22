@@ -170,43 +170,32 @@ export default function GestionInventario() {
   };
 
   const guardarEdicion = async (id: string) => {
-    if (!SUPABASE_URL || !SUPABASE_ANON) return alert('Supabase no configurado.');
-    const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
+    const familiaSeleccionada = datosEdit?.familia_id
+      ? familias.find((x) => String(x.id) === String(datosEdit.familia_id))
+      : null;
 
     const payload: any = {
-      ...datosEdit,
-      imagen_url: imagenesEdit[0] || datosEdit.imagen_url || null,
-      imagenes: imagenesEdit,
+      id,
+      nombre: datosEdit.nombre,
+      precio: parseFloat(datosEdit.precio) || 0,
+      precio_tachado: datosEdit.precio_tachado ? parseFloat(datosEdit.precio_tachado) : null,
+      descuento_pct: datosEdit.descuento_pct ? parseFloat(datosEdit.descuento_pct) : null,
       descripcion: datosEdit.descripcion || null,
       descripcion_larga: datosEdit.descripcion_larga || null,
-      precio_tachado: datosEdit.precio_tachado ? parseFloat(datosEdit.precio_tachado) : null,
-      descuento_pct:  datosEdit.descuento_pct  ? parseFloat(datosEdit.descuento_pct)  : null,
+      imagen_url: imagenesEdit[0] || null,
+      imagenes: imagenesEdit,
+      familia_id: datosEdit.familia_id || null,
+      familia: familiaSeleccionada?.nombre || null,
     };
 
-    if (datosEdit?.familia_id) {
-      const f = familias.find((x) => String(x.id) === String(datosEdit.familia_id));
-      if (f) payload.familia = f.nombre;
-    } else {
-      payload.familia = null;
-      payload.familia_id = null;
-    }
-
-    const sanitized: any = Object.fromEntries(
-      Object.entries(payload).filter(([k, v]) => {
-        if (k === 'familias') return false;
-        if (v === null || Array.isArray(v)) return true;
-        const t = typeof v;
-        return t === 'string' || t === 'number' || t === 'boolean';
-      })
-    );
-
     try {
-      const { error } = await supabase.from('productos').update(sanitized).eq('id', id);
-      if (error) {
-        const s2 = { ...sanitized }; delete s2.familia;
-        const { error: e2 } = await supabase.from('productos').update(s2).eq('id', id);
-        if (e2) return alert(e2.message);
-      }
+      const res = await fetch('/api/admin/productos', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (!res.ok) return alert(json.error || 'Error al guardar');
       setEditandoId(null);
       setDatosEdit(null);
       setImagenesEdit([]);
@@ -217,11 +206,13 @@ export default function GestionInventario() {
   };
 
   const eliminarProducto = async (id: any) => {
-    if (!confirm('¿Seguro que quieres eliminarlo?')) return;
-    if (!SUPABASE_URL || !SUPABASE_ANON) return alert('Supabase no configurado.');
-    const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
-    await supabase.from('productos').delete().eq('id', id);
-    fetchProductos();
+    if (!confirm('¿Seguro que quieres eliminar este producto? Esta acción no se puede deshacer.')) return;
+    try {
+      const res = await fetch(`/api/admin/productos?id=${id}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (!res.ok) return alert(json.error || 'Error al eliminar');
+      fetchProductos();
+    } catch (e: any) { alert(String(e)); }
   };
 
   const productosFiltrados = (() => {

@@ -24,8 +24,8 @@ export async function GET(req: Request) {
       .from('resenas')
       .select(`
         id, valoracion, comentario, foto_url, creado_at,
-        producto:productos(id, nombre),
-        perfil:perfiles(nombre, email)
+        producto:productos!producto_id(id, nombre),
+        perfil:perfiles!cliente_id(nombre, email)
       `, { count: 'exact' })
       .order('creado_at', { ascending: false });
 

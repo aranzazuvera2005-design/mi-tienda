@@ -77,28 +77,21 @@ export default function ListaResenas({ productoId, clienteId }: ListaResenasProp
   const fetchResenas = useCallback(async () => {
     setCargando(true);
     try {
-      const res = await fetch(`/api/resenas?productoId=${productoId}`);
+      const res = await fetch(`/api/resenas?productoId=${productoId}`, { cache: 'no-store' });
       const json = await res.json();
       const data: Resena[] = json.data || [];
       setResenas(data);
-
-      if (clienteId) {
-        setYaReseno(data.some(r => {
-          // La API no devuelve cliente_id por privacidad, así que usamos el endpoint de verificación
-          return false; // se comprueba abajo
-        }));
-      }
     } finally {
       setCargando(false);
     }
-  }, [productoId, clienteId]);
+  }, [productoId]);
 
   // Verificar si el usuario ya reseñó y si ha comprado
   useEffect(() => {
     if (!clienteId) return;
 
     const check = async () => {
-      const res = await fetch(`/api/resenas/puede-resenar?productoId=${productoId}&clienteId=${clienteId}`);
+      const res = await fetch(`/api/resenas/puede-resenar?productoId=${productoId}&clienteId=${clienteId}`, { cache: 'no-store' });
       if (res.ok) {
         const json = await res.json();
         setHaPurchased(json.haPurchased);

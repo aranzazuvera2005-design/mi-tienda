@@ -59,18 +59,29 @@ export async function POST(req: Request) {
       return new Response(JSON.stringify({ error: 'La valoración debe ser entre 1 y 5' }), { status: 400 });
     }
 
-    // Validar que el cliente haya comprado el producto (vía lineas_pedido)
-    const { data: compra, error: compraError } = await supabase
-      .from('lineas_pedido')
-      .select('id, pedido:pedidos!inner(cliente_id)')
-      .eq('producto_id', productoId)
-      .eq('pedido.cliente_id', clienteId)
-      .limit(1)
-      .maybeSingle();
+    // Validar que el cliente haya comprado el producto
+    // Paso 1: obtener IDs de pedidos del cliente
+    const { data: pedidos, error: pedidosError } = await supabase
+      .from('pedidos')
+      .select('id')
+      .eq('cliente_id', clienteId);
 
-    if (compraError) {
-      return new Response(JSON.stringify({ error: compraError.message }), { status: 500 });
+    if (pedidosError) {
+      return new Response(JSON.stringify({ error: pedidosError.message }), { status: 500 });
     }
+
+    const pedidoIds = (pedidos || []).map((p: any) => p.id);
+
+    // Paso 2: comprobar si alguna línea de esos pedidos contiene el producto
+    const { data: compra } = pedidoIds.length > 0
+      ? await supabase
+          .from('lineas_pedido')
+          .select('id')
+          .eq('producto_id', productoId)
+          .in('pedido_id', pedidoIds)
+          .limit(1)
+          .maybeSingle()
+      : { data: null };
 
     if (!compra) {
       return new Response(

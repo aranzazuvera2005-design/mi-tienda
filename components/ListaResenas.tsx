@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Star, ImageIcon } from 'lucide-react';
+import { Star, ImageIcon, Pencil } from 'lucide-react';
 import ResenaForm from './ResenaForm';
 
 interface Resena {
@@ -11,6 +11,13 @@ interface Resena {
   foto_url: string | null;
   creado_at: string;
   perfil: { nombre: string | null } | null;
+}
+
+interface MiResena {
+  id: string;
+  valoracion: number;
+  comentario: string | null;
+  foto_url: string | null;
 }
 
 interface ListaResenasProps {
@@ -72,6 +79,8 @@ export default function ListaResenas({ productoId, clienteId }: ListaResenasProp
   const [cargando, setCargando] = useState(true);
   const [yaReseno, setYaReseno] = useState(false);
   const [haPurchased, setHaPurchased] = useState<boolean | null>(null);
+  const [miResena, setMiResena] = useState<MiResena | null>(null);
+  const [editando, setEditando] = useState(false);
   const [expandedFoto, setExpandedFoto] = useState<string | null>(null);
 
   const fetchResenas = useCallback(async () => {
@@ -79,34 +88,39 @@ export default function ListaResenas({ productoId, clienteId }: ListaResenasProp
     try {
       const res = await fetch(`/api/resenas?productoId=${productoId}`, { cache: 'no-store' });
       const json = await res.json();
-      const data: Resena[] = json.data || [];
-      setResenas(data);
+      setResenas(json.data || []);
     } finally {
       setCargando(false);
     }
   }, [productoId]);
 
-  // Verificar si el usuario ya reseñó y si ha comprado
-  useEffect(() => {
+  const checkEstado = useCallback(async () => {
     if (!clienteId) return;
-
-    const check = async () => {
-      const res = await fetch(`/api/resenas/puede-resenar?productoId=${productoId}&clienteId=${clienteId}`, { cache: 'no-store' });
-      if (res.ok) {
-        const json = await res.json();
-        setHaPurchased(json.haPurchased);
-        setYaReseno(json.yaReseno);
-      }
-    };
-    check();
+    const res = await fetch(`/api/resenas/puede-resenar?productoId=${productoId}&clienteId=${clienteId}`, { cache: 'no-store' });
+    if (res.ok) {
+      const json = await res.json();
+      setHaPurchased(json.haPurchased);
+      setYaReseno(json.yaReseno);
+      setMiResena(json.miResena ?? null);
+    }
   }, [productoId, clienteId]);
 
   useEffect(() => {
     fetchResenas();
   }, [fetchResenas]);
 
+  useEffect(() => {
+    checkEstado();
+  }, [checkEstado]);
+
   const formatFecha = (iso: string) => {
     return new Date(iso).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+  };
+
+  const handleResenaGuardada = () => {
+    setEditando(false);
+    fetchResenas();
+    checkEstado();
   };
 
   return (
@@ -119,21 +133,56 @@ export default function ListaResenas({ productoId, clienteId }: ListaResenasProp
         <>
           <PromedioEstrellas resenas={resenas} />
 
-          {/* Formulario solo si ha comprado y no ha reseñado */}
+          {/* Formulario nueva reseña */}
           {clienteId && haPurchased && !yaReseno && (
             <ResenaForm
               productoId={productoId}
               clienteId={clienteId}
-              onResenaCreada={() => {
-                fetchResenas();
-                setYaReseno(true);
-              }}
+              onResenaCreada={handleResenaGuardada}
             />
           )}
 
-          {clienteId && haPurchased && yaReseno && (
-            <div className="text-sm text-slate-500 bg-slate-50 rounded-xl px-4 py-3">
-              Ya has reseñado este producto. ¡Gracias por tu opinión!
+          {/* Reseña propia: ver y editar */}
+          {clienteId && haPurchased && yaReseno && miResena && (
+            <div className="border border-amber-200 bg-amber-50 rounded-2xl p-4 flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-amber-800">Tu reseña</span>
+                {!editando && (
+                  <button
+                    onClick={() => setEditando(true)}
+                    className="flex items-center gap-1.5 text-xs text-amber-700 hover:text-amber-900 bg-white border border-amber-200 rounded-lg px-3 py-1.5 transition-colors"
+                  >
+                    <Pencil size={12} /> Editar reseña
+                  </button>
+                )}
+              </div>
+
+              {editando ? (
+                <ResenaForm
+                  productoId={productoId}
+                  clienteId={clienteId}
+                  resenaInicial={miResena}
+                  onResenaCreada={handleResenaGuardada}
+                  onCancelar={() => setEditando(false)}
+                />
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <Estrellas valor={miResena.valoracion} size={16} />
+                  {miResena.comentario && (
+                    <p className="text-sm text-slate-700 leading-relaxed">{miResena.comentario}</p>
+                  )}
+                  {miResena.foto_url && (
+                    <button onClick={() => setExpandedFoto(miResena.foto_url)} className="self-start">
+                      <img
+                        src={miResena.foto_url}
+                        alt="Tu foto"
+                        className="w-20 h-20 object-cover rounded-xl border border-amber-200 hover:opacity-80 transition-opacity cursor-zoom-in"
+                        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

@@ -135,3 +135,59 @@ export async function POST(req: Request) {
     return new Response(JSON.stringify({ error: e?.message || String(e) }), { status: 500 });
   }
 }
+
+// PUT /api/resenas → editar reseña propia
+export async function PUT(req: Request) {
+  if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+    return new Response(JSON.stringify({ error: 'Missing Supabase configuration' }), { status: 500 });
+  }
+
+  const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+
+  try {
+    const body = await req.json();
+    const { id, clienteId, valoracion, comentario, fotoUrl } = body;
+
+    if (!id || !clienteId || !valoracion) {
+      return new Response(JSON.stringify({ error: 'id, clienteId y valoracion son obligatorios' }), { status: 400 });
+    }
+
+    if (valoracion < 1 || valoracion > 5) {
+      return new Response(JSON.stringify({ error: 'La valoración debe ser entre 1 y 5' }), { status: 400 });
+    }
+
+    // Verificar que la reseña pertenece a este cliente
+    const { data: existente } = await supabase
+      .from('resenas')
+      .select('id, cliente_id')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (!existente) {
+      return new Response(JSON.stringify({ error: 'Reseña no encontrada' }), { status: 404 });
+    }
+
+    if (existente.cliente_id !== clienteId) {
+      return new Response(JSON.stringify({ error: 'No tienes permiso para editar esta reseña' }), { status: 403 });
+    }
+
+    const { data, error } = await supabase
+      .from('resenas')
+      .update({
+        valoracion,
+        comentario: comentario || null,
+        foto_url: fotoUrl !== undefined ? fotoUrl : undefined,
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    }
+
+    return new Response(JSON.stringify({ data }), { status: 200 });
+  } catch (e: any) {
+    return new Response(JSON.stringify({ error: e?.message || String(e) }), { status: 500 });
+  }
+}

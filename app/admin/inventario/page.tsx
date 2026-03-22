@@ -2,7 +2,7 @@
 
 import { createBrowserClient } from '@supabase/ssr';
 import { useEffect, useState, useRef } from 'react';
-import { Trash2, ArrowLeft, Pencil, X, Check, Search, Plus, Upload, Link as LinkIcon, HardDrive, ChevronLeft, ChevronRight, ImagePlus } from 'lucide-react';
+import { Trash2, ArrowLeft, Pencil, X, Check, Search, Plus, Upload, Link as LinkIcon, HardDrive, ChevronLeft, ChevronRight, ImagePlus, EyeOff, Eye } from 'lucide-react';
 import Link from 'next/link';
 import VariantesEditor from '@/components/VariantesEditor';
 
@@ -211,6 +211,26 @@ export default function GestionInventario() {
       const res = await fetch(`/api/admin/productos?id=${id}`, { method: 'DELETE' });
       const json = await res.json();
       if (!res.ok) return alert(json.error || 'Error al eliminar');
+      fetchProductos();
+    } catch (e: any) { alert(String(e)); }
+  };
+
+  const toggleOculto = async (p: any) => {
+    const nuevoOculto = !p.oculto;
+    const accion = nuevoOculto ? 'ocultar' : 'mostrar';
+    if (!confirm(`¿${nuevoOculto ? 'Ocultar' : 'Mostrar'} "${p.nombre}" en la tienda?`)) return;
+    try {
+      const res = await fetch('/api/admin/productos', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: p.id,
+          oculto: nuevoOculto,
+          oculto_desde: nuevoOculto ? new Date().toISOString() : null,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) return alert(json.error || `Error al ${accion}`);
       fetchProductos();
     } catch (e: any) { alert(String(e)); }
   };
@@ -485,7 +505,14 @@ export default function GestionInventario() {
                             )}
                           </div>
                           <div style={{ flex: 1 }}>
-                            <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{p.nombre}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                              <span style={{ fontWeight: 'bold', fontSize: '14px', color: p.oculto ? '#9ca3af' : undefined }}>{p.nombre}</span>
+                              {p.oculto && (
+                                <span style={{ fontSize: 10, background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', borderRadius: 6, padding: '1px 6px', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                                  Oculto{p.oculto_desde ? ` desde ${new Date(p.oculto_desde).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}
+                                </span>
+                              )}
+                            </div>
                             {imgs.length > 0 && <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{imgs.length} imagen{imgs.length > 1 ? 'es' : ''}</div>}
                             <VariantesEditor
                               productoId={p.id}
@@ -532,6 +559,13 @@ export default function GestionInventario() {
                           </>
                         ) : (
                           <>
+                            <button
+                              title={p.oculto ? 'Mostrar en tienda' : 'Ocultar de la tienda'}
+                              onClick={() => toggleOculto(p)}
+                              style={{ color: p.oculto ? '#f59e0b' : '#9ca3af', border: 'none', background: 'none', cursor: 'pointer' }}
+                            >
+                              {p.oculto ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
                             <button onClick={() => {
                               const famId = p.familia_id ?? (familias.find(f => f.nombre === p.familia)?.id ?? '');
                               setEditandoId(p.id);

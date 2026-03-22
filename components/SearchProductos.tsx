@@ -1,8 +1,25 @@
 'use client';
 
 import React, { useEffect, useState, useMemo, lazy, Suspense } from 'react';
-import { Search, X, ChevronDown, Tag, ChevronLeft, ChevronRight, Percent, Eye } from 'lucide-react';
+import { Search, X, ChevronDown, Tag, ChevronLeft, ChevronRight, Percent, Eye, Star } from 'lucide-react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+
+function MiniEstrellas({ media, total }: { media: number; total: number }) {
+  return (
+    <div className="flex items-center gap-1 mt-1">
+      <div className="flex gap-0.5">
+        {[1, 2, 3, 4, 5].map(n => (
+          <Star
+            key={n}
+            size={10}
+            className={n <= Math.round(media) ? 'fill-amber-400 text-amber-400' : 'fill-slate-200 text-slate-200'}
+          />
+        ))}
+      </div>
+      <span className="text-[10px] text-slate-400 font-semibold">{media.toFixed(1)} <span className="font-normal">({total})</span></span>
+    </div>
+  );
+}
 
 const ProductoModal = lazy(() => import('./ProductoModal'));
 
@@ -11,13 +28,15 @@ export default function SearchProductos({
   initialQuery = '',
   initialSort = 'newest',
   initialCategoria = null,
-  categorias = []
+  categorias = [],
+  medias = {}
 }: {
   initialProducts?: any[];
   initialQuery?: string;
   initialSort?: string;
   initialCategoria?: string | null;
   categorias?: any[];
+  medias?: Record<string, { media: number; total: number }>;
 }) {
   const router       = useRouter();
   const pathname     = usePathname();
@@ -218,7 +237,11 @@ export default function SearchProductos({
                   <h2 className="text-sm sm:text-2xl font-black text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2 tracking-tight">
                     {producto.nombre}
                   </h2>
-                  <div className="h-0.5 sm:h-1 w-8 sm:w-12 bg-blue-600/20 rounded-full mt-1 sm:mt-2 group-hover:w-16 sm:group-hover:w-24 transition-all duration-500" />
+                  {medias[producto.id] ? (
+                    <MiniEstrellas media={medias[producto.id].media} total={medias[producto.id].total} />
+                  ) : (
+                    <div className="h-0.5 sm:h-1 w-8 sm:w-12 bg-blue-600/20 rounded-full mt-1 sm:mt-2 group-hover:w-16 sm:group-hover:w-24 transition-all duration-500" />
+                  )}
                 </div>
 
                 {/* Descripción corta */}

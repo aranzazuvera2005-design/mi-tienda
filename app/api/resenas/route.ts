@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 export const dynamic = 'force-dynamic';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // GET /api/resenas?productoId=... → reseñas públicas de un producto
 export async function GET(req: Request) {
@@ -53,7 +53,18 @@ export async function POST(req: Request) {
     return new Response(JSON.stringify({ error: 'Missing Supabase configuration' }), { status: 500 });
   }
 
+  // Verificar token del usuario autenticado
+  const token = req.headers.get('Authorization')?.replace('Bearer ', '').trim();
+  if (!token) {
+    return new Response(JSON.stringify({ error: 'No autorizado' }), { status: 401 });
+  }
+
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  if (authError || !user) {
+    return new Response(JSON.stringify({ error: 'Token inválido' }), { status: 401 });
+  }
 
   try {
     const body = await req.json();
@@ -61,6 +72,11 @@ export async function POST(req: Request) {
 
     if (!productoId || !clienteId || !valoracion) {
       return new Response(JSON.stringify({ error: 'productoId, clienteId y valoracion son obligatorios' }), { status: 400 });
+    }
+
+    // Verificar que clienteId coincide con el usuario autenticado
+    if (user.id !== clienteId) {
+      return new Response(JSON.stringify({ error: 'No autorizado' }), { status: 403 });
     }
 
     if (valoracion < 1 || valoracion > 5) {
@@ -153,7 +169,18 @@ export async function PUT(req: Request) {
     return new Response(JSON.stringify({ error: 'Missing Supabase configuration' }), { status: 500 });
   }
 
+  // Verificar token del usuario autenticado
+  const token = req.headers.get('Authorization')?.replace('Bearer ', '').trim();
+  if (!token) {
+    return new Response(JSON.stringify({ error: 'No autorizado' }), { status: 401 });
+  }
+
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  if (authError || !user) {
+    return new Response(JSON.stringify({ error: 'Token inválido' }), { status: 401 });
+  }
 
   try {
     const body = await req.json();
@@ -161,6 +188,10 @@ export async function PUT(req: Request) {
 
     if (!id || !clienteId || !valoracion) {
       return new Response(JSON.stringify({ error: 'id, clienteId y valoracion son obligatorios' }), { status: 400 });
+    }
+
+    if (user.id !== clienteId) {
+      return new Response(JSON.stringify({ error: 'No autorizado' }), { status: 403 });
     }
 
     if (valoracion < 1 || valoracion > 5) {

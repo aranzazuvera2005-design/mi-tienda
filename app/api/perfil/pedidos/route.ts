@@ -9,10 +9,18 @@ const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 export async function POST(req: Request) {
   try {
     if (!SUPABASE_URL || !SERVICE_ROLE) {
-      return NextResponse.json({ 
-        error: 'Error de configuración en el servidor', 
-        details: 'Faltan variables de entorno críticas.' 
-      }, { status: 500 });
+      return NextResponse.json({ error: 'Error de configuración en el servidor' }, { status: 500 });
+    }
+
+    // Verificar token del usuario autenticado
+    const token = req.headers.get('Authorization')?.replace('Bearer ', '').trim();
+    if (!token) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+    const supabaseAuth = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data: { user }, error: authErr } = await supabaseAuth.auth.getUser(token);
+    if (authErr || !user) {
+      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
     const body = await req.json();
@@ -20,6 +28,11 @@ export async function POST(req: Request) {
 
     if (!userId || !cart || cart.length === 0) {
       return NextResponse.json({ error: 'Datos del pedido incompletos' }, { status: 400 });
+    }
+
+    // Verificar que userId coincide con el usuario autenticado
+    if (user.id !== userId) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE, {
@@ -34,7 +47,6 @@ export async function POST(req: Request) {
       .single();
 
     if (errorPerfil || !perfilExistente) {
-      console.log(`Perfil no encontrado para pedido de ${userId}, creando automáticamente...`);
       const { error: createProfileError } = await supabase
         .from('perfiles')
         .insert([{
@@ -99,7 +111,6 @@ export async function POST(req: Request) {
     });
 
   } catch (err: any) {
-    console.error('API PEDIDOS ERROR:', err);
     return NextResponse.json({ error: err.message || 'Error interno del servidor' }, { status: 500 });
   }
 }

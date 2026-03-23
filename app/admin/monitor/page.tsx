@@ -1,5 +1,6 @@
 'use client';
 
+import { adminFetch } from '@/lib/adminFetch';
 import { useEffect, useState, useRef } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { Bell, TrendingUp, ShoppingBag, Euro, Package, ArrowLeft, RefreshCw } from 'lucide-react';
@@ -31,7 +32,7 @@ export default function MonitorVentas() {
 
   const fetchStats = async () => {
     try {
-      const res = await fetch('/api/admin/stats');
+      const res = await adminFetch('/api/admin/stats');
       const data = await res.json();
       if (res.ok) setStats(data);
     } catch (e) {

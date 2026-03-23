@@ -1,5 +1,6 @@
 'use client';
 
+import { adminFetch } from '@/lib/adminFetch';
 import { useEffect, useState, useRef } from 'react';
 import { Star, Trash2, ArrowLeft, RefreshCw, Filter } from 'lucide-react';
 import Link from 'next/link';
@@ -53,7 +54,7 @@ export default function AdminResenas() {
       const params = new URLSearchParams({ page: String(p), limit: String(PAGE_SIZE) });
       if (valoracion) params.set('valoracion', valoracion);
 
-      const res = await fetch(`/api/admin/resenas?${params}`);
+      const res = await adminFetch(`/api/admin/resenas?${params}`);
       if (!res.ok) throw new Error('Error cargando reseñas');
       const json = await res.json();
       setResenas(json.data || []);
@@ -81,7 +82,7 @@ export default function AdminResenas() {
     if (!confirm('¿Eliminar esta reseña? Esta acción no se puede deshacer.')) return;
     setEliminando(id);
     try {
-      const res = await fetch(`/api/admin/resenas?id=${id}`, { method: 'DELETE' });
+      const res = await adminFetch(`/api/admin/resenas?id=${id}`, { method: 'DELETE' });
       if (!res.ok) {
         const json = await res.json();
         throw new Error(json.error || 'Error al eliminar');

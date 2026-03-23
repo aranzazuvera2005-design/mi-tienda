@@ -83,9 +83,19 @@ export default function MiPerfil() {
     }
     setGuardandoDir(true);
     try {
+      const supabaseClient = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const authToken = session?.access_token;
+
       const res = await fetch('/api/perfil/direcciones', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
+        },
         body: JSON.stringify({
           userId: user.id,
           email: user.email,

@@ -8,32 +8,24 @@ const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 export async function GET(req: Request) {
   try {
-    // Leer token del header Authorization
-    const authHeader = req.headers.get('Authorization');
-    const token = authHeader?.replace('Bearer ', '').trim();
-
-    console.log('[check-rol] token present:', !!token, '| token length:', token?.length);
+    const token = req.headers.get('Authorization')?.replace('Bearer ', '').trim();
 
     if (!token) {
       return NextResponse.json({ isAdmin: false, reason: 'no_token' }, { status: 401 });
     }
 
     if (!SUPABASE_URL || !SERVICE_ROLE) {
-      console.error('[check-rol] Faltan variables de entorno SUPABASE_URL o SERVICE_ROLE');
       return NextResponse.json({ isAdmin: false, reason: 'missing_env' }, { status: 500 });
     }
 
-    // Verificar el token con service role
     const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE, {
       auth: { persistSession: false }
     });
 
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
 
-    console.log('[check-rol] user:', user?.id, '| userError:', userError?.message);
-
     if (userError || !user) {
-      return NextResponse.json({ isAdmin: false, reason: 'invalid_token', detail: userError?.message }, { status: 401 });
+      return NextResponse.json({ isAdmin: false, reason: 'invalid_token' }, { status: 401 });
     }
 
     const { data: perfil, error: perfilError } = await supabaseAdmin
@@ -42,10 +34,7 @@ export async function GET(req: Request) {
       .eq('id', user.id)
       .single();
 
-    console.log('[check-rol] perfil:', perfil?.rol, '| perfilError:', perfilError?.message);
-
     if (perfilError || !perfil) {
-      console.error('[check-rol] Error al obtener perfil:', perfilError, 'userId:', user.id);
       return NextResponse.json({ isAdmin: false, reason: 'no_perfil' }, { status: 403 });
     }
 
@@ -58,8 +47,7 @@ export async function GET(req: Request) {
       userId: user.id
     });
 
-  } catch (err: any) {
-    console.error('[check-rol] Error general:', err);
-    return NextResponse.json({ isAdmin: false, reason: err.message }, { status: 500 });
+  } catch {
+    return NextResponse.json({ isAdmin: false, reason: 'error' }, { status: 500 });
   }
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { adminFetch } from '@/lib/adminFetch';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
@@ -26,7 +27,7 @@ export default function VentasPorCliente() {
   const cargar = async () => {
     setCargando(true);
     try {
-      const res = await fetch('/api/admin/ventas-cliente');
+      const res = await adminFetch('/api/admin/ventas-cliente');
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setClientes(Array.isArray(data) ? data : []);

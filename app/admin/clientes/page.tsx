@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { adminFetch } from '@/lib/adminFetch';
 import { useToast } from '@/context/ToastContext';
 import {
   User as UserIcon, Phone, MapPin, Search, ArrowLeft, Mail,
@@ -51,7 +52,7 @@ export default function GestionClientes() {
     setCargando(true);
     setError(null);
     try {
-      const res = await fetch('/api/admin/clientes');
+      const res = await adminFetch('/api/admin/clientes');
       const data = await res.json();
       if (!res.ok) { setError(data?.error || 'Error al cargar clientes'); setClientes([]); return; }
       if (!Array.isArray(data)) { setError('Respuesta inesperada del servidor'); setClientes([]); return; }
@@ -80,7 +81,7 @@ export default function GestionClientes() {
     }
     setCreating(true);
     try {
-      const res = await fetch('/api/admin/create-user', {
+      const res = await adminFetch('/api/admin/create-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nombre: nuevoNombre.trim(), email: nuevoEmail.trim(), password: nuevoPassword.trim(), telefono: nuevoTelefono.trim(), direccion: nuevaDireccion.trim() })
@@ -100,7 +101,7 @@ export default function GestionClientes() {
   const eliminarCliente = async (id: string) => {
     if (!confirm('¿Estás seguro de eliminar este cliente? Se borrará su cuenta y perfil.')) return;
     try {
-      const res = await fetch(`/api/admin/clientes?id=${id}`, { method: 'DELETE' });
+      const res = await adminFetch(`/api/admin/clientes?id=${id}`, { method: 'DELETE' });
       if (res.ok) { addToast({ message: 'Cliente eliminado', type: 'success' }); fetchClientes(); }
       else { const d = await res.json(); addToast({ message: d.error || 'Error al eliminar', type: 'error' }); }
     } catch { addToast({ message: 'Error al eliminar cliente', type: 'error' }); }
@@ -116,7 +117,7 @@ export default function GestionClientes() {
 
   const guardarEdicion = async (id: string) => {
     try {
-      const res = await fetch('/api/admin/clientes', {
+      const res = await adminFetch('/api/admin/clientes', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, nombre: editNombre.trim(), email: editEmail.trim(), telefono: editTelefono.trim(), rol: editRol })
@@ -130,7 +131,7 @@ export default function GestionClientes() {
     const pwd = passwordsInput[id];
     if (!pwd || pwd.length < 6) return addToast({ message: 'Mínimo 6 caracteres', type: 'error' });
     try {
-      const res = await fetch('/api/admin/clientes', {
+      const res = await adminFetch('/api/admin/clientes', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, password: pwd })
@@ -149,7 +150,7 @@ export default function GestionClientes() {
     }
     setLoadingPedidos(prev => ({ ...prev, [clienteId]: true }));
     try {
-      const res = await fetch(`/api/admin/pedidos?cliente_id=${clienteId}&limit=50&page=1`);
+      const res = await adminFetch(`/api/admin/pedidos?cliente_id=${clienteId}&limit=50&page=1`);
       const data = await res.json();
       const pedidos = data.data || [];
       setPedidosCliente(prev => ({ ...prev, [clienteId]: pedidos }));

@@ -66,6 +66,15 @@ export default function ResenaForm({ productoId, clienteId, pedidoId, resenaInic
     try {
       let fotoUrl: string | null = fotoUrlActual;
 
+      // Obtener token de sesión para autorizar las llamadas a la API
+      let authToken: string | undefined;
+      if (SUPABASE_URL && SUPABASE_ANON) {
+        const supabaseClient = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        authToken = session?.access_token;
+      }
+      const authHeaders = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
+
       if (foto && SUPABASE_URL && SUPABASE_ANON) {
         const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
         const ext = foto.name.split('.').pop();
@@ -87,7 +96,7 @@ export default function ResenaForm({ productoId, clienteId, pedidoId, resenaInic
       if (modoEdicion && resenaInicial) {
         const res = await fetch('/api/resenas', {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
           body: JSON.stringify({ id: resenaInicial.id, clienteId, valoracion, comentario, fotoUrl }),
         });
         const json = await res.json();
@@ -99,7 +108,7 @@ export default function ResenaForm({ productoId, clienteId, pedidoId, resenaInic
       } else {
         const res = await fetch('/api/resenas', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
           body: JSON.stringify({ productoId, clienteId, pedidoId, valoracion, comentario, fotoUrl }),
         });
         const json = await res.json();

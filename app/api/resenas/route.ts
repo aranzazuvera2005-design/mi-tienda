@@ -57,7 +57,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { productoId, clienteId, valoracion, comentario, fotoUrl } = body;
+    const { productoId, clienteId, pedidoId, valoracion, comentario, fotoUrl } = body;
 
     if (!productoId || !clienteId || !valoracion) {
       return new Response(JSON.stringify({ error: 'productoId, clienteId y valoracion son obligatorios' }), { status: 400 });
@@ -67,29 +67,37 @@ export async function POST(req: Request) {
       return new Response(JSON.stringify({ error: 'La valoración debe ser entre 1 y 5' }), { status: 400 });
     }
 
-    // Validar que el cliente haya comprado el producto
-    // Paso 1: obtener IDs de pedidos del cliente
-    const { data: pedidos, error: pedidosError } = await supabase
-      .from('pedidos')
-      .select('id')
-      .eq('cliente_id', clienteId);
-
-    if (pedidosError) {
-      return new Response(JSON.stringify({ error: pedidosError.message }), { status: 500 });
-    }
-
-    const pedidoIds = (pedidos || []).map((p: any) => p.id);
-
-    // Paso 2: comprobar si alguna línea de esos pedidos contiene el producto
-    const { data: compra } = pedidoIds.length > 0
-      ? await supabase
+    // Validar que el cliente haya comprado el producto (en el pedido concreto si se indica)
+    let compra = null;
+    if (pedidoId) {
+      const { data } = await supabase
+        .from('lineas_pedido')
+        .select('id')
+        .eq('producto_id', productoId)
+        .eq('pedido_id', pedidoId)
+        .limit(1)
+        .maybeSingle();
+      compra = data;
+    } else {
+      const { data: pedidos, error: pedidosError } = await supabase
+        .from('pedidos')
+        .select('id')
+        .eq('cliente_id', clienteId);
+      if (pedidosError) {
+        return new Response(JSON.stringify({ error: pedidosError.message }), { status: 500 });
+      }
+      const pedidoIds = (pedidos || []).map((p: any) => p.id);
+      if (pedidoIds.length > 0) {
+        const { data } = await supabase
           .from('lineas_pedido')
           .select('id')
           .eq('producto_id', productoId)
           .in('pedido_id', pedidoIds)
           .limit(1)
-          .maybeSingle()
-      : { data: null };
+          .maybeSingle();
+        compra = data;
+      }
+    }
 
     if (!compra) {
       return new Response(
@@ -98,17 +106,19 @@ export async function POST(req: Request) {
       );
     }
 
-    // Verificar que no exista ya una reseña de este cliente para este producto
-    const { data: existente } = await supabase
+    // Verificar que no exista ya una reseña de este cliente para este producto y pedido
+    let checkQuery = supabase
       .from('resenas')
       .select('id')
       .eq('producto_id', productoId)
-      .eq('cliente_id', clienteId)
-      .maybeSingle();
+      .eq('cliente_id', clienteId);
+    if (pedidoId) checkQuery = checkQuery.eq('pedido_id', pedidoId);
+
+    const { data: existente } = await checkQuery.maybeSingle();
 
     if (existente) {
       return new Response(
-        JSON.stringify({ error: 'Ya has reseñado este producto' }),
+        JSON.stringify({ error: 'Ya has reseñado este producto en este pedido' }),
         { status: 409 }
       );
     }
@@ -119,6 +129,7 @@ export async function POST(req: Request) {
       .insert({
         producto_id: productoId,
         cliente_id: clienteId,
+        pedido_id: pedidoId || null,
         valoracion,
         comentario: comentario || null,
         foto_url: fotoUrl || null,

@@ -2,16 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { ShoppingBag, Calendar, ChevronDown, ChevronUp, Package, ArrowLeft, Clock, CheckCircle, XCircle, AlertCircle, MapPin } from 'lucide-react';
+import { ShoppingBag, Calendar, ChevronDown, Package, ArrowLeft, Clock, CheckCircle, XCircle, AlertCircle, MapPin, Star } from 'lucide-react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import Card from '@/components/Card';
+import ResenaForm from '@/components/ResenaForm';
 
 export default function MisPedidos() {
   const [pedidos, setPedidos] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  // { [`${pedidoId}-${productoId}`]: { yaReseno, mostrando } }
+  const [resenasEstado, setResenasEstado] = useState<Record<string, { yaReseno: boolean; mostrando: boolean }>>({});
   const { user } = useCart();
 
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -19,10 +22,7 @@ export default function MisPedidos() {
   const supabase = (SUPABASE_URL && SUPABASE_ANON) ? createBrowserClient(SUPABASE_URL, SUPABASE_ANON) : null;
 
   useEffect(() => {
-    if (!user || !supabase) {
-      setCargando(false);
-      return;
-    }
+    if (!user || !supabase) { setCargando(false); return; }
     fetchPedidos();
   }, [user, supabase]);
 
@@ -30,14 +30,12 @@ export default function MisPedidos() {
     if (!supabase || !user) return;
     setCargando(true);
     setError(null);
-
     try {
       const { data, error: err } = await supabase
         .from('pedidos')
         .select('*')
         .eq('cliente_id', user.id)
         .order('creado_at', { ascending: false });
-
       if (err) throw err;
       setPedidos(data || []);
     } catch (e: any) {
@@ -45,6 +43,44 @@ export default function MisPedidos() {
     } finally {
       setCargando(false);
     }
+  };
+
+  // Al expandir un pedido, comprobar estado de reseña de cada producto
+  const handleExpand = async (pedidoId: string, articulos: any[]) => {
+    const nuevo = expandedId === pedidoId ? null : pedidoId;
+    setExpandedId(nuevo);
+
+    if (nuevo && user) {
+      const ids = articulos.map((a: any) => a.id).filter(Boolean);
+      await Promise.all(ids.map(async (productoId: string) => {
+        const key = `${pedidoId}-${productoId}`;
+        if (resenasEstado[key] !== undefined) return;
+        try {
+          const res = await fetch(`/api/resenas/puede-resenar?productoId=${productoId}&clienteId=${user.id}&pedidoId=${pedidoId}`);
+          if (res.ok) {
+            const json = await res.json();
+            setResenasEstado(prev => ({
+              ...prev,
+              [key]: { yaReseno: json.yaReseno, mostrando: false },
+            }));
+          }
+        } catch {}
+      }));
+    }
+  };
+
+  const toggleFormulario = (key: string) => {
+    setResenasEstado(prev => ({
+      ...prev,
+      [key]: { ...prev[key], mostrando: !prev[key]?.mostrando },
+    }));
+  };
+
+  const onResenaCreada = (key: string) => {
+    setResenasEstado(prev => ({
+      ...prev,
+      [key]: { yaReseno: true, mostrando: false },
+    }));
   };
 
   const getStatusColor = (estado: string) => {
@@ -67,18 +103,13 @@ export default function MisPedidos() {
 
   const formatearFecha = (fecha: string) => {
     const d = new Date(fecha);
-    return d.toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    }) + ' · ' + d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })
+      + ' · ' + d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
   };
 
   const puedeSolicitarDevolucion = (fechaPedido: string) => {
-    const fecha = new Date(fechaPedido);
-    const ahora = new Date();
-    const diferenciaDias = Math.floor((ahora.getTime() - fecha.getTime()) / (1000 * 60 * 60 * 24));
-    return diferenciaDias <= 30;
+    const dias = Math.floor((Date.now() - new Date(fechaPedido).getTime()) / (1000 * 60 * 60 * 24));
+    return dias <= 30;
   };
 
   if (!user) {
@@ -109,7 +140,6 @@ export default function MisPedidos() {
   return (
     <div className="py-8 sm:py-12">
       <div className="max-w-4xl mx-auto">
-        {/* Encabezado */}
         <div className="flex items-center gap-4 mb-10">
           <div className="bg-blue-600 p-3 rounded-2xl shadow-lg shadow-blue-200">
             <ShoppingBag className="text-white" size={28} />
@@ -118,9 +148,7 @@ export default function MisPedidos() {
         </div>
 
         {error && (
-          <div className="mb-8 p-4 bg-red-50 text-red-600 rounded-2xl text-sm font-bold border border-red-100">
-            {error}
-          </div>
+          <div className="mb-8 p-4 bg-red-50 text-red-600 rounded-2xl text-sm font-bold border border-red-100">{error}</div>
         )}
 
         {pedidos.length === 0 ? (
@@ -131,17 +159,16 @@ export default function MisPedidos() {
             <h3 className="text-2xl font-black text-slate-900 mb-2">Aún no tienes pedidos</h3>
             <p className="text-slate-500 mb-8 font-medium">Cuando realices tu primera compra, aparecerá aquí.</p>
             <Link href="/" className="inline-flex items-center gap-2 bg-blue-600 text-white px-8 py-4 rounded-full font-black hover:bg-blue-700 transition-all shadow-xl shadow-blue-200 active:scale-95">
-              <ArrowLeft size={20} />
-              Ir a la tienda
+              <ArrowLeft size={20} /> Ir a la tienda
             </Link>
           </Card>
         ) : (
           <div className="space-y-6">
             {pedidos.map((pedido) => (
               <Card key={pedido.id} className="overflow-hidden rounded-[2.5rem] shadow-xl shadow-slate-200/40 border-none hover:shadow-2xl transition-all duration-500 group">
-                {/* Cabecera del pedido */}
-                <button 
-                  onClick={() => setExpandedId(expandedId === pedido.id ? null : pedido.id)}
+                {/* Cabecera */}
+                <button
+                  onClick={() => handleExpand(pedido.id, pedido.articulos || [])}
                   className="w-full flex items-center justify-between p-6 sm:p-8 text-left transition-colors hover:bg-slate-50/50"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-10">
@@ -180,21 +207,56 @@ export default function MisPedidos() {
                           <Package size={14} /> Productos
                         </h4>
                         <div className="space-y-3">
-                          {pedido.articulos?.map((item: any, idx: number) => (
-                            <div key={idx} className="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                              <div className="flex flex-col">
-                                <span className="text-sm font-black text-slate-900">{item.nombre}</span>
-                                <span className="text-xs text-slate-500 font-bold">Cantidad: {item.cantidad}</span>
+                          {pedido.articulos?.map((item: any, idx: number) => {
+                            const productoId = item.id;
+                            const key = productoId ? `${pedido.id}-${productoId}` : undefined;
+                            const estado = key ? resenasEstado[key] : undefined;
+                            return (
+                              <div key={idx} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                                <div className="flex justify-between items-center p-4">
+                                  <div className="flex flex-col">
+                                    <span className="text-sm font-black text-slate-900">{item.nombre}</span>
+                                    <span className="text-xs text-slate-500 font-bold">Cantidad: {item.cantidad}</span>
+                                  </div>
+                                  <div className="flex items-center gap-3">
+                                    <span className="text-sm font-black text-blue-600">{(Number(item.precio) * item.cantidad).toFixed(2)}€</span>
+                                    {key && (
+                                      estado?.yaReseno ? (
+                                        <span className="flex items-center gap-1 text-xs font-bold text-amber-500 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-200">
+                                          <Star size={11} className="fill-amber-400 text-amber-400" /> Reseñado
+                                        </span>
+                                      ) : (
+                                        <button
+                                          onClick={() => toggleFormulario(key)}
+                                          className="flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-amber-600 bg-slate-50 hover:bg-amber-50 border border-slate-200 hover:border-amber-200 px-3 py-1.5 rounded-full transition-colors"
+                                        >
+                                          <Star size={11} />
+                                          {estado?.mostrando ? 'Cancelar' : 'Reseñar'}
+                                        </button>
+                                      )
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Formulario de reseña inline */}
+                                {key && estado?.mostrando && !estado?.yaReseno && (
+                                  <div className="border-t border-slate-100 p-4">
+                                    <ResenaForm
+                                      productoId={productoId}
+                                      clienteId={user.id}
+                                      pedidoId={pedido.id}
+                                      onResenaCreada={() => onResenaCreada(key)}
+                                    />
+                                  </div>
+                                )}
                               </div>
-                              <span className="text-sm font-black text-blue-600">{(Number(item.precio) * item.cantidad).toFixed(2)}€</span>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
 
                       {/* Info adicional */}
                       <div className="space-y-6">
-                        {/* Dirección */}
                         <div className="space-y-3">
                           <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                             <MapPin size={14} /> Dirección de entrega
@@ -206,7 +268,6 @@ export default function MisPedidos() {
                           </div>
                         </div>
 
-                        {/* Acciones */}
                         <div className="flex flex-col gap-3">
                           {puedeSolicitarDevolucion(pedido.creado_at) ? (
                             <Link
@@ -236,11 +297,9 @@ export default function MisPedidos() {
           </div>
         )}
 
-        {/* Volver */}
         <div className="mt-12 text-center">
           <Link href="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-blue-600 font-black text-sm uppercase tracking-widest transition-colors">
-            <ArrowLeft size={18} />
-            Volver a la tienda
+            <ArrowLeft size={18} /> Volver a la tienda
           </Link>
         </div>
       </div>

@@ -5,18 +5,31 @@ import { Star, Camera, X, Loader2 } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useToast } from '@/context/ToastContext';
 
+interface ResenaInicial {
+  id: string;
+  valoracion: number;
+  comentario: string | null;
+  foto_url: string | null;
+}
+
 interface ResenaFormProps {
   productoId: string;
   clienteId: string;
+  pedidoId?: string;
+  resenaInicial?: ResenaInicial | null;
   onResenaCreada: () => void;
+  onCancelar?: () => void;
 }
 
-export default function ResenaForm({ productoId, clienteId, onResenaCreada }: ResenaFormProps) {
-  const [valoracion, setValoracion] = useState(0);
+export default function ResenaForm({ productoId, clienteId, pedidoId, resenaInicial, onResenaCreada, onCancelar }: ResenaFormProps) {
+  const modoEdicion = !!resenaInicial;
+
+  const [valoracion, setValoracion] = useState(resenaInicial?.valoracion ?? 0);
   const [hover, setHover] = useState(0);
-  const [comentario, setComentario] = useState('');
+  const [comentario, setComentario] = useState(resenaInicial?.comentario ?? '');
   const [foto, setFoto] = useState<File | null>(null);
-  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+  const [fotoPreview, setFotoPreview] = useState<string | null>(resenaInicial?.foto_url ?? null);
+  const [fotoUrlActual, setFotoUrlActual] = useState<string | null>(resenaInicial?.foto_url ?? null);
   const [enviando, setEnviando] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const { addToast } = useToast();
@@ -38,6 +51,7 @@ export default function ResenaForm({ productoId, clienteId, onResenaCreada }: Re
   const quitarFoto = () => {
     setFoto(null);
     setFotoPreview(null);
+    setFotoUrlActual(null);
     if (fileRef.current) fileRef.current.value = '';
   };
 
@@ -50,9 +64,9 @@ export default function ResenaForm({ productoId, clienteId, onResenaCreada }: Re
 
     setEnviando(true);
     try {
-      let fotoUrl: string | null = null;
+      let fotoUrl: string | null = fotoUrlActual;
 
-      // Subir foto a Supabase Storage si existe
+      // Subir nueva foto si se seleccionó una
       if (foto && SUPABASE_URL && SUPABASE_ANON) {
         const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
         const ext = foto.name.split('.').pop();
@@ -71,22 +85,32 @@ export default function ResenaForm({ productoId, clienteId, onResenaCreada }: Re
         fotoUrl = urlData.publicUrl;
       }
 
-      const res = await fetch('/api/resenas', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productoId, clienteId, valoracion, comentario, fotoUrl }),
-      });
-
-      const json = await res.json();
-      if (!res.ok) {
-        addToast({ message: json.error || 'Error al enviar la reseña', type: 'error' });
-        return;
+      if (modoEdicion && resenaInicial) {
+        const res = await fetch('/api/resenas', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: resenaInicial.id, clienteId, valoracion, comentario, fotoUrl }),
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          addToast({ message: json.error || 'Error al guardar la reseña', type: 'error' });
+          return;
+        }
+        addToast({ message: '¡Reseña actualizada!', type: 'success' });
+      } else {
+        const res = await fetch('/api/resenas', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productoId, clienteId, pedidoId, valoracion, comentario, fotoUrl }),
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          addToast({ message: json.error || 'Error al enviar la reseña', type: 'error' });
+          return;
+        }
+        addToast({ message: '¡Reseña publicada! Gracias por tu opinión', type: 'success' });
       }
 
-      addToast({ message: '¡Reseña publicada! Gracias por tu opinión', type: 'success' });
-      setValoracion(0);
-      setComentario('');
-      quitarFoto();
       onResenaCreada();
     } catch (err: any) {
       addToast({ message: err?.message || 'Error inesperado', type: 'error' });
@@ -97,7 +121,9 @@ export default function ResenaForm({ productoId, clienteId, onResenaCreada }: Re
 
   return (
     <form onSubmit={handleSubmit} className="bg-slate-50 rounded-2xl p-5 flex flex-col gap-4">
-      <h3 className="font-black text-slate-800 text-base">Escribe tu reseña</h3>
+      <h3 className="font-black text-slate-800 text-base">
+        {modoEdicion ? 'Editar tu reseña' : 'Escribe tu reseña'}
+      </h3>
 
       {/* Estrellas */}
       <div className="flex gap-1">
@@ -159,7 +185,7 @@ export default function ResenaForm({ productoId, clienteId, onResenaCreada }: Re
             onClick={() => fileRef.current?.click()}
             className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 bg-white border border-dashed border-slate-300 rounded-xl px-4 py-2.5 transition-colors"
           >
-            <Camera size={16} /> Añadir foto (opcional)
+            <Camera size={16} /> {modoEdicion ? 'Cambiar foto (opcional)' : 'Añadir foto (opcional)'}
           </button>
         )}
         <input
@@ -171,14 +197,26 @@ export default function ResenaForm({ productoId, clienteId, onResenaCreada }: Re
         />
       </div>
 
-      <button
-        type="submit"
-        disabled={enviando || valoracion === 0}
-        className="self-start flex items-center gap-2 bg-slate-900 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm px-5 py-2.5 rounded-xl transition-colors"
-      >
-        {enviando && <Loader2 size={14} className="animate-spin" />}
-        {enviando ? 'Publicando…' : 'Publicar reseña'}
-      </button>
+      <div className="flex gap-3">
+        <button
+          type="submit"
+          disabled={enviando || valoracion === 0}
+          className="flex items-center gap-2 bg-slate-900 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm px-5 py-2.5 rounded-xl transition-colors"
+        >
+          {enviando && <Loader2 size={14} className="animate-spin" />}
+          {enviando ? 'Guardando…' : modoEdicion ? 'Guardar cambios' : 'Publicar reseña'}
+        </button>
+
+        {modoEdicion && onCancelar && (
+          <button
+            type="button"
+            onClick={onCancelar}
+            className="text-sm text-slate-500 hover:text-slate-700 px-4 py-2.5 rounded-xl border border-slate-200 bg-white transition-colors"
+          >
+            Cancelar
+          </button>
+        )}
+      </div>
     </form>
   );
 }

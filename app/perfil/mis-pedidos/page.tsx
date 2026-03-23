@@ -13,8 +13,8 @@ export default function MisPedidos() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  // { [`${pedidoId}-${productoId}`]: { yaReseno, mostrando } }
-  const [resenasEstado, setResenasEstado] = useState<Record<string, { yaReseno: boolean; mostrando: boolean }>>({});
+  // { [`${pedidoId}-${productoId}`]: { yaReseno, mostrando, miResena } }
+  const [resenasEstado, setResenasEstado] = useState<Record<string, { yaReseno: boolean; mostrando: boolean; miResena?: { id: string; valoracion: number; comentario: string | null; foto_url: string | null } | null }>>({});
   const { user } = useCart();
 
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -60,7 +60,7 @@ export default function MisPedidos() {
             const json = await res.json();
             setResenasEstado(prev => ({
               ...prev,
-              [key]: { yaReseno: json.yaReseno, mostrando: false },
+              [key]: { yaReseno: json.yaReseno, mostrando: false, miResena: json.miResena || null },
             }));
           }
         } catch {}
@@ -217,30 +217,32 @@ export default function MisPedidos() {
                                   <div className="flex items-center gap-3">
                                     <span className="text-sm font-black text-blue-600">{(Number(item.precio) * item.cantidad).toFixed(2)}€</span>
                                     {key && (
-                                      estado?.yaReseno ? (
-                                        <span className="flex items-center gap-1 text-xs font-bold text-amber-500 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-200">
-                                          <Star size={11} className="fill-amber-400 text-amber-400" /> Reseñado
-                                        </span>
-                                      ) : (
-                                        <button
-                                          onClick={() => toggleFormulario(key)}
-                                          className="flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-amber-600 bg-slate-50 hover:bg-amber-50 border border-slate-200 hover:border-amber-200 px-3 py-1.5 rounded-full transition-colors"
-                                        >
-                                          <Star size={11} />
-                                          {estado?.mostrando ? 'Cancelar' : 'Reseñar'}
-                                        </button>
-                                      )
+                                      <button
+                                        onClick={() => toggleFormulario(key)}
+                                        className={`flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full border transition-colors ${
+                                          estado?.yaReseno
+                                            ? 'text-amber-600 bg-amber-50 border-amber-200 hover:bg-amber-100'
+                                            : 'text-slate-600 hover:text-amber-600 bg-slate-50 hover:bg-amber-50 border-slate-200 hover:border-amber-200'
+                                        }`}
+                                      >
+                                        <Star size={11} className={estado?.yaReseno ? 'fill-amber-400 text-amber-400' : ''} />
+                                        {estado?.yaReseno
+                                          ? (estado?.mostrando ? 'Ocultar reseña' : 'Ver / Editar reseña')
+                                          : (estado?.mostrando ? 'Cancelar' : 'Reseñar')}
+                                      </button>
                                     )}
                                   </div>
                                 </div>
 
-                                {key && estado?.mostrando && !estado?.yaReseno && (
+                                {key && estado?.mostrando && (
                                   <div className="border-t border-slate-100 p-4">
                                     <ResenaForm
                                       productoId={productoId}
                                       clienteId={user.id}
                                       pedidoId={pedido.id}
+                                      resenaInicial={estado?.miResena ?? null}
                                       onResenaCreada={() => onResenaCreada(key)}
+                                      onCancelar={() => toggleFormulario(key)}
                                     />
                                   </div>
                                 )}

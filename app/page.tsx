@@ -8,7 +8,6 @@ export default async function HomePage({ searchParams }: { searchParams: any }) 
   const params = await searchParams;
   const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const BASE = process.env.NEXT_PUBLIC_APP_URL || '';
 
   const q         = params.q || '';
   const sort      = params.sort || 'newest';
@@ -20,27 +19,44 @@ export default async function HomePage({ searchParams }: { searchParams: any }) 
 
   if (URL && KEY) {
     try {
-      const [resProd, resCat, resMedias] = await Promise.all([
+      const headers = { apikey: KEY, Authorization: `Bearer ${KEY}` };
+
+      const [resProd, resCat] = await Promise.all([
         fetch(
           `${URL}/rest/v1/productos?select=id,nombre,precio,precio_tachado,descuento_pct,descripcion,descripcion_larga,imagen_url,imagenes,familia_id,familias(nombre)&or=(oculto.is.null,oculto.eq.false)`,
-          { headers: { apikey: KEY, Authorization: `Bearer ${KEY}` }, cache: 'no-store' }
+          { headers, cache: 'no-store' }
         ),
         fetch(
           `${URL}/rest/v1/familias?select=*&order=nombre.asc`,
-          { headers: { apikey: KEY, Authorization: `Bearer ${KEY}` }, cache: 'no-store' }
+          { headers, cache: 'no-store' }
         ),
-        fetch(`${BASE}/api/resenas/medias`, { cache: 'no-store' }),
       ]);
       if (resProd.ok) productos = await resProd.json();
       if (resCat.ok)  categorias = await resCat.json();
+    } catch (e) {
+      console.error("Error cargando productos/categorias");
+    }
+
+    // Medias de reseñas por separado para no bloquear si falla
+    try {
+      const resMedias = await fetch(
+        `${URL}/rest/v1/resenas?select=producto_id,valoracion`,
+        { headers: { apikey: KEY, Authorization: `Bearer ${KEY}` }, cache: 'no-store' }
+      );
       if (resMedias.ok) {
-        const json = await resMedias.json();
-        for (const m of json.data || []) {
-          medias[m.producto_id] = { media: m.media, total: m.total };
+        const rows: { producto_id: string; valoracion: number }[] = await resMedias.json();
+        const mapa: Record<string, { suma: number; total: number }> = {};
+        for (const r of rows) {
+          if (!mapa[r.producto_id]) mapa[r.producto_id] = { suma: 0, total: 0 };
+          mapa[r.producto_id].suma += r.valoracion;
+          mapa[r.producto_id].total += 1;
+        }
+        for (const [pid, { suma, total }] of Object.entries(mapa)) {
+          medias[pid] = { media: Math.round((suma / total) * 10) / 10, total };
         }
       }
     } catch (e) {
-      console.error("Error cargando datos");
+      // No bloqueante: las estrellas simplemente no aparecerán
     }
   }
 

@@ -140,7 +140,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Usamos la nueva API route para evitar el error 23503 (FK constraint)
       // Esta API se encarga de crear el perfil si no existe (Upsert)
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase!.auth.getSession();
       const authToken = session?.access_token;
 
       const response = await fetch('/api/perfil/pedidos', {

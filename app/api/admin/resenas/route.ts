@@ -1,12 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
+import { requireAdmin, isAuthError } from '@/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // GET /api/admin/resenas → todas las reseñas con estadísticas para el panel de admin
 export async function GET(req: Request) {
+  const auth = await requireAdmin(req);
+  if (isAuthError(auth)) return auth;
+
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
     return new Response(JSON.stringify({ error: 'Missing Supabase configuration' }), { status: 500 });
   }
@@ -14,8 +18,8 @@ export async function GET(req: Request) {
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
   const url = new URL(req.url);
 
-  const page = parseInt(url.searchParams.get('page') || '1', 10) || 1;
-  const limit = parseInt(url.searchParams.get('limit') || '20', 10) || 20;
+  const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10) || 1);
+  const limit = Math.max(1, Math.min(parseInt(url.searchParams.get('limit') || '20', 10) || 20, 100));
   const filtroValoracion = url.searchParams.get('valoracion') || '';
   const busqueda = url.searchParams.get('q') || '';
 
@@ -67,6 +71,9 @@ export async function GET(req: Request) {
 
 // DELETE /api/admin/resenas?id=... → eliminar una reseña
 export async function DELETE(req: Request) {
+  const auth = await requireAdmin(req);
+  if (isAuthError(auth)) return auth;
+
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
     return new Response(JSON.stringify({ error: 'Missing Supabase configuration' }), { status: 500 });
   }

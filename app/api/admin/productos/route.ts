@@ -1,9 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
+import { requireAdmin, isAuthError } from '@/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 function getSupabase() {
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) throw new Error('Missing Supabase configuration');
@@ -12,6 +13,9 @@ function getSupabase() {
 
 // PATCH /api/admin/productos → actualizar producto
 export async function PATCH(req: Request) {
+  const auth = await requireAdmin(req);
+  if (isAuthError(auth)) return auth;
+
   try {
     const supabase = getSupabase();
     const body = await req.json();
@@ -37,6 +41,9 @@ export async function PATCH(req: Request) {
 
 // DELETE /api/admin/productos?id=... → eliminar producto
 export async function DELETE(req: Request) {
+  const auth = await requireAdmin(req);
+  if (isAuthError(auth)) return auth;
+
   try {
     const supabase = getSupabase();
     const url = new URL(req.url);

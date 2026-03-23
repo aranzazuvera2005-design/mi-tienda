@@ -1,13 +1,16 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireAdmin, isAuthError } from '@/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
-// Priorizamos las variables de servidor (SERVICE_ROLE es obligatoria aquí)
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export async function POST(req: Request) {
+  const auth = await requireAdmin(req);
+  if (isAuthError(auth)) return auth;
+
   try {
     // 1. Verificación robusta de variables de entorno
     if (!SUPABASE_URL || !SERVICE_ROLE) {

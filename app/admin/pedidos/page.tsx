@@ -1,6 +1,7 @@
 
 'use client';
 
+import { adminFetch } from '@/lib/adminFetch';
 import { createBrowserClient } from '@supabase/ssr';
 import { useEffect, useState, useRef } from 'react';
 import { CheckCircle, Clock, Truck, User, MapPin, Package, RefreshCw, ArrowLeft } from 'lucide-react';
@@ -127,7 +128,7 @@ export default function AdminPedidos() {
       qs.set('page', String(p));
       qs.set('limit', String(pageSize));
 
-      const res = await fetch(`/api/admin/pedidos?${qs.toString()}`);
+      const res = await adminFetch(`/api/admin/pedidos?${qs.toString()}`);
       if (!res.ok) {
         const payload = await res.json().catch(() => ({}));
         const msg = payload?.error || `HTTP ${res.status}`;

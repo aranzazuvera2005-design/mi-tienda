@@ -7,9 +7,13 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const q = searchParams.get('q') || '';
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '12');
-    
+    const pageRaw = parseInt(searchParams.get('page') || '1');
+    const limitRaw = parseInt(searchParams.get('limit') || '12');
+
+    // Limitar valores para prevenir consultas masivas
+    const page = Math.max(1, Math.min(pageRaw, 1000));
+    const limit = Math.max(1, Math.min(limitRaw, 100));
+
     // Calcular rango para paginación
     const from = (page - 1) * limit;
     const to = from + limit - 1;
@@ -44,8 +48,8 @@ export async function GET(request: Request) {
       .select('*, familias(nombre)', { count: 'exact' });
 
     if (q) {
-      // Búsqueda en nombre, descripción y categoría
-      query = query.or(`nombre.ilike.%${q}%,descripcion.ilike.%${q}%,categoria.ilike.%${q}%`);
+      const qEscaped = q.replace(/[%_\\]/g, '\\$&');
+      query = query.or(`nombre.ilike.%${qEscaped}%,descripcion.ilike.%${qEscaped}%,categoria.ilike.%${qEscaped}%`);
     }
 
     const { data, error, count } = await query

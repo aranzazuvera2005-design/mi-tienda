@@ -1,11 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
+import { requireAdmin, isAuthError } from '@/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export async function GET(req: Request) {
+  const auth = await requireAdmin(req);
+  if (isAuthError(auth)) return auth;
+
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
     return new Response(JSON.stringify({ error: 'Missing Supabase configuration' }), { status: 500 });
   }
@@ -18,8 +22,8 @@ export async function GET(req: Request) {
     const clienteId = url.searchParams.get('cliente_id') || null;
     const from = url.searchParams.get('from') || null;
     const to = url.searchParams.get('to') || null;
-    const page = parseInt(url.searchParams.get('page') || '1', 10) || 1;
-    const limit = parseInt(url.searchParams.get('limit') || '10', 10) || 10;
+    const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10) || 1);
+    const limit = Math.max(1, Math.min(parseInt(url.searchParams.get('limit') || '10', 10) || 10, 100));
 
     let builder = supabase
       .from('pedidos')

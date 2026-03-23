@@ -1,5 +1,6 @@
 'use client';
 
+import { adminFetch } from '@/lib/adminFetch';
 import { createBrowserClient } from '@supabase/ssr';
 import { useEffect, useState, useRef } from 'react';
 import { Trash2, ArrowLeft, Pencil, X, Check, Search, Plus, Upload, Link as LinkIcon, HardDrive, ChevronLeft, ChevronRight, ImagePlus, EyeOff, Eye } from 'lucide-react';
@@ -189,7 +190,7 @@ export default function GestionInventario() {
     };
 
     try {
-      const res = await fetch('/api/admin/productos', {
+      const res = await adminFetch('/api/admin/productos', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -208,7 +209,7 @@ export default function GestionInventario() {
   const eliminarProducto = async (id: any) => {
     if (!confirm('¿Seguro que quieres eliminar este producto? Esta acción no se puede deshacer.')) return;
     try {
-      const res = await fetch(`/api/admin/productos?id=${id}`, { method: 'DELETE' });
+      const res = await adminFetch(`/api/admin/productos?id=${id}`, { method: 'DELETE' });
       const json = await res.json();
       if (!res.ok) return alert(json.error || 'Error al eliminar');
       fetchProductos();
@@ -220,7 +221,7 @@ export default function GestionInventario() {
     const accion = nuevoOculto ? 'ocultar' : 'mostrar';
     if (!confirm(`¿${nuevoOculto ? 'Ocultar' : 'Mostrar'} "${p.nombre}" en la tienda?`)) return;
     try {
-      const res = await fetch('/api/admin/productos', {
+      const res = await adminFetch('/api/admin/productos', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

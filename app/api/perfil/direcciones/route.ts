@@ -9,13 +9,27 @@ const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 export async function POST(req: Request) {
   try {
     if (!SUPABASE_URL || !SERVICE_ROLE) {
-      return NextResponse.json({ 
-        error: 'Error de configuración: Faltan variables SERVICE_ROLE' 
-      }, { status: 500 });
+      return NextResponse.json({ error: 'Error de configuración del servidor' }, { status: 500 });
+    }
+
+    // Verificar token del usuario autenticado
+    const token = req.headers.get('Authorization')?.replace('Bearer ', '').trim();
+    if (!token) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+    const supabaseAuth = createClient(SUPABASE_URL, SERVICE_ROLE);
+    const { data: { user }, error: authErr } = await supabaseAuth.auth.getUser(token);
+    if (authErr || !user) {
+      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
     const body = await req.json();
     const { userId, email, nombre, calle, ciudad, cp, esPrincipal } = body;
+
+    // Verificar que userId coincide con el usuario autenticado
+    if (user.id !== userId) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+    }
 
     // Cliente con SERVICE_ROLE para asegurar que podemos escribir en 'perfiles'
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
@@ -52,7 +66,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, data: nuevaDireccion });
 
   } catch (err: any) {
-    console.error('API ERROR:', err.message);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

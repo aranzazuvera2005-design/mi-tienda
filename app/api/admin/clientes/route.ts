@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireAdmin, isAuthError } from '@/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,10 +11,12 @@ const supabaseAdmin = createClient(SUPABASE_URL!, SERVICE_ROLE!, {
   auth: { persistSession: false }
 });
 
-export async function GET() {
+export async function GET(req: Request) {
+  const auth = await requireAdmin(req);
+  if (isAuthError(auth)) return auth;
+
   try {
     if (!SUPABASE_URL || !SERVICE_ROLE) {
-      console.error('[admin/clientes] Faltan variables de entorno: SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY');
       return NextResponse.json({ error: 'Configuración de servidor incompleta' }, { status: 500 });
     }
 
@@ -27,7 +30,6 @@ export async function GET() {
       throw perfilesError;
     }
 
-    console.log(`[admin/clientes] Perfiles encontrados: ${perfiles?.length ?? 0}`);
 
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.listUsers();
     if (authError) {
@@ -52,6 +54,9 @@ export async function GET() {
 }
 
 export async function PUT(req: Request) {
+  const auth = await requireAdmin(req);
+  if (isAuthError(auth)) return auth;
+
   try {
     const body = await req.json();
     const { id, nombre, email, telefono, rol, password } = body;
@@ -87,6 +92,9 @@ export async function PUT(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  const auth = await requireAdmin(req);
+  if (isAuthError(auth)) return auth;
+
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');

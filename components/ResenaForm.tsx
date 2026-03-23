@@ -15,12 +15,13 @@ interface ResenaInicial {
 interface ResenaFormProps {
   productoId: string;
   clienteId: string;
+  pedidoId?: string;
   resenaInicial?: ResenaInicial | null;
   onResenaCreada: () => void;
   onCancelar?: () => void;
 }
 
-export default function ResenaForm({ productoId, clienteId, resenaInicial, onResenaCreada, onCancelar }: ResenaFormProps) {
+export default function ResenaForm({ productoId, clienteId, pedidoId, resenaInicial, onResenaCreada, onCancelar }: ResenaFormProps) {
   const modoEdicion = !!resenaInicial;
 
   const [valoracion, setValoracion] = useState(resenaInicial?.valoracion ?? 0);
@@ -65,7 +66,6 @@ export default function ResenaForm({ productoId, clienteId, resenaInicial, onRes
     try {
       let fotoUrl: string | null = fotoUrlActual;
 
-      // Subir nueva foto si se seleccionó una
       if (foto && SUPABASE_URL && SUPABASE_ANON) {
         const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
         const ext = foto.name.split('.').pop();
@@ -100,7 +100,7 @@ export default function ResenaForm({ productoId, clienteId, resenaInicial, onRes
         const res = await fetch('/api/resenas', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ productoId, clienteId, valoracion, comentario, fotoUrl }),
+          body: JSON.stringify({ productoId, clienteId, pedidoId, valoracion, comentario, fotoUrl }),
         });
         const json = await res.json();
         if (!res.ok) {
@@ -124,7 +124,6 @@ export default function ResenaForm({ productoId, clienteId, resenaInicial, onRes
         {modoEdicion ? 'Editar tu reseña' : 'Escribe tu reseña'}
       </h3>
 
-      {/* Estrellas */}
       <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map(n => (
           <button
@@ -152,7 +151,6 @@ export default function ResenaForm({ productoId, clienteId, resenaInicial, onRes
         )}
       </div>
 
-      {/* Comentario */}
       <textarea
         value={comentario}
         onChange={e => setComentario(e.target.value)}
@@ -161,7 +159,6 @@ export default function ResenaForm({ productoId, clienteId, resenaInicial, onRes
         className="resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
       />
 
-      {/* Foto */}
       <div>
         {fotoPreview ? (
           <div className="relative w-24 h-24">

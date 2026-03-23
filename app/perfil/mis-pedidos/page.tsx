@@ -13,7 +13,7 @@ export default function MisPedidos() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  // { [productoId]: { yaReseno, mostrando } }
+  // { [`${pedidoId}-${productoId}`]: { yaReseno, mostrando } }
   const [resenasEstado, setResenasEstado] = useState<Record<string, { yaReseno: boolean; mostrando: boolean }>>({});
   const { user } = useCart();
 
@@ -45,7 +45,6 @@ export default function MisPedidos() {
     }
   };
 
-  // Al expandir un pedido, comprobar estado de reseña de cada producto
   const handleExpand = async (pedidoId: string, articulos: any[]) => {
     const nuevo = expandedId === pedidoId ? null : pedidoId;
     setExpandedId(nuevo);
@@ -53,14 +52,15 @@ export default function MisPedidos() {
     if (nuevo && user) {
       const ids = articulos.map((a: any) => a.id).filter(Boolean);
       await Promise.all(ids.map(async (productoId: string) => {
-        if (resenasEstado[productoId] !== undefined) return;
+        const key = `${pedidoId}-${productoId}`;
+        if (resenasEstado[key] !== undefined) return;
         try {
-          const res = await fetch(`/api/resenas/puede-resenar?productoId=${productoId}&clienteId=${user.id}`);
+          const res = await fetch(`/api/resenas/puede-resenar?productoId=${productoId}&clienteId=${user.id}&pedidoId=${pedidoId}`);
           if (res.ok) {
             const json = await res.json();
             setResenasEstado(prev => ({
               ...prev,
-              [productoId]: { yaReseno: json.yaReseno, mostrando: false },
+              [key]: { yaReseno: json.yaReseno, mostrando: false },
             }));
           }
         } catch {}
@@ -68,17 +68,17 @@ export default function MisPedidos() {
     }
   };
 
-  const toggleFormulario = (productoId: string) => {
+  const toggleFormulario = (key: string) => {
     setResenasEstado(prev => ({
       ...prev,
-      [productoId]: { ...prev[productoId], mostrando: !prev[productoId]?.mostrando },
+      [key]: { ...prev[key], mostrando: !prev[key]?.mostrando },
     }));
   };
 
-  const onResenaCreada = (productoId: string) => {
+  const onResenaCreada = (key: string) => {
     setResenasEstado(prev => ({
       ...prev,
-      [productoId]: { yaReseno: true, mostrando: false },
+      [key]: { yaReseno: true, mostrando: false },
     }));
   };
 
@@ -165,7 +165,6 @@ export default function MisPedidos() {
           <div className="space-y-6">
             {pedidos.map((pedido) => (
               <Card key={pedido.id} className="overflow-hidden rounded-[2.5rem] shadow-xl shadow-slate-200/40 border-none hover:shadow-2xl transition-all duration-500 group">
-                {/* Cabecera */}
                 <button
                   onClick={() => handleExpand(pedido.id, pedido.articulos || [])}
                   className="w-full flex items-center justify-between p-6 sm:p-8 text-left transition-colors hover:bg-slate-50/50"
@@ -196,11 +195,9 @@ export default function MisPedidos() {
                   </div>
                 </button>
 
-                {/* Detalles expandidos */}
                 {expandedId === pedido.id && (
                   <div className="border-t border-slate-100 p-6 sm:p-8 bg-slate-50/30 animate-in slide-in-from-top-4 duration-500">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      {/* Productos */}
                       <div className="space-y-4">
                         <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                           <Package size={14} /> Productos
@@ -208,7 +205,8 @@ export default function MisPedidos() {
                         <div className="space-y-3">
                           {pedido.articulos?.map((item: any, idx: number) => {
                             const productoId = item.id;
-                            const estado = productoId ? resenasEstado[productoId] : undefined;
+                            const key = productoId ? `${pedido.id}-${productoId}` : undefined;
+                            const estado = key ? resenasEstado[key] : undefined;
                             return (
                               <div key={idx} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                                 <div className="flex justify-between items-center p-4">
@@ -218,14 +216,14 @@ export default function MisPedidos() {
                                   </div>
                                   <div className="flex items-center gap-3">
                                     <span className="text-sm font-black text-blue-600">{(Number(item.precio) * item.cantidad).toFixed(2)}€</span>
-                                    {productoId && (
+                                    {key && (
                                       estado?.yaReseno ? (
                                         <span className="flex items-center gap-1 text-xs font-bold text-amber-500 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-200">
                                           <Star size={11} className="fill-amber-400 text-amber-400" /> Reseñado
                                         </span>
                                       ) : (
                                         <button
-                                          onClick={() => toggleFormulario(productoId)}
+                                          onClick={() => toggleFormulario(key)}
                                           className="flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-amber-600 bg-slate-50 hover:bg-amber-50 border border-slate-200 hover:border-amber-200 px-3 py-1.5 rounded-full transition-colors"
                                         >
                                           <Star size={11} />
@@ -236,13 +234,13 @@ export default function MisPedidos() {
                                   </div>
                                 </div>
 
-                                {/* Formulario de reseña inline */}
-                                {productoId && estado?.mostrando && !estado?.yaReseno && (
+                                {key && estado?.mostrando && !estado?.yaReseno && (
                                   <div className="border-t border-slate-100 p-4">
                                     <ResenaForm
                                       productoId={productoId}
                                       clienteId={user.id}
-                                      onResenaCreada={() => onResenaCreada(productoId)}
+                                      pedidoId={pedido.id}
+                                      onResenaCreada={() => onResenaCreada(key)}
                                     />
                                   </div>
                                 )}
@@ -252,7 +250,6 @@ export default function MisPedidos() {
                         </div>
                       </div>
 
-                      {/* Info adicional */}
                       <div className="space-y-6">
                         <div className="space-y-3">
                           <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">

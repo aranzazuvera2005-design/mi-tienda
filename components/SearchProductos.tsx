@@ -189,14 +189,14 @@ export default function SearchProductos({
                       {imgs.length > 1 && (
                         <>
                           <button onClick={e => { e.stopPropagation(); setCarouselIdx(c => ({...c, [producto.id]: (cidx - 1 + imgs.length) % imgs.length})); }}
-                            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-white/80 backdrop-blur-sm rounded-full w-8 h-8 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            className="absolute left-2 top-1/2 -translate-y-1/2 z-30 bg-white/80 backdrop-blur-sm rounded-full w-8 h-8 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                             <ChevronLeft size={16} className="text-slate-700" />
                           </button>
                           <button onClick={e => { e.stopPropagation(); setCarouselIdx(c => ({...c, [producto.id]: (cidx + 1) % imgs.length})); }}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-white/80 backdrop-blur-sm rounded-full w-8 h-8 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            className="absolute right-2 top-1/2 -translate-y-1/2 z-30 bg-white/80 backdrop-blur-sm rounded-full w-8 h-8 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                             <ChevronRight size={16} className="text-slate-700" />
                           </button>
-                          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
+                          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-30 flex gap-1.5">
                             {imgs.map((_, i) => (
                               <button key={i} onClick={e => { e.stopPropagation(); setCarouselIdx(c => ({...c, [producto.id]: i})); }}
                                 className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${i === cidx ? 'bg-white w-4' : 'bg-white/50'}`} />

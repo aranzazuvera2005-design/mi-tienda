@@ -73,7 +73,7 @@ export default function ResenaForm({ productoId, clienteId, pedidoId, resenaInic
         const { data: { session } } = await supabaseClient.auth.getSession();
         authToken = session?.access_token;
       }
-      const authHeaders = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
+      const authHeaders: Record<string, string> = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
 
       if (foto && SUPABASE_URL && SUPABASE_ANON) {
         const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON);
